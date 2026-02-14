@@ -89,19 +89,25 @@ public static class HtmlFragments
                 <header>
                     <div style="display:flex;justify-content:space-between;align-items:center;">
                         <strong>Level {levelNum}</strong>
-                        <button type="button"
-                                hx-delete="/character/level/remove?index={levelIndex}"
-                                hx-target="#level-{levelIndex}"
-                                hx-swap="outerHTML"
-                                class="outline secondary btn-sm">
-                            Remove Level
-                        </button>
+                        <div style="display:flex;gap:0.5rem;">
+                            <button type="button"
+                                    onclick="var b=document.getElementById('level-body-{levelIndex}');b.style.display=b.style.display==='none'?'':'none';this.textContent=b.style.display==='none'?'\u25b6':'\u25bc'"
+                                    class="outline secondary btn-sm">&#x25bc;</button>
+                            <button type="button"
+                                    hx-delete="/character/level/remove?index={levelIndex}"
+                                    hx-target="#level-{levelIndex}"
+                                    hx-swap="outerHTML"
+                                    class="outline secondary btn-sm">
+                                Remove Level
+                            </button>
+                        </div>
                     </div>
                 </header>
 
                 <input type="hidden" name="level[{levelIndex}].number" value="{levelNum}" />
 
-                <div id="attacks-{levelIndex}">
+                <div id="level-body-{levelIndex}">
+                    <div id="attacks-{levelIndex}">
             """);
 
         for (var j = 0; j < l.Attacks.Count; j++)
@@ -110,16 +116,17 @@ public static class HtmlFragments
         }
 
         sb.Append($"""
-                </div>
+                    </div>
 
-                <button type="button"
-                        hx-post="/character/attack/add?levelIndex={levelIndex}"
-                        hx-target="#attacks-{levelIndex}"
-                        hx-swap="beforeend"
-                        hx-include="#attack-counter"
-                        class="outline btn-sm">
-                    + Add Attack
-                </button>
+                    <button type="button"
+                            hx-post="/character/attack/add?levelIndex={levelIndex}"
+                            hx-target="#attacks-{levelIndex}"
+                            hx-swap="beforeend"
+                            hx-include="#attack-counter"
+                            class="outline btn-sm">
+                        + Add Attack
+                    </button>
+                </div>
             </article>
             """);
 

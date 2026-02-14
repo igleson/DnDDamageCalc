@@ -160,6 +160,45 @@ public class FormParserTests
     }
 
     [Fact]
+    public void Parse_TopplePercent_ParsedCorrectly()
+    {
+        var form = CreateForm(new Dictionary<string, string>
+        {
+            ["characterName"] = "Test",
+            ["level[0].number"] = "1",
+            ["level[0].attacks[0].name"] = "Hammer",
+            ["level[0].attacks[0].hitPercent"] = "65",
+            ["level[0].attacks[0].critPercent"] = "5",
+            ["level[0].attacks[0].masteryTopple"] = "on",
+            ["level[0].attacks[0].topplePercent"] = "40"
+        });
+
+        var character = FormParser.Parse(form);
+        var attack = character.Levels[0].Attacks[0];
+
+        Assert.True(attack.MasteryTopple);
+        Assert.Equal(40, attack.TopplePercent);
+    }
+
+    [Fact]
+    public void Parse_TopplePercent_DefaultsToZero()
+    {
+        var form = CreateForm(new Dictionary<string, string>
+        {
+            ["characterName"] = "Test",
+            ["level[0].number"] = "1",
+            ["level[0].attacks[0].name"] = "Sword",
+            ["level[0].attacks[0].hitPercent"] = "65",
+            ["level[0].attacks[0].critPercent"] = "5"
+        });
+
+        var character = FormParser.Parse(form);
+        var attack = character.Levels[0].Attacks[0];
+
+        Assert.Equal(0, attack.TopplePercent);
+    }
+
+    [Fact]
     public void Parse_TrimsWhitespace()
     {
         var form = CreateForm(new Dictionary<string, string>

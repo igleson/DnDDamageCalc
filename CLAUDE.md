@@ -6,7 +6,7 @@ A web application that receives D&D character information and calculates damage 
 
 ```bash
 dotnet build                     # Build the solution
-dotnet test                      # Run all 35 tests
+dotnet test                      # Run all 54 tests
 dotnet run --project src/DnDDamageCalc.Web  # Run the app (http://localhost:5082)
 dotnet publish -c Release        # AOT-compiled release build
 ```
@@ -36,12 +36,15 @@ src/DnDDamageCalc.Web/
 │   └── HtmlFragments.cs               # All HTML fragment rendering (C# string interpolation)
 ├── Endpoints/
 │   └── CharacterEndpoints.cs          # All character-related routes
+├── Simulation/
+│   └── DamageSimulator.cs             # Monte Carlo damage simulation engine
 └── wwwroot/
     └── index.html                      # Shell page: sidebar + form container
 
 tests/DnDDamageCalc.Tests/
 ├── CharacterEndpointTests.cs           # Integration tests (WebApplicationFactory)
 ├── CharacterRepositoryTests.cs         # DB CRUD tests (temp SQLite file per test)
+├── DamageSimulatorTests.cs             # Simulation logic unit tests
 └── FormParserTests.cs                  # Form parsing edge cases
 ```
 
@@ -55,13 +58,14 @@ Domain model hierarchy:
 Character        { Id, Name, List<CharacterLevel> }
 CharacterLevel   { LevelNumber (1-20), List<Attack> }
 Attack           { Name, HitPercent, CritPercent, MasteryVex, MasteryTopple,
-                   FlatModifier, List<DiceGroup> }
+                   TopplePercent, FlatModifier, List<DiceGroup> }
 DiceGroup        { Quantity, DieSize (4/6/8/10/12/20) }
 ```
 
 - `Character.Id` and `Character.Name` are SQL columns; everything else is serialized to a protobuf blob
 - `CharacterLevel`, `Attack`, and `DiceGroup` are annotated with `[ProtoContract]`/`[ProtoMember(n)]`
 - Masteries are bool flags (Vex, Topple) — expandable for future weapon masteries
+- `TopplePercent` is the chance the target fails the save when Topple mastery is active
 - `FlatModifier` is per-attack (the "+3" in "2d6+1d4+3")
 
 ### Database (`Data/Database.cs`)
@@ -94,11 +98,13 @@ DiceGroup        { Quantity, DieSize (4/6/8/10/12/20) }
 All HTML rendered via C# `$"""..."""` raw string interpolation (AOT-safe, no template engine).
 
 Key methods:
-- `CharacterForm(Character?)` — full form with hidden monotonic counters
+- `CharacterForm(Character?)` — full form with hidden monotonic counters; level buttons in flex row with conditional clone button
 - `LevelFragment(levelIndex, CharacterLevel?)` — single level card with attacks container
-- `AttackFragment(levelIndex, attackIndex, Attack?)` — attack fieldset with hit/crit/masteries/damage
+- `AttackFragment(levelIndex, attackIndex, Attack?)` — attack fieldset with hit/crit/masteries/topple%/damage
 - `DiceGroupFragment(levelIndex, attackIndex, diceIndex, DiceGroup?)` — inline dice row (qty + die size + remove)
+- `CloneLevelButton()` — reusable clone button HTML, used in form and OOB responses
 - `CharacterList(List<(int,string)>)` — sidebar character items
+- `DamageResultsTable(List<LevelStats>)` — damage statistics table with percentiles
 - `ValidationError(string)` / `SaveConfirmation(int, string)` — feedback messages
 
 Counter management: monotonic hidden fields (`levelCounter`, `attackCounter`, `diceCounter`) that only increment, updated via `hx-swap-oob="true"` on add responses. This avoids index collisions when elements are removed.
@@ -112,7 +118,8 @@ Extension method `MapCharacterEndpoints()` registers all routes:
 | GET | `/character/form` | Empty form | innerHTML into container |
 | GET | `/character/{id}` | Load saved character | innerHTML into container |
 | GET | `/character/list` | List saved characters | innerHTML into sidebar |
-| POST | `/character/level/add` | Add level fragment | beforeend + OOB counter |
+| POST | `/character/level/add` | Add level fragment | beforeend + OOB counter + OOB clone btn |
+| POST | `/character/level/clone` | Clone last level (incremented number) | beforeend + OOB counters + OOB clone btn |
 | POST | `/character/attack/add` | Add attack fragment | beforeend + OOB counter |
 | POST | `/character/dice/add` | Add dice group | beforeend + OOB counter |
 | DELETE | `/character/level/remove` | Remove level | outerHTML (empty) |
@@ -121,8 +128,22 @@ Extension method `MapCharacterEndpoints()` registers all routes:
 | POST | `/character/save` | Save to SQLite | innerHTML (form + message) |
 | DELETE | `/character/{id}` | Delete character | updated sidebar list |
 | POST | `/character/validate-percentages` | Validate hit%+crit% <= 100 | inline error |
+| POST | `/character/calculate` | Run damage simulation | innerHTML into results div |
 
 Server-side validation on save: name required, levels 1-20, attack name required, percentages 0-100, hit%+crit% <= 100.
+
+### Simulation (`Simulation/DamageSimulator.cs`)
+
+Monte Carlo damage simulation engine (10,000 iterations per level by default).
+
+- `LevelStats` — result DTO with LevelNumber, Average, P25, P50, P75, P90, P95
+- `DamageSimulator.Simulate(Character, iterations)` — iterates each level, simulates turns, returns sorted percentile stats
+- `SimulateTurn(attacks)` — processes attacks sequentially within a turn, tracking Vex/Topple state
+- **Vex mastery**: on a miss, grants advantage (roll twice) to the next attack; consumed after one use
+- **Topple mastery**: on a hit/crit, target makes a save (TopplePercent chance to fail); prone grants advantage to all subsequent attacks for the turn
+- **Advantage**: recalculates effective hit/crit rates using `1 - (1-p)^2` formula, preserving crit/hit ratio
+- **Crits**: double dice quantity only, flat modifier applied once
+- Percentile calculation uses linear interpolation on sorted damage arrays
 
 ### Frontend (`wwwroot/index.html`)
 
@@ -169,6 +190,8 @@ Server-side validation on save: name required, levels 1-20, attack name required
 - Remove endpoints return empty string (outerHTML swap deletes the element)
 - Save returns confirmation message + full re-rendered form
 - Percentage validation returns inline error or empty string
+- **OOB visibility pattern**: clone button wrapped in `<span id="clone-level-btn">`, shown/hidden via `hx-swap-oob="innerHTML"` from add-level and clone endpoints
+- **Clone endpoint** receives full form via `hx-include="#character-form"`, parses with `FormParser`, updates all three counters (level, attack, dice) via OOB to prevent index collisions with cloned content
 
 ### PicoCSS Conventions
 

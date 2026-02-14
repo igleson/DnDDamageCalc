@@ -1,5 +1,6 @@
 using DnDDamageCalc.Web.Data;
 using DnDDamageCalc.Web.Html;
+using DnDDamageCalc.Web.Simulation;
 
 namespace DnDDamageCalc.Web.Endpoints;
 
@@ -33,6 +34,47 @@ public static class CharacterEndpoints
 
             var html = HtmlFragments.LevelFragment(counter, new Models.CharacterLevel { LevelNumber = levelNumber });
             html += $"""<input type="hidden" id="level-counter" name="levelCounter" value="{levelNumber}" hx-swap-oob="true" />""";
+            html += $"""<span id="clone-level-btn" hx-swap-oob="innerHTML">{HtmlFragments.CloneLevelButton()}</span>""";
+            return Results.Text(html, "text/html");
+        });
+
+        app.MapPost("/character/level/clone", async (HttpRequest request) =>
+        {
+            var form = await request.ReadFormAsync();
+            var character = FormParser.Parse(form);
+
+            if (character.Levels.Count == 0)
+                return Results.Text(HtmlFragments.ValidationError("No levels to clone."), "text/html");
+
+            int.TryParse(form["levelCounter"], out var levelCounter);
+            int.TryParse(form["attackCounter"], out var attackCounter);
+            int.TryParse(form["diceCounter"], out var diceCounter);
+
+            var lastLevel = character.Levels[^1];
+            var newLevelNumber = lastLevel.LevelNumber + 1;
+
+            if (newLevelNumber > 20)
+                return Results.Text(HtmlFragments.ValidationError("Maximum level is 20."), "text/html");
+
+            var clonedLevel = new Models.CharacterLevel
+            {
+                LevelNumber = newLevelNumber,
+                Attacks = lastLevel.Attacks
+            };
+
+            var html = HtmlFragments.LevelFragment(levelCounter, clonedLevel);
+
+            var newLevelCounter = levelCounter + 1;
+            html += $"""<input type="hidden" id="level-counter" name="levelCounter" value="{newLevelCounter}" hx-swap-oob="true" />""";
+            html += $"""<span id="clone-level-btn" hx-swap-oob="innerHTML">{HtmlFragments.CloneLevelButton()}</span>""";
+
+            var newAttackCounter = Math.Max(attackCounter, lastLevel.Attacks.Count);
+            html += $"""<input type="hidden" id="attack-counter" name="attackCounter" value="{newAttackCounter}" hx-swap-oob="true" />""";
+
+            var maxDice = lastLevel.Attacks.Count > 0 ? lastLevel.Attacks.Max(a => a.DiceGroups.Count) : 0;
+            var newDiceCounter = Math.Max(diceCounter, maxDice);
+            html += $"""<input type="hidden" id="dice-counter" name="diceCounter" value="{newDiceCounter}" hx-swap-oob="true" />""";
+
             return Results.Text(html, "text/html");
         });
 
@@ -103,6 +145,23 @@ public static class CharacterEndpoints
 
             return Results.Text("", "text/html");
         });
+
+        app.MapPost("/character/calculate", async (HttpRequest request) =>
+        {
+            var form = await request.ReadFormAsync();
+            var character = FormParser.Parse(form);
+
+            var errors = ValidateForCalculation(character);
+            if (errors.Count > 0)
+            {
+                var errorHtml = string.Join("", errors.Select(e =>
+                    $"""<p style="color:var(--pico-del-color);">{System.Net.WebUtility.HtmlEncode(e)}</p>"""));
+                return Results.Text(errorHtml, "text/html");
+            }
+
+            var stats = DamageSimulator.Simulate(character);
+            return Results.Text(HtmlFragments.DamageResultsTable(stats), "text/html");
+        });
     }
 
     private static List<string> Validate(Models.Character character)
@@ -130,6 +189,40 @@ public static class CharacterEndpoints
 
                 if (attack.CritPercent < 0 || attack.CritPercent > 100)
                     errors.Add($"Crit% must be 0-100 for attack \"{attack.Name}\" at level {level.LevelNumber}.");
+
+                if (attack.MasteryTopple && (attack.TopplePercent < 0 || attack.TopplePercent > 100))
+                    errors.Add($"Topple% must be 0-100 for attack \"{attack.Name}\" at level {level.LevelNumber}.");
+            }
+        }
+
+        return errors;
+    }
+
+    private static List<string> ValidateForCalculation(Models.Character character)
+    {
+        var errors = new List<string>();
+
+        if (character.Levels.Count == 0)
+            errors.Add("Add at least one level to calculate damage.");
+
+        foreach (var level in character.Levels)
+        {
+            if (level.Attacks.Count == 0)
+                errors.Add($"Level {level.LevelNumber} needs at least one attack.");
+
+            foreach (var attack in level.Attacks)
+            {
+                if (attack.HitPercent + attack.CritPercent > 100)
+                    errors.Add($"Hit% + Crit% exceeds 100 for attack \"{attack.Name}\" at level {level.LevelNumber}.");
+
+                if (attack.HitPercent < 0 || attack.HitPercent > 100)
+                    errors.Add($"Hit% must be 0-100 for attack \"{attack.Name}\" at level {level.LevelNumber}.");
+
+                if (attack.CritPercent < 0 || attack.CritPercent > 100)
+                    errors.Add($"Crit% must be 0-100 for attack \"{attack.Name}\" at level {level.LevelNumber}.");
+
+                if (attack.MasteryTopple && (attack.TopplePercent < 0 || attack.TopplePercent > 100))
+                    errors.Add($"Topple% must be 0-100 for attack \"{attack.Name}\" at level {level.LevelNumber}.");
             }
         }
 

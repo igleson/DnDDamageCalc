@@ -1,5 +1,6 @@
 using System.Text;
 using DnDDamageCalc.Web.Models;
+using DnDDamageCalc.Web.Simulation;
 
 namespace DnDDamageCalc.Web.Html;
 
@@ -43,19 +44,35 @@ public static class HtmlFragments
         sb.Append($"""
                     </div>
 
-                    <button type="button"
-                            hx-post="/character/level/add"
-                            hx-target="#levels-container"
-                            hx-swap="beforeend"
-                            hx-include="#level-counter"
-                            class="secondary outline">
-                        + Add Level
-                    </button>
+                    <div style="display:flex;gap:1rem;">
+                        <button type="button"
+                                hx-post="/character/level/add"
+                                hx-target="#levels-container"
+                                hx-swap="beforeend"
+                                hx-include="#level-counter"
+                                class="secondary outline">
+                            + Add Level
+                        </button>
+                        <span id="clone-level-btn">
+                            {(c.Levels.Count > 0 ? CloneLevelButton() : "")}
+                        </span>
+                    </div>
                 </section>
 
                 <hr />
                 <button type="submit">Save Character</button>
             </form>
+
+            <button type="button"
+                    hx-post="/character/calculate"
+                    hx-include="#character-form"
+                    hx-target="#damage-results"
+                    hx-swap="innerHTML"
+                    class="contrast"
+                    style="margin-top:1rem;width:100%;">
+                Calculate Damage
+            </button>
+            <div id="damage-results"></div>
             """);
 
         return sb.ToString();
@@ -149,8 +166,13 @@ public static class HtmlFragments
                         <label><input type="checkbox" name="{prefix}.masteryVex" {(a.MasteryVex ? "checked" : "")} /> Vex</label>
                     </div>
                     <div>
-                        <label><input type="checkbox" name="{prefix}.masteryTopple" {(a.MasteryTopple ? "checked" : "")} /> Topple</label>
+                        <label><input type="checkbox" name="{prefix}.masteryTopple" {(a.MasteryTopple ? "checked" : "")}
+                               onchange="this.closest('fieldset').querySelector('.topple-pct').style.display=this.checked?'block':'none'" /> Topple</label>
                     </div>
+                </div>
+                <div class="topple-pct" style="display:{(a.MasteryTopple ? "block" : "none")};">
+                    <label for="{prefix}.topplePercent">Topple Save Fail %</label>
+                    <input type="number" name="{prefix}.topplePercent" value="{a.TopplePercent}" min="0" max="100" placeholder="e.g. 40" />
                 </div>
 
                 <h6>Damage</h6>
@@ -260,11 +282,71 @@ public static class HtmlFragments
         return sb.ToString();
     }
 
+    public static string CloneLevelButton() =>
+        """
+        <button type="button"
+                hx-post="/character/level/clone"
+                hx-include="#character-form"
+                hx-target="#levels-container"
+                hx-swap="beforeend"
+                class="secondary outline">
+            Clone Previous Level
+        </button>
+        """;
+
     public static string ValidationError(string message) =>
         $"""<span style="color:var(--pico-del-color);">{Encode(message)}</span>""";
 
     public static string SaveConfirmation(int id, string name) =>
         $"""<article style="padding:0.75rem;margin-bottom:1rem;border-left:4px solid var(--pico-ins-color);">Character "{Encode(name)}" saved successfully.</article>""";
+
+    public static string DamageResultsTable(List<LevelStats> stats)
+    {
+        if (stats.Count == 0)
+            return "<p><em>No levels to calculate.</em></p>";
+
+        var sb = new StringBuilder();
+        sb.Append("""
+            <article style="margin-top:1rem;">
+                <header><strong>Damage Statistics</strong></header>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Level</th>
+                            <th>Average</th>
+                            <th>P25</th>
+                            <th>P50</th>
+                            <th>P75</th>
+                            <th>P90</th>
+                            <th>P95</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            """);
+
+        foreach (var s in stats)
+        {
+            sb.Append($"""
+                        <tr>
+                            <td>{s.LevelNumber}</td>
+                            <td>{s.Average:F1}</td>
+                            <td>{s.P25:F1}</td>
+                            <td>{s.P50:F1}</td>
+                            <td>{s.P75:F1}</td>
+                            <td>{s.P90:F1}</td>
+                            <td>{s.P95:F1}</td>
+                        </tr>
+                """);
+        }
+
+        sb.Append("""
+                    </tbody>
+                </table>
+            </article>
+            """);
+
+        return sb.ToString();
+    }
 
     private static string Encode(string value) =>
         System.Net.WebUtility.HtmlEncode(value);

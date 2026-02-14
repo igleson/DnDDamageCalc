@@ -33,7 +33,8 @@ public static partial class FormParser
                     CritPercent = ParseInt(form, $"{prefix}.critPercent"),
                     FlatModifier = ParseInt(form, $"{prefix}.flatModifier"),
                     MasteryVex = form[$"{prefix}.masteryVex"] == "on",
-                    MasteryTopple = form[$"{prefix}.masteryTopple"] == "on"
+                    MasteryTopple = form[$"{prefix}.masteryTopple"] == "on",
+                    TopplePercent = ParseInt(form, $"{prefix}.topplePercent")
                 };
 
                 var diceIndices = ExtractIndices(form, DicePattern(li, ai));

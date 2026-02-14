@@ -216,6 +216,154 @@ public class CharacterEndpointTests : IClassFixture<WebApplicationFactory<Progra
     }
 
     [Fact]
+    public async Task Calculate_ValidData_ReturnsResultsTable()
+    {
+        var content = new FormUrlEncodedContent([
+            new KeyValuePair<string, string>("characterName", "Test"),
+            new KeyValuePair<string, string>("level[0].number", "1"),
+            new KeyValuePair<string, string>("level[0].attacks[0].name", "Longsword"),
+            new KeyValuePair<string, string>("level[0].attacks[0].hitPercent", "65"),
+            new KeyValuePair<string, string>("level[0].attacks[0].critPercent", "5"),
+            new KeyValuePair<string, string>("level[0].attacks[0].flatModifier", "3"),
+            new KeyValuePair<string, string>("level[0].attacks[0].dice[0].quantity", "1"),
+            new KeyValuePair<string, string>("level[0].attacks[0].dice[0].dieSize", "8")
+        ]);
+        var response = await _client.PostAsync("/character/calculate", content);
+
+        response.EnsureSuccessStatusCode();
+        var html = await response.Content.ReadAsStringAsync();
+        Assert.Contains("Damage Statistics", html);
+        Assert.Contains("<table>", html);
+    }
+
+    [Fact]
+    public async Task Calculate_NoLevels_ReturnsError()
+    {
+        var content = new FormUrlEncodedContent([
+            new KeyValuePair<string, string>("characterName", "Empty")
+        ]);
+        var response = await _client.PostAsync("/character/calculate", content);
+
+        response.EnsureSuccessStatusCode();
+        var html = await response.Content.ReadAsStringAsync();
+        Assert.Contains("at least one level", html);
+    }
+
+    [Fact]
+    public async Task Calculate_WithTopple_ReturnsResults()
+    {
+        var content = new FormUrlEncodedContent([
+            new KeyValuePair<string, string>("characterName", "Topple Fighter"),
+            new KeyValuePair<string, string>("level[0].number", "1"),
+            new KeyValuePair<string, string>("level[0].attacks[0].name", "Warhammer"),
+            new KeyValuePair<string, string>("level[0].attacks[0].hitPercent", "65"),
+            new KeyValuePair<string, string>("level[0].attacks[0].critPercent", "5"),
+            new KeyValuePair<string, string>("level[0].attacks[0].flatModifier", "4"),
+            new KeyValuePair<string, string>("level[0].attacks[0].masteryTopple", "on"),
+            new KeyValuePair<string, string>("level[0].attacks[0].topplePercent", "40"),
+            new KeyValuePair<string, string>("level[0].attacks[0].dice[0].quantity", "1"),
+            new KeyValuePair<string, string>("level[0].attacks[0].dice[0].dieSize", "8")
+        ]);
+        var response = await _client.PostAsync("/character/calculate", content);
+
+        response.EnsureSuccessStatusCode();
+        var html = await response.Content.ReadAsStringAsync();
+        Assert.Contains("Damage Statistics", html);
+    }
+
+    [Fact]
+    public async Task CloneLevel_WithLevel_ReturnsClonedFragment()
+    {
+        var content = new FormUrlEncodedContent([
+            new KeyValuePair<string, string>("levelCounter", "1"),
+            new KeyValuePair<string, string>("attackCounter", "1"),
+            new KeyValuePair<string, string>("diceCounter", "1"),
+            new KeyValuePair<string, string>("characterName", "Test"),
+            new KeyValuePair<string, string>("level[0].number", "3"),
+            new KeyValuePair<string, string>("level[0].attacks[0].name", "Longsword"),
+            new KeyValuePair<string, string>("level[0].attacks[0].hitPercent", "65"),
+            new KeyValuePair<string, string>("level[0].attacks[0].critPercent", "5"),
+            new KeyValuePair<string, string>("level[0].attacks[0].flatModifier", "3"),
+            new KeyValuePair<string, string>("level[0].attacks[0].dice[0].quantity", "1"),
+            new KeyValuePair<string, string>("level[0].attacks[0].dice[0].dieSize", "8")
+        ]);
+        var response = await _client.PostAsync("/character/level/clone", content);
+
+        response.EnsureSuccessStatusCode();
+        var html = await response.Content.ReadAsStringAsync();
+        Assert.Contains("Longsword", html);
+        Assert.Contains("Level 4", html);
+        Assert.Contains("level-1", html);
+    }
+
+    [Fact]
+    public async Task CloneLevel_NoLevels_ReturnsError()
+    {
+        var content = new FormUrlEncodedContent([
+            new KeyValuePair<string, string>("levelCounter", "0"),
+            new KeyValuePair<string, string>("attackCounter", "0"),
+            new KeyValuePair<string, string>("diceCounter", "0"),
+            new KeyValuePair<string, string>("characterName", "Test")
+        ]);
+        var response = await _client.PostAsync("/character/level/clone", content);
+
+        response.EnsureSuccessStatusCode();
+        var html = await response.Content.ReadAsStringAsync();
+        Assert.Contains("No levels to clone", html);
+    }
+
+    [Fact]
+    public async Task CloneLevel_PreservesAttackData()
+    {
+        var content = new FormUrlEncodedContent([
+            new KeyValuePair<string, string>("levelCounter", "1"),
+            new KeyValuePair<string, string>("attackCounter", "1"),
+            new KeyValuePair<string, string>("diceCounter", "1"),
+            new KeyValuePair<string, string>("characterName", "Test"),
+            new KeyValuePair<string, string>("level[0].number", "5"),
+            new KeyValuePair<string, string>("level[0].attacks[0].name", "Greatsword"),
+            new KeyValuePair<string, string>("level[0].attacks[0].hitPercent", "70"),
+            new KeyValuePair<string, string>("level[0].attacks[0].critPercent", "10"),
+            new KeyValuePair<string, string>("level[0].attacks[0].flatModifier", "5"),
+            new KeyValuePair<string, string>("level[0].attacks[0].masteryVex", "on"),
+            new KeyValuePair<string, string>("level[0].attacks[0].dice[0].quantity", "2"),
+            new KeyValuePair<string, string>("level[0].attacks[0].dice[0].dieSize", "6")
+        ]);
+        var response = await _client.PostAsync("/character/level/clone", content);
+
+        response.EnsureSuccessStatusCode();
+        var html = await response.Content.ReadAsStringAsync();
+        Assert.Contains("Greatsword", html);
+        Assert.Contains("value=\"70\"", html);
+        Assert.Contains("value=\"10\"", html);
+        Assert.Contains("value=\"5\"", html);
+        Assert.Contains("value=\"2\"", html);
+        Assert.Contains("checked", html);
+    }
+
+    [Fact]
+    public async Task CloneLevel_AtLevel20_ReturnsError()
+    {
+        var content = new FormUrlEncodedContent([
+            new KeyValuePair<string, string>("levelCounter", "1"),
+            new KeyValuePair<string, string>("attackCounter", "1"),
+            new KeyValuePair<string, string>("diceCounter", "1"),
+            new KeyValuePair<string, string>("characterName", "Test"),
+            new KeyValuePair<string, string>("level[0].number", "20"),
+            new KeyValuePair<string, string>("level[0].attacks[0].name", "Longsword"),
+            new KeyValuePair<string, string>("level[0].attacks[0].hitPercent", "65"),
+            new KeyValuePair<string, string>("level[0].attacks[0].critPercent", "5"),
+            new KeyValuePair<string, string>("level[0].attacks[0].dice[0].quantity", "1"),
+            new KeyValuePair<string, string>("level[0].attacks[0].dice[0].dieSize", "8")
+        ]);
+        var response = await _client.PostAsync("/character/level/clone", content);
+
+        response.EnsureSuccessStatusCode();
+        var html = await response.Content.ReadAsStringAsync();
+        Assert.Contains("Maximum level is 20", html);
+    }
+
+    [Fact]
     public async Task SaveAndLoad_RoundTrip()
     {
         var content = new FormUrlEncodedContent([

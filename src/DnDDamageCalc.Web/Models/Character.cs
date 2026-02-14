@@ -42,6 +42,9 @@ public class Attack
 
     [ProtoMember(7)]
     public List<DiceGroup> DiceGroups { get; set; } = [];
+
+    [ProtoMember(8)]
+    public int TopplePercent { get; set; }
 }
 
 [ProtoContract]

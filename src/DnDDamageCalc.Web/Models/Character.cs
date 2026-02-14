@@ -1,0 +1,55 @@
+using ProtoBuf;
+
+namespace DnDDamageCalc.Web.Models;
+
+public class Character
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = "";
+    public List<CharacterLevel> Levels { get; set; } = [];
+}
+
+[ProtoContract]
+public class CharacterLevel
+{
+    [ProtoMember(1)]
+    public int LevelNumber { get; set; }
+
+    [ProtoMember(2)]
+    public List<Attack> Attacks { get; set; } = [];
+}
+
+[ProtoContract]
+public class Attack
+{
+    [ProtoMember(1)]
+    public string Name { get; set; } = "";
+
+    [ProtoMember(2)]
+    public int HitPercent { get; set; }
+
+    [ProtoMember(3)]
+    public int CritPercent { get; set; }
+
+    [ProtoMember(4)]
+    public bool MasteryVex { get; set; }
+
+    [ProtoMember(5)]
+    public bool MasteryTopple { get; set; }
+
+    [ProtoMember(6)]
+    public int FlatModifier { get; set; }
+
+    [ProtoMember(7)]
+    public List<DiceGroup> DiceGroups { get; set; } = [];
+}
+
+[ProtoContract]
+public class DiceGroup
+{
+    [ProtoMember(1)]
+    public int Quantity { get; set; } = 1;
+
+    [ProtoMember(2)]
+    public int DieSize { get; set; } = 6;
+}

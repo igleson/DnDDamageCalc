@@ -1,18 +1,17 @@
+using DnDDamageCalc.Web.Data;
+using DnDDamageCalc.Web.Endpoints;
+
 var builder = WebApplication.CreateSlimBuilder(args);
 
 var app = builder.Build();
 
 app.UseStaticFiles();
 
+Database.Initialize();
+
 app.MapGet("/", () => Results.Redirect("/index.html"));
 
-app.MapPost("/counter/increment", (int? count) =>
-{
-    var newCount = (count ?? 0) + 1;
-    return Results.Text(
-        $"""<div id="counter"><span>Count: {newCount}</span><button hx-post="/counter/increment?count={newCount}" hx-target="#counter" hx-swap="outerHTML">Increment</button></div>""",
-        "text/html");
-});
+app.MapCharacterEndpoints();
 
 app.Run();
 

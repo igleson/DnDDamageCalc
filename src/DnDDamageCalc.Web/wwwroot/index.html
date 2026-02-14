@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="light">
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -8,18 +8,181 @@
     <script src="https://unpkg.com/htmx.org@2.0.4"
             integrity="sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+"
             crossorigin="anonymous"></script>
+    <style>
+        body {
+            margin: 0;
+        }
+        .app-layout {
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 280px;
+            min-width: 280px;
+            background: var(--pico-card-background-color);
+            border-right: 1px solid var(--pico-muted-border-color);
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            transition: margin-left 0.25s ease;
+            overflow-y: auto;
+        }
+        .sidebar.collapsed {
+            margin-left: -280px;
+        }
+        .sidebar h4 {
+            margin-bottom: 0.5rem;
+        }
+        .sidebar hr {
+            margin: 0.75rem 0;
+        }
+        #character-list {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        /* Toggle button */
+        .sidebar-toggle {
+            position: fixed;
+            top: 0.75rem;
+            left: 0.75rem;
+            z-index: 10;
+            width: auto !important;
+            padding: 0.35rem 0.65rem !important;
+            margin: 0 !important;
+            font-size: 1.2rem;
+            line-height: 1;
+            transition: left 0.25s ease;
+        }
+        .sidebar:not(.collapsed) ~ .app-main .sidebar-toggle {
+            left: 290px;
+        }
+
+        /* Main content */
+        .app-main {
+            flex: 1;
+            min-width: 0;
+            padding: 1rem 2rem;
+            max-width: 900px;
+            overflow-y: auto;
+        }
+        header.app-header {
+            text-align: center;
+            padding: 1rem 0;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid var(--pico-muted-border-color);
+        }
+        header.app-header h1 {
+            margin-bottom: 0.25rem;
+        }
+        header.app-header small {
+            color: var(--pico-muted-color);
+        }
+
+        /* Form styles */
+        #form-container fieldset {
+            border: 1px solid var(--pico-muted-border-color);
+            border-radius: var(--pico-border-radius);
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+        #form-container fieldset legend {
+            font-weight: bold;
+            padding: 0 0.5rem;
+        }
+        .attack-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+        .btn-sm {
+            width: auto !important;
+            margin: 0 !important;
+            padding: 0.25rem 0.75rem !important;
+        }
+
+        /* Sidebar character items */
+        .char-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem;
+            border-radius: var(--pico-border-radius);
+            margin-bottom: 0.25rem;
+        }
+        .char-item:hover {
+            background: var(--pico-secondary-hover-background);
+        }
+        .char-item a {
+            flex: 1;
+            text-decoration: none;
+        }
+
+        /* Responsive: stack on small screens */
+        @media (max-width: 768px) {
+            .sidebar {
+                position: fixed;
+                top: 0;
+                left: 0;
+                height: 100vh;
+                z-index: 5;
+                box-shadow: 2px 0 8px rgba(0,0,0,0.3);
+            }
+            .sidebar.collapsed {
+                margin-left: -280px;
+            }
+            .sidebar-toggle {
+                left: 0.75rem !important;
+            }
+            .sidebar:not(.collapsed) ~ .app-main .sidebar-toggle {
+                left: 290px !important;
+            }
+            .app-main {
+                padding: 1rem;
+                margin-left: 0;
+            }
+        }
+    </style>
 </head>
 <body>
-    <main class="container">
-        <h1>D&amp;D Damage Calculator</h1>
-        <div id="counter">
-            <span>Count: 0</span>
-            <button hx-post="/counter/increment?count=0"
-                    hx-target="#counter"
-                    hx-swap="outerHTML">
-                Increment
+    <div class="app-layout">
+        <aside class="sidebar" id="sidebar"
+               hx-get="/character/list"
+               hx-trigger="load"
+               hx-target="#character-list"
+               hx-swap="innerHTML">
+            <h4>Characters</h4>
+            <hr />
+            <div id="character-list"></div>
+            <hr />
+            <button type="button" class="outline"
+                    hx-get="/character/form"
+                    hx-target="#form-container"
+                    hx-swap="innerHTML"
+                    style="width:100%;">
+                + New Character
             </button>
+        </aside>
+
+        <div class="app-main">
+            <button type="button" class="sidebar-toggle outline secondary"
+                    onclick="document.getElementById('sidebar').classList.toggle('collapsed')">
+                &#9776;
+            </button>
+
+            <header class="app-header">
+                <h1>D&amp;D Damage Calculator</h1>
+                <small>Build your character, calculate your damage</small>
+            </header>
+
+            <div id="messages"></div>
+
+            <div id="form-container" hx-get="/character/form" hx-trigger="load" hx-swap="innerHTML">
+            </div>
         </div>
-    </main>
+    </div>
 </body>
 </html>

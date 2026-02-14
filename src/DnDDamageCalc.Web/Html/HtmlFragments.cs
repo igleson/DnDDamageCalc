@@ -141,49 +141,55 @@ public static class HtmlFragments
 
         sb.Append($"""
             <fieldset id="attack-{levelIndex}-{attackIndex}">
-                <legend>{(string.IsNullOrEmpty(a.Name) ? "New Attack" : Encode(a.Name))}</legend>
+                <legend style="display:flex;align-items:center;gap:0.5rem;">
+                    <button type="button"
+                            onclick="var b=document.getElementById('attack-body-{levelIndex}-{attackIndex}');b.style.display=b.style.display==='none'?'':'none';this.textContent=b.style.display==='none'?'\u25b6':'\u25bc'"
+                            class="outline secondary btn-sm">&#x25bc;</button>
+                    {(string.IsNullOrEmpty(a.Name) ? "New Attack" : Encode(a.Name))}
+                </legend>
 
-                <label for="{prefix}.name">Attack Name</label>
-                <input type="text" name="{prefix}.name" value="{Encode(a.Name)}" required placeholder="e.g. Longsword" />
+                <div id="attack-body-{levelIndex}-{attackIndex}">
+                    <label for="{prefix}.name">Attack Name</label>
+                    <input type="text" name="{prefix}.name" value="{Encode(a.Name)}" required placeholder="e.g. Longsword" />
 
-                <div class="grid">
-                    <div>
-                        <label for="{prefix}.hitPercent">Hit %</label>
-                        <input type="number" name="{prefix}.hitPercent" value="{a.HitPercent}" min="0" max="100"
-                               hx-post="/character/validate-percentages"
-                               hx-trigger="change"
-                               hx-target="#pct-error-{levelIndex}-{attackIndex}"
-                               hx-swap="innerHTML"
-                               hx-include="[name='{prefix}.hitPercent'],[name='{prefix}.critPercent']" />
+                    <div class="grid">
+                        <div>
+                            <label for="{prefix}.hitPercent">Hit %</label>
+                            <input type="number" name="{prefix}.hitPercent" value="{a.HitPercent}" min="0" max="100"
+                                   hx-post="/character/validate-percentages"
+                                   hx-trigger="change"
+                                   hx-target="#pct-error-{levelIndex}-{attackIndex}"
+                                   hx-swap="innerHTML"
+                                   hx-include="[name='{prefix}.hitPercent'],[name='{prefix}.critPercent']" />
+                        </div>
+                        <div>
+                            <label for="{prefix}.critPercent">Crit %</label>
+                            <input type="number" name="{prefix}.critPercent" value="{a.CritPercent}" min="0" max="100"
+                                   hx-post="/character/validate-percentages"
+                                   hx-trigger="change"
+                                   hx-target="#pct-error-{levelIndex}-{attackIndex}"
+                                   hx-swap="innerHTML"
+                                   hx-include="[name='{prefix}.hitPercent'],[name='{prefix}.critPercent']" />
+                        </div>
                     </div>
-                    <div>
-                        <label for="{prefix}.critPercent">Crit %</label>
-                        <input type="number" name="{prefix}.critPercent" value="{a.CritPercent}" min="0" max="100"
-                               hx-post="/character/validate-percentages"
-                               hx-trigger="change"
-                               hx-target="#pct-error-{levelIndex}-{attackIndex}"
-                               hx-swap="innerHTML"
-                               hx-include="[name='{prefix}.hitPercent'],[name='{prefix}.critPercent']" />
-                    </div>
-                </div>
-                <small id="pct-error-{levelIndex}-{attackIndex}" style="color:var(--pico-del-color);"></small>
+                    <small id="pct-error-{levelIndex}-{attackIndex}" style="color:var(--pico-del-color);"></small>
 
-                <div class="grid">
-                    <div>
-                        <label><input type="checkbox" name="{prefix}.masteryVex" {(a.MasteryVex ? "checked" : "")} /> Vex</label>
+                    <div class="grid">
+                        <div>
+                            <label><input type="checkbox" name="{prefix}.masteryVex" {(a.MasteryVex ? "checked" : "")} /> Vex</label>
+                        </div>
+                        <div>
+                            <label><input type="checkbox" name="{prefix}.masteryTopple" {(a.MasteryTopple ? "checked" : "")}
+                                   onchange="this.closest('fieldset').querySelector('.topple-pct').style.display=this.checked?'block':'none'" /> Topple</label>
+                        </div>
                     </div>
-                    <div>
-                        <label><input type="checkbox" name="{prefix}.masteryTopple" {(a.MasteryTopple ? "checked" : "")}
-                               onchange="this.closest('fieldset').querySelector('.topple-pct').style.display=this.checked?'block':'none'" /> Topple</label>
+                    <div class="topple-pct" style="display:{(a.MasteryTopple ? "block" : "none")};">
+                        <label for="{prefix}.topplePercent">Topple Save Fail %</label>
+                        <input type="number" name="{prefix}.topplePercent" value="{a.TopplePercent}" min="0" max="100" placeholder="e.g. 40" />
                     </div>
-                </div>
-                <div class="topple-pct" style="display:{(a.MasteryTopple ? "block" : "none")};">
-                    <label for="{prefix}.topplePercent">Topple Save Fail %</label>
-                    <input type="number" name="{prefix}.topplePercent" value="{a.TopplePercent}" min="0" max="100" placeholder="e.g. 40" />
-                </div>
 
-                <h6>Damage</h6>
-                <div id="dice-{levelIndex}-{attackIndex}">
+                    <h6>Damage</h6>
+                    <div id="dice-{levelIndex}-{attackIndex}">
             """);
 
         for (var k = 0; k < a.DiceGroups.Count; k++)
@@ -192,30 +198,31 @@ public static class HtmlFragments
         }
 
         sb.Append($"""
-                </div>
+                    </div>
 
-                <button type="button"
-                        hx-post="/character/dice/add?levelIndex={levelIndex}&attackIndex={attackIndex}"
-                        hx-target="#dice-{levelIndex}-{attackIndex}"
-                        hx-swap="beforeend"
-                        hx-include="#dice-counter"
-                        class="outline btn-sm">
-                    + Add Dice
-                </button>
-
-                <div style="margin-top:1rem;">
-                    <label for="{prefix}.flatModifier">Damage Modifier (+/-)</label>
-                    <input type="number" name="{prefix}.flatModifier" value="{a.FlatModifier}" placeholder="e.g. 5 for +5" />
-                </div>
-
-                <div class="attack-actions">
                     <button type="button"
-                            hx-delete="/character/attack/remove?levelIndex={levelIndex}&attackIndex={attackIndex}"
-                            hx-target="#attack-{levelIndex}-{attackIndex}"
-                            hx-swap="outerHTML"
-                            class="outline secondary btn-sm">
-                        Remove Attack
+                            hx-post="/character/dice/add?levelIndex={levelIndex}&attackIndex={attackIndex}"
+                            hx-target="#dice-{levelIndex}-{attackIndex}"
+                            hx-swap="beforeend"
+                            hx-include="#dice-counter"
+                            class="outline btn-sm">
+                        + Add Dice
                     </button>
+
+                    <div style="margin-top:1rem;">
+                        <label for="{prefix}.flatModifier">Damage Modifier (+/-)</label>
+                        <input type="number" name="{prefix}.flatModifier" value="{a.FlatModifier}" placeholder="e.g. 5 for +5" />
+                    </div>
+
+                    <div class="attack-actions">
+                        <button type="button"
+                                hx-delete="/character/attack/remove?levelIndex={levelIndex}&attackIndex={attackIndex}"
+                                hx-target="#attack-{levelIndex}-{attackIndex}"
+                                hx-swap="outerHTML"
+                                class="outline secondary btn-sm">
+                            Remove Attack
+                        </button>
+                    </div>
                 </div>
             </fieldset>
             """);

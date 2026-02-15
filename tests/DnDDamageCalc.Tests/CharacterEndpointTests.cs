@@ -10,7 +10,16 @@ public class CharacterEndpointTests : IClassFixture<WebApplicationFactory<Progra
 
     public CharacterEndpointTests(WebApplicationFactory<Program> factory)
     {
-        _client = factory.CreateClient(new WebApplicationFactoryClientOptions
+        Environment.SetEnvironmentVariable("SUPABASE_URL", "https://fake.supabase.co");
+        Environment.SetEnvironmentVariable("SUPABASE_ANON_KEY", "fake-anon-key");
+        Environment.SetEnvironmentVariable("TestUserId", "test-user-id");
+
+        var customFactory = factory.WithWebHostBuilder(builder =>
+        {
+            builder.UseSetting("TestUserId", "test-user-id");
+        });
+
+        _client = customFactory.CreateClient(new WebApplicationFactoryClientOptions
         {
             AllowAutoRedirect = false
         });
@@ -383,5 +392,28 @@ public class CharacterEndpointTests : IClassFixture<WebApplicationFactory<Progra
         var listResponse = await _client.GetAsync("/character/list");
         var listHtml = await listResponse.Content.ReadAsStringAsync();
         Assert.Contains("Frodo", listHtml);
+    }
+
+    [Fact]
+    public async Task LoginPage_ReturnsHtml()
+    {
+        var response = await _client.GetAsync("/login");
+
+        response.EnsureSuccessStatusCode();
+        var html = await response.Content.ReadAsStringAsync();
+        Assert.Contains("Sign in with Google", html);
+        Assert.Contains("D&amp;D Damage Calculator", html);
+    }
+
+    [Fact]
+    public async Task AuthLogin_RedirectsToSupabase()
+    {
+        var response = await _client.GetAsync("/auth/login");
+
+        Assert.True(response.StatusCode == HttpStatusCode.Redirect || response.StatusCode == HttpStatusCode.Found);
+        var location = response.Headers.Location?.ToString() ?? "";
+        Assert.Contains("fake.supabase.co", location);
+        Assert.Contains("flow_type=pkce", location);
+        Assert.Contains("code_challenge=", location);
     }
 }

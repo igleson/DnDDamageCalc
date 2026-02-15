@@ -168,6 +168,10 @@
                     style="width:100%;">
                 + New Character
             </button>
+            <hr />
+            <form method="post" action="/auth/logout">
+                <button type="submit" class="outline secondary" style="width:100%;">Logout</button>
+            </form>
         </aside>
 
         <div class="app-main">
@@ -187,5 +191,10 @@
             </div>
         </div>
     </div>
+    <script>
+        document.addEventListener('htmx:responseError', function(e) {
+            if (e.detail.xhr.status === 401) window.location.href = '/login';
+        });
+    </script>
 </body>
 </html>

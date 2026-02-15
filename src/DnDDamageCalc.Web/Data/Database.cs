@@ -30,9 +30,11 @@ public static class Database
         cmd.CommandText = """
             CREATE TABLE IF NOT EXISTS Characters (
                 Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                SupabaseUserId TEXT NOT NULL,
                 Name TEXT NOT NULL,
                 Data BLOB NOT NULL
             );
+            CREATE INDEX IF NOT EXISTS idx_characters_user ON Characters(SupabaseUserId);
             """;
         cmd.ExecuteNonQuery();
     }

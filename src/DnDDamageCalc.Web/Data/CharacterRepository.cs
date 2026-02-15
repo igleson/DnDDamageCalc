@@ -5,7 +5,7 @@ namespace DnDDamageCalc.Web.Data;
 
 public static class CharacterRepository
 {
-    public static int Save(Character character)
+    public static int Save(Character character, string userId)
     {
         using var connection = Database.CreateConnection();
 
@@ -19,8 +19,9 @@ public static class CharacterRepository
         if (character.Id > 0)
         {
             using var cmd = connection.CreateCommand();
-            cmd.CommandText = "UPDATE Characters SET Name = @name, Data = @data WHERE Id = @id";
+            cmd.CommandText = "UPDATE Characters SET Name = @name, Data = @data WHERE Id = @id AND SupabaseUserId = @userId";
             cmd.Parameters.AddWithValue("@id", character.Id);
+            cmd.Parameters.AddWithValue("@userId", userId);
             cmd.Parameters.AddWithValue("@name", character.Name);
             cmd.Parameters.AddWithValue("@data", blob);
             cmd.ExecuteNonQuery();
@@ -29,19 +30,21 @@ public static class CharacterRepository
         else
         {
             using var cmd = connection.CreateCommand();
-            cmd.CommandText = "INSERT INTO Characters (Name, Data) VALUES (@name, @data); SELECT last_insert_rowid();";
+            cmd.CommandText = "INSERT INTO Characters (SupabaseUserId, Name, Data) VALUES (@userId, @name, @data); SELECT last_insert_rowid();";
+            cmd.Parameters.AddWithValue("@userId", userId);
             cmd.Parameters.AddWithValue("@name", character.Name);
             cmd.Parameters.AddWithValue("@data", blob);
             return Convert.ToInt32(cmd.ExecuteScalar());
         }
     }
 
-    public static Character? GetById(int id)
+    public static Character? GetById(int id, string userId)
     {
         using var connection = Database.CreateConnection();
         using var cmd = connection.CreateCommand();
-        cmd.CommandText = "SELECT Id, Name, Data FROM Characters WHERE Id = @id";
+        cmd.CommandText = "SELECT Id, Name, Data FROM Characters WHERE Id = @id AND SupabaseUserId = @userId";
         cmd.Parameters.AddWithValue("@id", id);
+        cmd.Parameters.AddWithValue("@userId", userId);
 
         using var reader = cmd.ExecuteReader();
         if (!reader.Read()) return null;
@@ -59,11 +62,12 @@ public static class CharacterRepository
         return character;
     }
 
-    public static List<(int Id, string Name)> ListAll()
+    public static List<(int Id, string Name)> ListAll(string userId)
     {
         using var connection = Database.CreateConnection();
         using var cmd = connection.CreateCommand();
-        cmd.CommandText = "SELECT Id, Name FROM Characters ORDER BY Name";
+        cmd.CommandText = "SELECT Id, Name FROM Characters WHERE SupabaseUserId = @userId ORDER BY Name";
+        cmd.Parameters.AddWithValue("@userId", userId);
 
         var list = new List<(int, string)>();
         using var reader = cmd.ExecuteReader();
@@ -74,12 +78,13 @@ public static class CharacterRepository
         return list;
     }
 
-    public static void Delete(int id)
+    public static void Delete(int id, string userId)
     {
         using var connection = Database.CreateConnection();
         using var cmd = connection.CreateCommand();
-        cmd.CommandText = "DELETE FROM Characters WHERE Id = @id";
+        cmd.CommandText = "DELETE FROM Characters WHERE Id = @id AND SupabaseUserId = @userId";
         cmd.Parameters.AddWithValue("@id", id);
+        cmd.Parameters.AddWithValue("@userId", userId);
         cmd.ExecuteNonQuery();
     }
 }

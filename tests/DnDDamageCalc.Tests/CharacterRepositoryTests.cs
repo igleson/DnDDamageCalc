@@ -7,6 +7,7 @@ namespace DnDDamageCalc.Tests;
 [Collection("Database")]
 public class CharacterRepositoryTests : IDisposable
 {
+    private const string TestUserId = "test-user-id";
     private readonly string _dbPath;
 
     public CharacterRepositoryTests()
@@ -28,7 +29,7 @@ public class CharacterRepositoryTests : IDisposable
     public void Save_NewCharacter_ReturnsPositiveId()
     {
         var character = CreateTestCharacter();
-        var id = CharacterRepository.Save(character);
+        var id = CharacterRepository.Save(character, TestUserId);
         Assert.True(id > 0);
     }
 
@@ -36,9 +37,9 @@ public class CharacterRepositoryTests : IDisposable
     public void GetById_AfterSave_ReturnsCharacter()
     {
         var character = CreateTestCharacter();
-        var id = CharacterRepository.Save(character);
+        var id = CharacterRepository.Save(character, TestUserId);
 
-        var loaded = CharacterRepository.GetById(id);
+        var loaded = CharacterRepository.GetById(id, TestUserId);
 
         Assert.NotNull(loaded);
         Assert.Equal("TestChar", loaded.Name);
@@ -49,9 +50,9 @@ public class CharacterRepositoryTests : IDisposable
     public void GetById_PreservesLevels()
     {
         var character = CreateTestCharacter();
-        var id = CharacterRepository.Save(character);
+        var id = CharacterRepository.Save(character, TestUserId);
 
-        var loaded = CharacterRepository.GetById(id)!;
+        var loaded = CharacterRepository.GetById(id, TestUserId)!;
 
         Assert.Single(loaded.Levels);
         Assert.Equal(1, loaded.Levels[0].LevelNumber);
@@ -61,9 +62,9 @@ public class CharacterRepositoryTests : IDisposable
     public void GetById_PreservesAttacks()
     {
         var character = CreateTestCharacter();
-        var id = CharacterRepository.Save(character);
+        var id = CharacterRepository.Save(character, TestUserId);
 
-        var loaded = CharacterRepository.GetById(id)!;
+        var loaded = CharacterRepository.GetById(id, TestUserId)!;
         var attack = loaded.Levels[0].Attacks[0];
 
         Assert.Equal("Longsword", attack.Name);
@@ -78,9 +79,9 @@ public class CharacterRepositoryTests : IDisposable
     public void GetById_PreservesDiceGroups()
     {
         var character = CreateTestCharacter();
-        var id = CharacterRepository.Save(character);
+        var id = CharacterRepository.Save(character, TestUserId);
 
-        var loaded = CharacterRepository.GetById(id)!;
+        var loaded = CharacterRepository.GetById(id, TestUserId)!;
         var dice = loaded.Levels[0].Attacks[0].DiceGroups;
 
         Assert.Equal(2, dice.Count);
@@ -94,23 +95,23 @@ public class CharacterRepositoryTests : IDisposable
     public void Save_ExistingCharacter_Updates()
     {
         var character = CreateTestCharacter();
-        var id = CharacterRepository.Save(character);
+        var id = CharacterRepository.Save(character, TestUserId);
 
         character.Id = id;
         character.Name = "Updated";
-        CharacterRepository.Save(character);
+        CharacterRepository.Save(character, TestUserId);
 
-        var loaded = CharacterRepository.GetById(id)!;
+        var loaded = CharacterRepository.GetById(id, TestUserId)!;
         Assert.Equal("Updated", loaded.Name);
     }
 
     [Fact]
     public void ListAll_ReturnsAllCharacters()
     {
-        CharacterRepository.Save(CreateTestCharacter("Alice"));
-        CharacterRepository.Save(CreateTestCharacter("Bob"));
+        CharacterRepository.Save(CreateTestCharacter("Alice"), TestUserId);
+        CharacterRepository.Save(CreateTestCharacter("Bob"), TestUserId);
 
-        var list = CharacterRepository.ListAll();
+        var list = CharacterRepository.ListAll(TestUserId);
 
         Assert.True(list.Count >= 2);
         Assert.Contains(list, c => c.Name == "Alice");
@@ -120,18 +121,53 @@ public class CharacterRepositoryTests : IDisposable
     [Fact]
     public void Delete_RemovesCharacter()
     {
-        var id = CharacterRepository.Save(CreateTestCharacter());
-        CharacterRepository.Delete(id);
+        var id = CharacterRepository.Save(CreateTestCharacter(), TestUserId);
+        CharacterRepository.Delete(id, TestUserId);
 
-        var loaded = CharacterRepository.GetById(id);
+        var loaded = CharacterRepository.GetById(id, TestUserId);
         Assert.Null(loaded);
     }
 
     [Fact]
     public void GetById_NonExistent_ReturnsNull()
     {
-        var loaded = CharacterRepository.GetById(99999);
+        var loaded = CharacterRepository.GetById(99999, TestUserId);
         Assert.Null(loaded);
+    }
+
+    [Fact]
+    public void GetById_WrongUser_ReturnsNull()
+    {
+        var character = CreateTestCharacter();
+        var id = CharacterRepository.Save(character, TestUserId);
+
+        var loaded = CharacterRepository.GetById(id, "other-user-id");
+        Assert.Null(loaded);
+    }
+
+    [Fact]
+    public void ListAll_OnlyReturnsOwnCharacters()
+    {
+        CharacterRepository.Save(CreateTestCharacter("MyChar"), TestUserId);
+        CharacterRepository.Save(CreateTestCharacter("OtherChar"), "other-user-id");
+
+        var myList = CharacterRepository.ListAll(TestUserId);
+        var otherList = CharacterRepository.ListAll("other-user-id");
+
+        Assert.Single(myList);
+        Assert.Equal("MyChar", myList[0].Name);
+        Assert.Single(otherList);
+        Assert.Equal("OtherChar", otherList[0].Name);
+    }
+
+    [Fact]
+    public void Delete_WrongUser_DoesNotDelete()
+    {
+        var id = CharacterRepository.Save(CreateTestCharacter(), TestUserId);
+        CharacterRepository.Delete(id, "other-user-id");
+
+        var loaded = CharacterRepository.GetById(id, TestUserId);
+        Assert.NotNull(loaded);
     }
 
     private static Character CreateTestCharacter(string name = "TestChar")

@@ -16,8 +16,10 @@ dotnet publish -c Release        # AOT-compiled release build
 - **.NET 10** Minimal API with Native AOT (`PublishAot`, `CreateSlimBuilder`)
 - **HTMX 2.0.4** for dynamic HTML — no Blazor, no JS frameworks
 - **PicoCSS v2** (dark theme) for styling
-- **SQLite** via `Microsoft.Data.Sqlite` (WAL mode, AOT-compatible, no EF Core)
-- **protobuf-net** for binary serialization of character data blobs
+- **Supabase PostgreSQL** via REST API (AOT-compatible, no SDK)
+- **Supabase Auth** for Google OAuth authentication
+- **System.Text.Json** with source generation for JSONB serialization
+- **SQLite** (for tests only) via `Microsoft.Data.Sqlite` (WAL mode, AOT-compatible)
 - **xUnit** + `WebApplicationFactory<Program>` for testing
 
 ## Project Structure
@@ -29,8 +31,10 @@ src/DnDDamageCalc.Web/
 ├── Models/
 │   └── Character.cs                    # Domain models with protobuf annotations
 ├── Data/
-│   ├── Database.cs                     # SQLite connection factory + schema init
-│   ├── CharacterRepository.cs          # CRUD with protobuf blob serialization
+│   ├── ICharacterRepository.cs         # Repository abstraction for DI
+│   ├── SupabaseCharacterRepository.cs  # HTTP-based Supabase implementation
+│   ├── SqliteCharacterRepository.cs    # SQLite implementation (tests only)
+│   ├── Database.cs                     # SQLite connection factory (tests only)
 │   └── FormParser.cs                   # IFormCollection -> Character parsing
 ├── Html/
 │   └── HtmlFragments.cs               # All HTML fragment rendering (C# string interpolation)
@@ -62,27 +66,37 @@ Attack           { Name, HitPercent, CritPercent, MasteryVex, MasteryTopple,
 DiceGroup        { Quantity, DieSize (4/6/8/10/12/20) }
 ```
 
-- `Character.Id` and `Character.Name` are SQL columns; everything else is serialized to a protobuf blob
-- `CharacterLevel`, `Attack`, and `DiceGroup` are annotated with `[ProtoContract]`/`[ProtoMember(n)]`
+- `Character.Id` and `Character.Name` are columns in PostgreSQL/SQLite
+- `Character.Levels` is serialized to JSONB (Supabase) or protobuf blob (SQLite tests)
+- `CharacterLevel`, `Attack`, and `DiceGroup` are plain C# classes (no attributes for Supabase)
 - Masteries are bool flags (Vex, Topple) — expandable for future weapon masteries
 - `TopplePercent` is the chance the target fails the save when Topple mastery is active
 - `FlatModifier` is per-attack (the "+3" in "2d6+1d4+3")
 
-### Database (`Data/Database.cs`)
+### Database & Repository (`Data/`)
 
-- Static class with `Configure(connString)`, `CreateConnection()`, `Initialize()`
-- Single denormalized table: `Characters (Id INTEGER PK, Name TEXT, Data BLOB)`
-- The `Data` column stores `List<CharacterLevel>` as a protobuf-serialized binary blob
+**Production (Supabase)**:
+- `ICharacterRepository` — Abstraction for DI and testing
+- `SupabaseCharacterRepository` — HTTP client calling Supabase REST API
+- PostgreSQL table: `characters (id, user_id, name, data JSONB, created_at, updated_at)`
+- JSONB column stores `List<CharacterLevel>` serialized with System.Text.Json
+- Row Level Security (RLS) policies enforce user isolation (`user_id = auth.uid()`)
+- HttpClient with Authorization header using `SUPABASE_SERVICE_KEY`
+
+**Tests (SQLite)**:
+- `SqliteCharacterRepository` — Implements `ICharacterRepository` for tests
+- `Database.cs` — Static class with `Configure()`, `CreateConnection()`, `Initialize()`
+- Single denormalized table: `Characters (Id INTEGER PK, SupabaseUserId TEXT, Name TEXT, Data BLOB)`
+- The `Data` column stores `List<CharacterLevel>` as protobuf-serialized binary blob
 - WAL mode enabled on every connection for concurrency
 - `Configure()` allows tests to redirect to temp databases
 
-### Repository (`Data/CharacterRepository.cs`)
-
-- `Save(Character)`: INSERT or UPDATE (upsert) — serializes `character.Levels` to protobuf blob
-- `GetById(int)`: SELECT + deserialize blob back to `List<CharacterLevel>`
-- `ListAll()`: `SELECT Id, Name` only (no blob deserialization)
-- `Delete(int)`: simple DELETE by Id
-- All methods create and dispose their own connections
+**Repository Methods**:
+- `SaveAsync(Character, userId)`: INSERT or UPDATE (upsert) — serializes to JSONB/protobuf
+- `GetByIdAsync(int, userId)`: SELECT + deserialize back to `List<CharacterLevel>`
+- `ListAllAsync(userId)`: `SELECT Id, Name` only (no blob/JSONB deserialization)
+- `DeleteAsync(int, userId)`: DELETE by Id and userId
+- All methods are async and enforce user isolation
 
 ### Form Parser (`Data/FormParser.cs`)
 
@@ -159,10 +173,11 @@ Monte Carlo damage simulation engine (10,000 iterations per level by default).
 ### General
 
 - **No Blazor** — HTMX only for interactivity
-- **No EF Core** — raw SQL with `Microsoft.Data.Sqlite` for AOT compatibility
-- **No JS frameworks** — vanilla JS only where absolutely necessary
+- **No EF Core** — Direct HTTP calls to Supabase REST API for AOT compatibility
+- **No JS frameworks** — vanilla JS only where absolutely necessary (sidebar toggle)
 - **Native AOT** must compile (`dotnet publish -c Release`)
 - HTML rendering via C# string interpolation, not Razor/template engines
+- **Dependency Injection** — Use `ICharacterRepository` for testability
 
 ### Validation Strategy (3 layers)
 
@@ -172,17 +187,29 @@ Monte Carlo damage simulation engine (10,000 iterations per level by default).
 
 ### Data Persistence
 
-- Single `Characters` table with Id, Name, and a protobuf blob for all nested data
-- Only `List<CharacterLevel>` is serialized to the blob; Id and Name are SQL columns
-- `ListAll()` never reads the blob — lightweight listing
+**Production (Supabase)**:
+- Single `characters` table with user_id, name, and JSONB data column
+- JSONB stores `List<CharacterLevel>` using System.Text.Json
+- Row Level Security (RLS) enforces user isolation at database level
+- `ListAllAsync()` never reads JSONB column — lightweight listing
+- HttpClient-based REST API calls (no SDK for AOT compatibility)
+
+**Tests (SQLite)**:
+- Single `Characters` table with Id, SupabaseUserId, Name, and protobuf blob
+- Protobuf-net serializes `List<CharacterLevel>` for backward compatibility with existing tests
+- Tests use `SqliteCharacterRepository` via `CustomWebApplicationFactory`
+- Fast, isolated, no network calls
 
 ### Testing Conventions
 
-- Integration tests use `WebApplicationFactory<Program>` with `IClassFixture`
+- Integration tests use `CustomWebApplicationFactory` with `IClassFixture`
+- Factory injects `SqliteCharacterRepository` instead of Supabase
 - Repository tests use temp SQLite files with unique GUIDs, cleaned up in `Dispose()`
-- Both test classes use `[Collection("Database")]` to prevent parallel execution (shared static `Database` state)
+- Both test classes use `[Collection("Database")]` to prevent parallel execution
 - Call `SqliteConnection.ClearAllPools()` before deleting temp DB files (WAL mode keeps handles)
 - `public partial class Program { }` in Program.cs exposes entry point to test infrastructure
+- **No Supabase calls in tests** — fast, isolated, repeatable
+- Mock authentication via `TestUserId` configuration setting
 
 ### HTMX Patterns
 

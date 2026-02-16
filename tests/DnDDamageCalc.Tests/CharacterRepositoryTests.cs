@@ -9,12 +9,14 @@ public class CharacterRepositoryTests : IDisposable
 {
     private const string TestUserId = "test-user-id";
     private readonly string _dbPath;
+    private readonly SqliteCharacterRepository _repository;
 
     public CharacterRepositoryTests()
     {
         _dbPath = Path.Combine(Path.GetTempPath(), $"dnd_test_{Guid.NewGuid()}.db");
         Database.Configure($"Data Source={_dbPath}");
         Database.Initialize();
+        _repository = new SqliteCharacterRepository();
     }
 
     public void Dispose()
@@ -26,20 +28,20 @@ public class CharacterRepositoryTests : IDisposable
     }
 
     [Fact]
-    public void Save_NewCharacter_ReturnsPositiveId()
+    public async Task Save_NewCharacter_ReturnsPositiveId()
     {
         var character = CreateTestCharacter();
-        var id = CharacterRepository.Save(character, TestUserId);
+        var id = await _repository.SaveAsync(character, TestUserId, "fake-token");
         Assert.True(id > 0);
     }
 
     [Fact]
-    public void GetById_AfterSave_ReturnsCharacter()
+    public async Task GetById_AfterSave_ReturnsCharacter()
     {
         var character = CreateTestCharacter();
-        var id = CharacterRepository.Save(character, TestUserId);
+        var id = await _repository.SaveAsync(character, TestUserId, "fake-token");
 
-        var loaded = CharacterRepository.GetById(id, TestUserId);
+        var loaded = await _repository.GetByIdAsync(id, TestUserId, "fake-token");
 
         Assert.NotNull(loaded);
         Assert.Equal("TestChar", loaded.Name);
@@ -47,24 +49,26 @@ public class CharacterRepositoryTests : IDisposable
     }
 
     [Fact]
-    public void GetById_PreservesLevels()
+    public async Task GetById_PreservesLevels()
     {
         var character = CreateTestCharacter();
-        var id = CharacterRepository.Save(character, TestUserId);
+        var id = await _repository.SaveAsync(character, TestUserId, "fake-token");
 
-        var loaded = CharacterRepository.GetById(id, TestUserId)!;
+        var loaded = await _repository.GetByIdAsync(id, TestUserId, "fake-token");
 
+        Assert.NotNull(loaded);
         Assert.Single(loaded.Levels);
         Assert.Equal(1, loaded.Levels[0].LevelNumber);
     }
 
     [Fact]
-    public void GetById_PreservesAttacks()
+    public async Task GetById_PreservesAttacks()
     {
         var character = CreateTestCharacter();
-        var id = CharacterRepository.Save(character, TestUserId);
+        var id = await _repository.SaveAsync(character, TestUserId, "fake-token");
 
-        var loaded = CharacterRepository.GetById(id, TestUserId)!;
+        var loaded = await _repository.GetByIdAsync(id, TestUserId, "fake-token");
+        Assert.NotNull(loaded);
         var attack = loaded.Levels[0].Attacks[0];
 
         Assert.Equal("Longsword", attack.Name);
@@ -76,12 +80,13 @@ public class CharacterRepositoryTests : IDisposable
     }
 
     [Fact]
-    public void GetById_PreservesDiceGroups()
+    public async Task GetById_PreservesDiceGroups()
     {
         var character = CreateTestCharacter();
-        var id = CharacterRepository.Save(character, TestUserId);
+        var id = await _repository.SaveAsync(character, TestUserId, "fake-token");
 
-        var loaded = CharacterRepository.GetById(id, TestUserId)!;
+        var loaded = await _repository.GetByIdAsync(id, TestUserId, "fake-token");
+        Assert.NotNull(loaded);
         var dice = loaded.Levels[0].Attacks[0].DiceGroups;
 
         Assert.Equal(2, dice.Count);
@@ -92,26 +97,27 @@ public class CharacterRepositoryTests : IDisposable
     }
 
     [Fact]
-    public void Save_ExistingCharacter_Updates()
+    public async Task Save_ExistingCharacter_Updates()
     {
         var character = CreateTestCharacter();
-        var id = CharacterRepository.Save(character, TestUserId);
+        var id = await _repository.SaveAsync(character, TestUserId, "fake-token");
 
         character.Id = id;
         character.Name = "Updated";
-        CharacterRepository.Save(character, TestUserId);
+        await _repository.SaveAsync(character, TestUserId, "fake-token");
 
-        var loaded = CharacterRepository.GetById(id, TestUserId)!;
+        var loaded = await _repository.GetByIdAsync(id, TestUserId, "fake-token");
+        Assert.NotNull(loaded);
         Assert.Equal("Updated", loaded.Name);
     }
 
     [Fact]
-    public void ListAll_ReturnsAllCharacters()
+    public async Task ListAll_ReturnsAllCharacters()
     {
-        CharacterRepository.Save(CreateTestCharacter("Alice"), TestUserId);
-        CharacterRepository.Save(CreateTestCharacter("Bob"), TestUserId);
+        await _repository.SaveAsync(CreateTestCharacter("Alice"), TestUserId, "fake-token");
+        await _repository.SaveAsync(CreateTestCharacter("Bob"), TestUserId, "fake-token");
 
-        var list = CharacterRepository.ListAll(TestUserId);
+        var list = await _repository.ListAllAsync(TestUserId, "fake-token");
 
         Assert.True(list.Count >= 2);
         Assert.Contains(list, c => c.Name == "Alice");
@@ -119,40 +125,40 @@ public class CharacterRepositoryTests : IDisposable
     }
 
     [Fact]
-    public void Delete_RemovesCharacter()
+    public async Task Delete_RemovesCharacter()
     {
-        var id = CharacterRepository.Save(CreateTestCharacter(), TestUserId);
-        CharacterRepository.Delete(id, TestUserId);
+        var id = await _repository.SaveAsync(CreateTestCharacter(), TestUserId, "fake-token");
+        await _repository.DeleteAsync(id, TestUserId, "fake-token");
 
-        var loaded = CharacterRepository.GetById(id, TestUserId);
+        var loaded = await _repository.GetByIdAsync(id, TestUserId, "fake-token");
         Assert.Null(loaded);
     }
 
     [Fact]
-    public void GetById_NonExistent_ReturnsNull()
+    public async Task GetById_NonExistent_ReturnsNull()
     {
-        var loaded = CharacterRepository.GetById(99999, TestUserId);
+        var loaded = await _repository.GetByIdAsync(99999, TestUserId, "fake-token");
         Assert.Null(loaded);
     }
 
     [Fact]
-    public void GetById_WrongUser_ReturnsNull()
+    public async Task GetById_WrongUser_ReturnsNull()
     {
         var character = CreateTestCharacter();
-        var id = CharacterRepository.Save(character, TestUserId);
+        var id = await _repository.SaveAsync(character, TestUserId, "fake-token");
 
-        var loaded = CharacterRepository.GetById(id, "other-user-id");
+        var loaded = await _repository.GetByIdAsync(id, "other-user-id", "fake-token");
         Assert.Null(loaded);
     }
 
     [Fact]
-    public void ListAll_OnlyReturnsOwnCharacters()
+    public async Task ListAll_OnlyReturnsOwnCharacters()
     {
-        CharacterRepository.Save(CreateTestCharacter("MyChar"), TestUserId);
-        CharacterRepository.Save(CreateTestCharacter("OtherChar"), "other-user-id");
+        await _repository.SaveAsync(CreateTestCharacter("MyChar"), TestUserId, "fake-token");
+        await _repository.SaveAsync(CreateTestCharacter("OtherChar"), "other-user-id");
 
-        var myList = CharacterRepository.ListAll(TestUserId);
-        var otherList = CharacterRepository.ListAll("other-user-id");
+        var myList = await _repository.ListAllAsync(TestUserId, "fake-token");
+        var otherList = await _repository.ListAllAsync("other-user-id", "fake-token");
 
         Assert.Single(myList);
         Assert.Equal("MyChar", myList[0].Name);
@@ -161,12 +167,12 @@ public class CharacterRepositoryTests : IDisposable
     }
 
     [Fact]
-    public void Delete_WrongUser_DoesNotDelete()
+    public async Task Delete_WrongUser_DoesNotDelete()
     {
-        var id = CharacterRepository.Save(CreateTestCharacter(), TestUserId);
-        CharacterRepository.Delete(id, "other-user-id");
+        var id = await _repository.SaveAsync(CreateTestCharacter(), TestUserId, "fake-token");
+        await _repository.DeleteAsync(id, "other-user-id", "fake-token");
 
-        var loaded = CharacterRepository.GetById(id, TestUserId);
+        var loaded = await _repository.GetByIdAsync(id, TestUserId, "fake-token");
         Assert.NotNull(loaded);
     }
 

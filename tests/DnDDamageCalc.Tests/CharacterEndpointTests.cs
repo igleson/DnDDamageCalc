@@ -1,25 +1,19 @@
 using System.Net;
+using DnDDamageCalc.Web.Data;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace DnDDamageCalc.Tests;
 
 [Collection("Database")]
-public class CharacterEndpointTests : IClassFixture<WebApplicationFactory<Program>>
+public class CharacterEndpointTests : IClassFixture<CustomWebApplicationFactory>
 {
     private readonly HttpClient _client;
 
-    public CharacterEndpointTests(WebApplicationFactory<Program> factory)
+    public CharacterEndpointTests(CustomWebApplicationFactory factory)
     {
-        Environment.SetEnvironmentVariable("SUPABASE_URL", "https://fake.supabase.co");
-        Environment.SetEnvironmentVariable("SUPABASE_ANON_KEY", "fake-anon-key");
-        Environment.SetEnvironmentVariable("TestUserId", "test-user-id");
-
-        var customFactory = factory.WithWebHostBuilder(builder =>
-        {
-            builder.UseSetting("TestUserId", "test-user-id");
-        });
-
-        _client = customFactory.CreateClient(new WebApplicationFactoryClientOptions
+        _client = factory.CreateClient(new WebApplicationFactoryClientOptions
         {
             AllowAutoRedirect = false
         });

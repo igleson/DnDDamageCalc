@@ -28,6 +28,7 @@ public class AuthMiddleware
         if (!string.IsNullOrEmpty(_testUserId))
         {
             context.Items["UserId"] = _testUserId;
+            context.Items["AccessToken"] = "fake-test-token";
             await _next(context);
             return;
         }
@@ -73,6 +74,7 @@ public class AuthMiddleware
         Console.WriteLine($"[AUTH MW] Authenticated user {userId} for {path}");
 
         context.Items["UserId"] = userId;
+        context.Items["AccessToken"] = cookie.AccessToken;
         await _next(context);
     }
 
@@ -124,5 +126,10 @@ public static class AuthExtensions
     public static string GetUserId(this HttpContext context)
     {
         return context.Items["UserId"] as string ?? throw new InvalidOperationException("UserId not set");
+    }
+
+    public static string GetAccessToken(this HttpContext context)
+    {
+        return context.Items["AccessToken"] as string ?? throw new InvalidOperationException("AccessToken not set");
     }
 }

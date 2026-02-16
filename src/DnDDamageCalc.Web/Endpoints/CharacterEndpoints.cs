@@ -12,17 +12,19 @@ public static class CharacterEndpoints
         app.MapGet("/character/form", () =>
             Results.Text(HtmlFragments.CharacterForm(), "text/html"));
 
-        app.MapGet("/character/list", (HttpContext ctx) =>
+        app.MapGet("/character/list", async (HttpContext ctx, ICharacterRepository repo) =>
         {
             var userId = ctx.GetUserId();
-            var characters = CharacterRepository.ListAll(userId);
+            var accessToken = ctx.GetAccessToken();
+            var characters = await repo.ListAllAsync(userId, accessToken);
             return Results.Text(HtmlFragments.CharacterList(characters), "text/html");
         });
 
-        app.MapGet("/character/{id:int}", (int id, HttpContext ctx) =>
+        app.MapGet("/character/{id:int}", async (int id, HttpContext ctx, ICharacterRepository repo) =>
         {
             var userId = ctx.GetUserId();
-            var character = CharacterRepository.GetById(id, userId);
+            var accessToken = ctx.GetAccessToken();
+            var character = await repo.GetByIdAsync(id, userId, accessToken);
             if (character is null) return Results.NotFound();
             return Results.Text(HtmlFragments.CharacterForm(character), "text/html");
         });
@@ -110,9 +112,10 @@ public static class CharacterEndpoints
         app.MapDelete("/character/dice/remove", (int levelIndex, int attackIndex, int diceIndex) =>
             Results.Text("", "text/html"));
 
-        app.MapPost("/character/save", async (HttpRequest request, HttpContext ctx) =>
+        app.MapPost("/character/save", async (HttpRequest request, HttpContext ctx, ICharacterRepository repo) =>
         {
             var userId = ctx.GetUserId();
+            var accessToken = ctx.GetAccessToken();
             var form = await request.ReadFormAsync();
             var character = FormParser.Parse(form);
 
@@ -124,18 +127,20 @@ public static class CharacterEndpoints
                 return Results.Text(errorHtml + HtmlFragments.CharacterForm(character), "text/html");
             }
 
-            var id = CharacterRepository.Save(character, userId);
+            var id = await repo.SaveAsync(character, userId, accessToken);
             character.Id = id;
             var confirmation = HtmlFragments.SaveConfirmation(id, character.Name);
-            var sidebarOob = $"""<div id="character-list" hx-swap-oob="innerHTML">{HtmlFragments.CharacterList(CharacterRepository.ListAll(userId))}</div>""";
+            var characters = await repo.ListAllAsync(userId, accessToken);
+            var sidebarOob = $"""<div id="character-list" hx-swap-oob="innerHTML">{HtmlFragments.CharacterList(characters)}</div>""";
             return Results.Text(confirmation + HtmlFragments.CharacterForm(character) + sidebarOob, "text/html");
         });
 
-        app.MapDelete("/character/{id:int}", (int id, HttpContext ctx) =>
+        app.MapDelete("/character/{id:int}", async (int id, HttpContext ctx, ICharacterRepository repo) =>
         {
             var userId = ctx.GetUserId();
-            CharacterRepository.Delete(id, userId);
-            var characters = CharacterRepository.ListAll(userId);
+            var accessToken = ctx.GetAccessToken();
+            await repo.DeleteAsync(id, userId, accessToken);
+            var characters = await repo.ListAllAsync(userId, accessToken);
             return Results.Text(HtmlFragments.CharacterList(characters), "text/html");
         });
 

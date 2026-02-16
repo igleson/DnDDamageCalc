@@ -3,13 +3,15 @@ using ProtoBuf;
 
 namespace DnDDamageCalc.Web.Data;
 
-public static class CharacterRepository
+public class SqliteCharacterRepository : ICharacterRepository
 {
-    public static int Save(Character character, string userId)
+    public async Task<int> SaveAsync(Character character, string userId, string accessToken)
     {
-        using var connection = Database.CreateConnection();
+        return await Task.Run(() =>
+        {
+            using var connection = Database.CreateConnection();
 
-        byte[] blob;
+            byte[] blob;
         using (var ms = new MemoryStream())
         {
             Serializer.Serialize(ms, character.Levels);
@@ -36,11 +38,14 @@ public static class CharacterRepository
             cmd.Parameters.AddWithValue("@data", blob);
             return Convert.ToInt32(cmd.ExecuteScalar());
         }
+        });
     }
 
-    public static Character? GetById(int id, string userId)
+    public async Task<Character?> GetByIdAsync(int id, string userId, string accessToken)
     {
-        using var connection = Database.CreateConnection();
+        return await Task.Run(() =>
+        {
+            using var connection = Database.CreateConnection();
         using var cmd = connection.CreateCommand();
         cmd.CommandText = "SELECT Id, Name, Data FROM Characters WHERE Id = @id AND SupabaseUserId = @userId";
         cmd.Parameters.AddWithValue("@id", id);
@@ -60,11 +65,14 @@ public static class CharacterRepository
         character.Levels = Serializer.Deserialize<List<CharacterLevel>>(ms);
 
         return character;
+        });
     }
 
-    public static List<(int Id, string Name)> ListAll(string userId)
+    public async Task<List<(int Id, string Name)>> ListAllAsync(string userId, string accessToken)
     {
-        using var connection = Database.CreateConnection();
+        return await Task.Run(() =>
+        {
+            using var connection = Database.CreateConnection();
         using var cmd = connection.CreateCommand();
         cmd.CommandText = "SELECT Id, Name FROM Characters WHERE SupabaseUserId = @userId ORDER BY Name";
         cmd.Parameters.AddWithValue("@userId", userId);
@@ -76,15 +84,19 @@ public static class CharacterRepository
             list.Add((reader.GetInt32(0), reader.GetString(1)));
         }
         return list;
+        });
     }
 
-    public static void Delete(int id, string userId)
+    public async Task DeleteAsync(int id, string userId, string accessToken)
     {
-        using var connection = Database.CreateConnection();
-        using var cmd = connection.CreateCommand();
-        cmd.CommandText = "DELETE FROM Characters WHERE Id = @id AND SupabaseUserId = @userId";
-        cmd.Parameters.AddWithValue("@id", id);
-        cmd.Parameters.AddWithValue("@userId", userId);
-        cmd.ExecuteNonQuery();
+        await Task.Run(() =>
+        {
+            using var connection = Database.CreateConnection();
+            using var cmd = connection.CreateCommand();
+            cmd.CommandText = "DELETE FROM Characters WHERE Id = @id AND SupabaseUserId = @userId";
+            cmd.Parameters.AddWithValue("@id", id);
+            cmd.Parameters.AddWithValue("@userId", userId);
+            cmd.ExecuteNonQuery();
+        });
     }
 }

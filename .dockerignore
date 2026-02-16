@@ -1,0 +1,44 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# IDEs
+.vs
+.vscode
+.idea
+*.user
+*.suo
+
+# Build outputs
+**/bin/
+**/obj/
+**/publish/
+
+# Environment files
+.env
+.env.*
+!.env.example
+!.env.production
+
+# Test outputs
+TestResults/
+*.trx
+
+# Database files
+*.db
+*.db-shm
+*.db-wal
+
+# Documentation (not needed in container)
+*.md
+!MIGRATION.md
+
+# CI/CD
+.github/
+
+# Migrations (already applied in Supabase)
+migrations/
+
+# Session state
+.copilot/

@@ -17,8 +17,8 @@ public class AuthMiddleware
     {
         var path = context.Request.Path.Value ?? "";
 
-        // Skip auth for login page, auth endpoints, and static files
-        if (path == "/login" || path.StartsWith("/auth/") || path.Contains('.'))
+        // Skip auth for health checks, login page, auth endpoints, and static files
+        if (path == "/health" || path == "/login" || path.StartsWith("/auth/") || path.Contains('.'))
         {
             await _next(context);
             return;

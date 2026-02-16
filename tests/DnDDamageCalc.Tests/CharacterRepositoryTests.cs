@@ -155,7 +155,7 @@ public class CharacterRepositoryTests : IDisposable
     public async Task ListAll_OnlyReturnsOwnCharacters()
     {
         await _repository.SaveAsync(CreateTestCharacter("MyChar"), TestUserId, "fake-token");
-        await _repository.SaveAsync(CreateTestCharacter("OtherChar"), "other-user-id");
+        await _repository.SaveAsync(CreateTestCharacter("OtherChar"), "other-user-id", "fake-token");
 
         var myList = await _repository.ListAllAsync(TestUserId, "fake-token");
         var otherList = await _repository.ListAllAsync("other-user-id", "fake-token");

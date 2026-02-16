@@ -77,6 +77,22 @@ dotnet run --project src/DnDDamageCalc.Web
 
 Open http://localhost:5082 and sign in with Google.
 
+## Deployment
+
+Deploy to Fly.io with Native AOT compilation:
+
+```bash
+# Quick start (5 minutes)
+flyctl secrets set SUPABASE_URL=https://your-project.supabase.co
+flyctl secrets set SUPABASE_ANON_KEY=your-anon-key
+flyctl secrets set SUPABASE_SERVICE_KEY=your-service-key
+flyctl launch --no-deploy
+flyctl deploy
+```
+
+**📖 Full deployment guide**: See [DEPLOYMENT.md](DEPLOYMENT.md) for complete instructions  
+**⚡ Quick reference**: See [DEPLOY-QUICK.md](DEPLOY-QUICK.md) for common commands
+
 ## Development
 
 ```bash

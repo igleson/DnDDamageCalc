@@ -9,13 +9,18 @@ public static class AuthEndpoints
 
     public static void MapAuthEndpoints(this WebApplication app)
     {
+        var logger = app.Logger;
+        
         app.MapGet("/login", () => Results.Text(HtmlFragments.LoginPage(), "text/html"));
+        logger.LogInformation("Registered: GET /login");
 
         app.MapGet("/auth/login", (HttpRequest request, HttpResponse response) =>
         {
             var scheme = request.Scheme;
             var host = request.Host;
             var redirectUri = $"{scheme}://{host}/auth/callback";
+            
+            Console.WriteLine($"[AUTH] /auth/login called - scheme={scheme}, host={host}, redirectUri={redirectUri}");
 
             var (verifier, challenge) = SupabaseAuth.GeneratePkce();
 
@@ -30,12 +35,15 @@ public static class AuthEndpoints
             var loginUrl = SupabaseAuth.GetGoogleLoginUrl(redirectUri, challenge);
             response.Redirect(loginUrl);
         });
+        logger.LogInformation("Registered: GET /auth/login");
 
-        app.MapGet("/auth/callback", async (HttpRequest request, HttpResponse response) =>
+        app.MapGet("/auth/callback", async (HttpRequest request, HttpResponse response, ILogger<Program> log) =>
         {
+            log.LogInformation("=== /auth/callback HIT === Query: {Query}", request.QueryString);
             var code = request.Query["code"].ToString();
             if (string.IsNullOrEmpty(code))
             {
+                log.LogWarning("No code in query string");
                 response.Redirect("/login");
                 return;
             }
@@ -62,6 +70,7 @@ public static class AuthEndpoints
             SessionCookie.Set(response, tokens.AccessToken, tokens.RefreshToken, tokens.ExpiresIn);
             response.Redirect("/");
         });
+        logger.LogInformation("Registered: GET /auth/callback");
 
         app.MapPost("/auth/logout", (HttpContext context) =>
         {
@@ -74,5 +83,6 @@ public static class AuthEndpoints
             SessionCookie.Clear(context.Response);
             context.Response.Redirect("/login");
         });
+        logger.LogInformation("Registered: POST /auth/logout");
     }
 }

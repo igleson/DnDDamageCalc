@@ -269,7 +269,7 @@ public static class HtmlFragments
             """;
     }
 
-    public static string CharacterList(List<(int Id, string Name)> characters)
+    public static string CharacterList(List<(int Id, string Name)> characters, int? selectedId = null)
     {
         if (characters.Count == 0)
             return "<p><em>No saved characters.</em></p>";
@@ -277,8 +277,9 @@ public static class HtmlFragments
         var sb = new StringBuilder();
         foreach (var (id, name) in characters)
         {
+            var selectedClass = id == selectedId ? " selected" : "";
             sb.Append($"""
-                <div class="char-item">
+                <div class="char-item{selectedClass}">
                     <a href="#"
                        hx-get="/character/{id}"
                        hx-target="#form-container"

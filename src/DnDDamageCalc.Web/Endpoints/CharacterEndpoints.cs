@@ -17,7 +17,7 @@ public static class CharacterEndpoints
             var userId = ctx.GetUserId();
             var accessToken = ctx.GetAccessToken();
             var characters = await repo.ListAllAsync(userId, accessToken);
-            return Results.Text(HtmlFragments.CharacterList(characters), "text/html");
+            return Results.Text(HtmlFragments.CharacterList(characters, selectedId: null), "text/html");
         });
 
         app.MapGet("/character/{id:int}", async (int id, HttpContext ctx, ICharacterRepository repo) =>
@@ -91,7 +91,7 @@ public static class CharacterEndpoints
             character.Id = id;
             var confirmation = HtmlFragments.SaveConfirmation(id, character.Name);
             var characters = await repo.ListAllAsync(userId, accessToken);
-            var sidebarOob = $"""<div id="character-list" hx-swap-oob="innerHTML">{HtmlFragments.CharacterList(characters)}</div>""";
+            var sidebarOob = $"""<div id="character-list" hx-swap-oob="innerHTML">{HtmlFragments.CharacterList(characters, selectedId: id)}</div>""";
             return Results.Text(confirmation + HtmlFragments.CharacterForm(character) + sidebarOob, "text/html");
         });
 
@@ -101,7 +101,7 @@ public static class CharacterEndpoints
             var accessToken = ctx.GetAccessToken();
             await repo.DeleteAsync(id, userId, accessToken);
             var characters = await repo.ListAllAsync(userId, accessToken);
-            return Results.Text(HtmlFragments.CharacterList(characters), "text/html");
+            return Results.Text(HtmlFragments.CharacterList(characters, selectedId: null), "text/html");
         });
 
         app.MapPost("/character/validate-percentages", async (HttpRequest request) =>

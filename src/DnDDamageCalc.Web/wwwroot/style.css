@@ -1,0 +1,424 @@
+/* ============================================
+   D&D Damage Calculator - Dark Fantasy Theme
+   Fire & Dragon Color Scheme
+   ============================================ */
+
+:root {
+    /* === Color Palette === */
+    
+    /* Backgrounds - Deep Purple/Black */
+    --bg-primary: #1a0f2e;
+    --bg-secondary: #2d1b3d;
+    --bg-card: #261738;
+    --bg-elevated: #3a2550;
+    
+    /* Accents - Fire & Dragon */
+    --accent-primary: #ff6b35;
+    --accent-secondary: #d4682a;
+    --accent-tertiary: #ffa500;
+    --accent-glow: #ffb347;
+    
+    /* Text Colors */
+    --text-primary: #f0e6ff;
+    --text-secondary: #b8a7cc;
+    --text-muted: #776688;
+    
+    /* Borders */
+    --border-default: #443355;
+    --border-focus: #ff6b35;
+    
+    /* === PicoCSS Variable Overrides === */
+    
+    /* Background Colors */
+    --pico-background-color: var(--bg-primary);
+    --pico-card-background-color: var(--bg-card);
+    --pico-card-sectioning-background-color: var(--bg-secondary);
+    
+    /* Text Colors */
+    --pico-color: var(--text-primary);
+    --pico-muted-color: var(--text-muted);
+    --pico-secondary-color: var(--text-secondary);
+    
+    /* Primary Button & Links - Orange/Amber */
+    --pico-primary-background: var(--accent-primary);
+    --pico-primary-hover-background: var(--accent-secondary);
+    --pico-primary-focus: var(--accent-primary);
+    --pico-primary: var(--accent-primary);
+    
+    /* Borders */
+    --pico-muted-border-color: var(--border-default);
+    --pico-border-color: var(--border-default);
+    
+    /* Focus/Active States */
+    --pico-focus-color: var(--border-focus);
+    
+    /* Spacing - More generous */
+    --pico-spacing: 1.5rem;
+    --pico-typography-spacing-vertical: 1.5rem;
+    
+    /* Typography */
+    --pico-font-size: 15px;
+    --pico-line-height: 1.6;
+    
+    /* Border Radius */
+    --pico-border-radius: 0.5rem;
+}
+
+/* === Global Improvements === */
+
+body {
+    font-size: 15px;
+    line-height: 1.6;
+}
+
+/* Better heading hierarchy */
+h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    background: linear-gradient(135deg, var(--text-primary), var(--accent-glow));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+h2 {
+    font-size: 2rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: var(--accent-glow);
+}
+
+h3 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    color: var(--text-primary);
+}
+
+h4 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--accent-tertiary);
+}
+
+/* === Card & Article Enhancements === */
+
+article {
+    padding: 2rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border-default);
+    border-radius: var(--pico-border-radius);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    margin-bottom: 1.5rem;
+    transition: box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+article:hover {
+    box-shadow: 0 6px 20px rgba(255, 107, 53, 0.15);
+    border-color: rgba(255, 107, 53, 0.3);
+}
+
+article header {
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid var(--border-default);
+}
+
+article header strong {
+    font-size: 1.25rem;
+    color: var(--accent-glow);
+    font-weight: 600;
+}
+
+/* === Fieldset Improvements === */
+
+fieldset {
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    border: 2px solid var(--border-default);
+    border-radius: var(--pico-border-radius);
+    background: rgba(61, 37, 80, 0.3);
+    transition: border-color 0.3s ease;
+}
+
+fieldset:focus-within {
+    border-color: var(--border-focus);
+    background: rgba(61, 37, 80, 0.5);
+}
+
+fieldset legend {
+    font-weight: 600;
+    font-size: 1.1rem;
+    color: var(--accent-tertiary);
+    padding: 0 0.75rem;
+}
+
+/* === Form Element Polish === */
+
+input[type="text"],
+input[type="number"],
+select {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-default);
+    color: var(--text-primary);
+    padding: 0.75rem 1rem;
+    transition: all 0.3s ease;
+}
+
+input[type="text"]:focus,
+input[type="number"]:focus,
+select:focus {
+    border-color: var(--border-focus);
+    box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.2);
+    background: var(--bg-elevated);
+}
+
+input[type="checkbox"] {
+    accent-color: var(--accent-primary);
+}
+
+label {
+    font-weight: 500;
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+/* === Button Hierarchy === */
+
+button,
+[type="button"],
+[type="submit"] {
+    font-weight: 600;
+    padding: 0.75rem 1.5rem;
+    border-radius: var(--pico-border-radius);
+    transition: all 0.3s ease;
+    text-transform: none;
+}
+
+/* Primary buttons - Fire orange */
+button:not(.secondary):not(.contrast):not(.outline),
+[type="submit"] {
+    background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+    border: none;
+    color: white;
+    box-shadow: 0 4px 12px rgba(255, 107, 53, 0.3);
+}
+
+button:not(.secondary):not(.contrast):not(.outline):hover,
+[type="submit"]:hover {
+    background: linear-gradient(135deg, var(--accent-secondary), var(--accent-primary));
+    box-shadow: 0 6px 16px rgba(255, 107, 53, 0.5);
+    transform: translateY(-2px);
+}
+
+/* Contrast buttons */
+button.contrast {
+    background: var(--accent-tertiary);
+    color: var(--bg-primary);
+    border: none;
+    box-shadow: 0 4px 12px rgba(255, 165, 0, 0.3);
+}
+
+button.contrast:hover {
+    background: var(--accent-glow);
+    box-shadow: 0 6px 16px rgba(255, 165, 0, 0.5);
+    transform: translateY(-2px);
+}
+
+/* Outline buttons */
+button.outline {
+    background: transparent;
+    border: 2px solid var(--border-default);
+    color: var(--text-secondary);
+}
+
+button.outline:hover {
+    border-color: var(--accent-primary);
+    color: var(--accent-primary);
+    background: rgba(255, 107, 53, 0.1);
+}
+
+/* Secondary outline */
+button.secondary.outline {
+    border-color: var(--border-default);
+}
+
+button.secondary.outline:hover {
+    border-color: var(--text-muted);
+    color: var(--text-primary);
+}
+
+/* Small buttons */
+.btn-sm {
+    padding: 0.5rem 1rem !important;
+    font-size: 0.9rem;
+}
+
+/* === Sidebar Enhancements === */
+
+.sidebar {
+    background: var(--bg-secondary);
+    border-right: 2px solid var(--border-default);
+    box-shadow: 4px 0 12px rgba(0, 0, 0, 0.3);
+}
+
+.sidebar h4 {
+    color: var(--accent-glow);
+    font-size: 1.3rem;
+    margin-bottom: 1rem;
+}
+
+.sidebar hr {
+    border-color: var(--border-default);
+    margin: 1rem 0;
+    opacity: 0.5;
+}
+
+/* Character list items */
+.char-item {
+    padding: 0.75rem;
+    border-radius: var(--pico-border-radius);
+    margin-bottom: 0.5rem;
+    background: rgba(38, 23, 56, 0.5);
+    border: 1px solid transparent;
+    transition: all 0.3s ease;
+}
+
+.char-item:hover {
+    background: var(--bg-elevated);
+    border-color: var(--accent-primary);
+    transform: translateX(4px);
+    box-shadow: 0 2px 8px rgba(255, 107, 53, 0.2);
+}
+
+/* Selected character - Orange glow */
+.char-item.selected {
+    background: var(--bg-elevated);
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 20px rgba(255, 107, 53, 0.6),
+                0 0 40px rgba(255, 107, 53, 0.3);
+    transform: translateX(4px);
+}
+
+.char-item.selected:hover {
+    box-shadow: 0 0 24px rgba(255, 107, 53, 0.7),
+                0 0 48px rgba(255, 107, 53, 0.4);
+}
+
+.char-item a {
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+.char-item:hover a {
+    color: var(--accent-glow);
+}
+
+.char-item.selected a {
+    color: var(--accent-glow);
+    font-weight: 600;
+}
+
+/* === Header Improvements === */
+
+header.app-header {
+    background: linear-gradient(135deg, var(--bg-card), var(--bg-secondary));
+    padding: 2rem 0;
+    margin-bottom: 2rem;
+    border-bottom: 2px solid var(--border-default);
+    border-radius: var(--pico-border-radius);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+header.app-header small {
+    color: var(--text-muted);
+    font-size: 1rem;
+}
+
+/* === Table Styling === */
+
+table {
+    border-collapse: separate;
+    border-spacing: 0;
+    border: 1px solid var(--border-default);
+    border-radius: var(--pico-border-radius);
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+table thead {
+    background: var(--bg-secondary);
+}
+
+table thead th {
+    color: var(--accent-tertiary);
+    font-weight: 600;
+    padding: 1rem;
+    border-bottom: 2px solid var(--border-default);
+}
+
+table tbody tr {
+    transition: background 0.2s ease;
+}
+
+table tbody tr:hover {
+    background: var(--bg-elevated);
+}
+
+table tbody td {
+    padding: 1rem;
+    border-bottom: 1px solid var(--border-default);
+}
+
+table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* === Utility Classes === */
+
+.grid {
+    gap: 1rem;
+}
+
+hgroup {
+    margin-bottom: 1.5rem;
+}
+
+hgroup p {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    margin-top: 0.5rem;
+}
+
+/* === Responsive Adjustments === */
+
+@media (max-width: 768px) {
+    h1 {
+        font-size: 2rem;
+    }
+    
+    article {
+        padding: 1.5rem;
+    }
+    
+    fieldset {
+        padding: 1rem;
+    }
+}
+
+/* === Smooth Transitions === */
+
+* {
+    transition-property: background-color, border-color, box-shadow, transform;
+    transition-duration: 0.3s;
+    transition-timing-function: ease;
+}
+
+/* Don't animate everything */
+input,
+select,
+textarea {
+    transition-property: border-color, box-shadow, background-color;
+}

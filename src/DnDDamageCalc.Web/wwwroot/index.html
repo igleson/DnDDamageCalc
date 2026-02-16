@@ -5,13 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>D&amp;D Damage Calculator</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css" />
+    <link rel="stylesheet" href="/style.css" />
     <script src="https://unpkg.com/htmx.org@2.0.4"
             integrity="sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+"
             crossorigin="anonymous"></script>
     <style>
-        :root {
-            font-size: 12px;
-        }
         body {
             margin: 0;
         }
@@ -192,8 +190,35 @@
         </div>
     </div>
     <script>
+        // Handle 401 unauthorized responses
         document.addEventListener('htmx:responseError', function(e) {
             if (e.detail.xhr.status === 401) window.location.href = '/login';
+        });
+
+        // Track selected character in sidebar
+        document.addEventListener('htmx:beforeRequest', function(evt) {
+            const target = evt.detail.elt;
+            
+            // If clicking a character link
+            if (target.hasAttribute('hx-get') && target.getAttribute('hx-get').startsWith('/character/')) {
+                const charItem = target.closest('.char-item');
+                if (charItem) {
+                    // Remove selected class from all items
+                    document.querySelectorAll('.char-item').forEach(item => {
+                        item.classList.remove('selected');
+                    });
+                    // Add selected class to clicked item
+                    charItem.classList.add('selected');
+                }
+            }
+            
+            // If clicking "New Character" button
+            if (target.hasAttribute('hx-get') && target.getAttribute('hx-get') === '/character/form') {
+                // Remove selected class from all character items
+                document.querySelectorAll('.char-item').forEach(item => {
+                    item.classList.remove('selected');
+                });
+            }
         });
     </script>
 </body>

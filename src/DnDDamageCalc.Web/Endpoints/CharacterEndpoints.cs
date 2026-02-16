@@ -43,46 +43,6 @@ public static class CharacterEndpoints
             return Results.Text(html, "text/html");
         });
 
-        app.MapPost("/character/level/clone", async (HttpRequest request) =>
-        {
-            var form = await request.ReadFormAsync();
-            var character = FormParser.Parse(form);
-
-            if (character.Levels.Count == 0)
-                return Results.Text(HtmlFragments.ValidationError("No levels to clone."), "text/html");
-
-            int.TryParse(form["levelCounter"], out var levelCounter);
-            int.TryParse(form["attackCounter"], out var attackCounter);
-            int.TryParse(form["diceCounter"], out var diceCounter);
-
-            var lastLevel = character.Levels[^1];
-            var newLevelNumber = lastLevel.LevelNumber + 1;
-
-            if (newLevelNumber > 20)
-                return Results.Text(HtmlFragments.ValidationError("Maximum level is 20."), "text/html");
-
-            var clonedLevel = new Models.CharacterLevel
-            {
-                LevelNumber = newLevelNumber,
-                Attacks = lastLevel.Attacks
-            };
-
-            var html = HtmlFragments.LevelFragment(levelCounter, clonedLevel);
-
-            var newLevelCounter = levelCounter + 1;
-            html += $"""<input type="hidden" id="level-counter" name="levelCounter" value="{newLevelCounter}" hx-swap-oob="true" />""";
-            html += $"""<span id="clone-level-btn" hx-swap-oob="innerHTML">{HtmlFragments.CloneLevelButton()}</span>""";
-
-            var newAttackCounter = Math.Max(attackCounter, lastLevel.Attacks.Count);
-            html += $"""<input type="hidden" id="attack-counter" name="attackCounter" value="{newAttackCounter}" hx-swap-oob="true" />""";
-
-            var maxDice = lastLevel.Attacks.Count > 0 ? lastLevel.Attacks.Max(a => a.DiceGroups.Count) : 0;
-            var newDiceCounter = Math.Max(diceCounter, maxDice);
-            html += $"""<input type="hidden" id="dice-counter" name="diceCounter" value="{newDiceCounter}" hx-swap-oob="true" />""";
-
-            return Results.Text(html, "text/html");
-        });
-
         app.MapPost("/character/attack/add", (HttpRequest request, int levelIndex) =>
         {
             var form = request.Form;

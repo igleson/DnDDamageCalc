@@ -302,12 +302,9 @@ public static class HtmlFragments
     public static string CloneLevelButton() =>
         """
         <button type="button"
-                hx-post="/character/level/clone"
-                hx-include="#character-form"
-                hx-target="#levels-container"
-                hx-swap="beforeend"
+                onclick="cloneLevel()"
                 class="secondary outline">
-            Clone Previous Level
+            Clone Last Level
         </button>
         """;
 

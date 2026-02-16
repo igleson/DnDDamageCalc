@@ -303,6 +303,136 @@
             // Process HTMX attributes on the new element
             htmx.process(cloned);
         }
+
+        // Clone level function - pure client-side
+        function cloneLevel() {
+            const container = document.getElementById('levels-container');
+            if (!container) return;
+            
+            const levels = container.querySelectorAll('article');
+            if (levels.length === 0) return;
+            
+            // Clone the last level
+            const lastLevel = levels[levels.length - 1];
+            const cloned = lastLevel.cloneNode(true);
+            
+            // Extract old level index from id
+            const oldIndex = parseInt(lastLevel.id.replace('level-', '')) || (levels.length - 1);
+            
+            // Get current counter and calculate new index
+            const levelCounter = document.getElementById('level-counter');
+            const newIndex = parseInt(levelCounter.value) || levels.length;
+            
+            // Calculate new level number (increment from last level's number)
+            const lastLevelNumberInput = lastLevel.querySelector(`input[name="level[${oldIndex}].number"]`);
+            const lastLevelNumber = lastLevelNumberInput ? parseInt(lastLevelNumberInput.value) : oldIndex + 1;
+            const newLevelNumber = lastLevelNumber + 1;
+            
+            if (newLevelNumber > 20) {
+                alert('Maximum level is 20');
+                return;
+            }
+            
+            // Update level number in header
+            const header = cloned.querySelector('header strong');
+            if (header) {
+                header.textContent = `Level ${newLevelNumber}`;
+            }
+            
+            // Update hidden level number input
+            const levelNumberInput = cloned.querySelector(`input[name^="level["]`);
+            if (levelNumberInput) {
+                levelNumberInput.name = `level[${newIndex}].number`;
+                levelNumberInput.value = newLevelNumber;
+            }
+            
+            // Update article id
+            cloned.id = `level-${newIndex}`;
+            
+            // Update all name attributes: level[oldIndex] -> level[newIndex]
+            cloned.querySelectorAll('[name]').forEach(input => {
+                if (input.name && input.name.includes(`level[${oldIndex}]`)) {
+                    input.name = input.name.replace(
+                        `level[${oldIndex}]`,
+                        `level[${newIndex}]`
+                    );
+                }
+            });
+            
+            // Update all id attributes with old level index
+            cloned.querySelectorAll('[id]').forEach(el => {
+                if (el.id) {
+                    // Update patterns like: level-body-0, attacks-0, attack-0-*, dice-0-*-*
+                    el.id = el.id.replace(
+                        new RegExp(`-(${oldIndex})(-|$)`, 'g'),
+                        `-${newIndex}$2`
+                    );
+                }
+            });
+            
+            // Update HTMX attributes with level index
+            cloned.querySelectorAll('[hx-target]').forEach(el => {
+                const target = el.getAttribute('hx-target');
+                if (target) {
+                    el.setAttribute('hx-target', target.replace(
+                        new RegExp(`-(${oldIndex})(-|$)`, 'g'),
+                        `-${newIndex}$2`
+                    ));
+                }
+            });
+            
+            cloned.querySelectorAll('[hx-delete]').forEach(el => {
+                const url = el.getAttribute('hx-delete');
+                if (url) {
+                    el.setAttribute('hx-delete', url.replace(
+                        `index=${oldIndex}`,
+                        `index=${newIndex}`
+                    ));
+                }
+            });
+            
+            cloned.querySelectorAll('[hx-post]').forEach(el => {
+                const url = el.getAttribute('hx-post');
+                if (url) {
+                    el.setAttribute('hx-post', url.replace(
+                        `levelIndex=${oldIndex}`,
+                        `levelIndex=${newIndex}`
+                    ));
+                }
+            });
+            
+            // Update onclick attributes for collapse button
+            cloned.querySelectorAll('[onclick]').forEach(el => {
+                const onclick = el.getAttribute('onclick');
+                if (onclick && onclick.includes('level-body-')) {
+                    el.setAttribute('onclick', onclick.replace(
+                        `level-body-${oldIndex}`,
+                        `level-body-${newIndex}`
+                    ));
+                }
+            });
+            
+            // Update counters
+            levelCounter.value = newIndex + 1;
+            
+            // Update attack counter if needed (count all attacks in cloned level)
+            const attackCounter = document.getElementById('attack-counter');
+            const clonedAttacks = cloned.querySelectorAll('fieldset[id^="attack-"]');
+            const currentAttackCounter = parseInt(attackCounter.value) || 0;
+            attackCounter.value = Math.max(currentAttackCounter, clonedAttacks.length);
+            
+            // Update dice counter if needed (count all dice groups in cloned level)
+            const diceCounter = document.getElementById('dice-counter');
+            const clonedDice = cloned.querySelectorAll('[id^="dice-"]');
+            const currentDiceCounter = parseInt(diceCounter.value) || 0;
+            diceCounter.value = Math.max(currentDiceCounter, clonedDice.length);
+            
+            // Append to container
+            container.appendChild(cloned);
+            
+            // Process HTMX attributes on the new element
+            htmx.process(cloned);
+        }
     </script>
 </body>
 </html>

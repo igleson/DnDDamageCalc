@@ -24,6 +24,31 @@ A D&D Damage Calculator built with ASP.NET Minimal APIs, HTMX, and PicoCSS. Comp
 
 ## Setup
 
+### Development Mode (SQLite, No Authentication)
+
+For local development without Supabase:
+
+```bash
+# Set environment (PowerShell)
+$env:ASPNETCORE_ENVIRONMENT="Development"
+
+# Or (bash/zsh)
+export ASPNETCORE_ENVIRONMENT=Development
+
+# Run the app
+dotnet run --project src/DnDDamageCalc.Web
+```
+
+Open http://localhost:5082 — characters save to `dev-characters.db` (gitignored).
+
+**Features in dev mode:**
+- ✅ SQLite database (no network calls)
+- ✅ No authentication required (fixed "dev-user" ID)
+- ✅ Full app functionality (create/edit/delete/simulate)
+- ✅ Persistent storage across runs
+
+### Production Mode (Supabase + Google OAuth)
+
 ### 1. Prerequisites
 
 - [.NET 10 SDK](https://dotnet.microsoft.com/download)
@@ -67,6 +92,9 @@ cd DnDDamageCalc
 # Set environment variables (see .env.example)
 cp .env.example .env
 # Edit .env with your Supabase credentials
+
+# Set production environment
+export ASPNETCORE_ENVIRONMENT=Production  # or omit (defaults to Production)
 
 # Run with hot reload
 dotnet watch --project src/DnDDamageCalc.Web

@@ -118,14 +118,17 @@ public static class HtmlFragments
         sb.Append($"""
                     </div>
 
-                    <button type="button"
-                            hx-post="/character/attack/add?levelIndex={levelIndex}"
-                            hx-target="#attacks-{levelIndex}"
-                            hx-swap="beforeend"
-                            hx-include="#attack-counter"
-                            class="outline btn-sm">
-                        + Add Attack
-                    </button>
+                    <div style="display:flex;gap:1rem;">
+                        <button type="button"
+                                hx-post="/character/attack/add?levelIndex={levelIndex}"
+                                hx-target="#attacks-{levelIndex}"
+                                hx-swap="beforeend"
+                                hx-include="#attack-counter"
+                                class="outline btn-sm">
+                            + Add Attack
+                        </button>
+                        {(l.Attacks.Count > 0 ? CloneAttackButton(levelIndex) : "")}
+                    </div>
                 </div>
             </article>
             """);
@@ -305,6 +308,15 @@ public static class HtmlFragments
                 hx-swap="beforeend"
                 class="secondary outline">
             Clone Previous Level
+        </button>
+        """;
+
+    public static string CloneAttackButton(int levelIndex) =>
+        $"""
+        <button type="button"
+                onclick="cloneAttack({levelIndex})"
+                class="outline btn-sm">
+            Clone Last Attack
         </button>
         """;
 

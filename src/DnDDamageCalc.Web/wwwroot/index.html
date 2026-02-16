@@ -220,6 +220,89 @@
                 });
             }
         });
+
+        // Clone attack function - pure client-side
+        function cloneAttack(levelIndex) {
+            const container = document.getElementById(`attacks-${levelIndex}`);
+            if (!container) return;
+            
+            const attacks = container.querySelectorAll('fieldset');
+            if (attacks.length === 0) return;
+            
+            // Clone the last attack
+            const lastAttack = attacks[attacks.length - 1];
+            const cloned = lastAttack.cloneNode(true);
+            
+            // Get current counter and increment
+            const counterInput = document.getElementById('attack-counter');
+            const currentCounter = parseInt(counterInput.value) || attacks.length;
+            const newIndex = currentCounter;
+            
+            // Find the old attack index from the last attack's id attribute
+            const lastAttackId = lastAttack.id;
+            const oldIndexMatch = lastAttackId.match(/attack-\d+-(\d+)$/);
+            const oldIndex = oldIndexMatch ? parseInt(oldIndexMatch[1]) : attacks.length - 1;
+            
+            // Update all name attributes: attacks[oldIndex] -> attacks[newIndex]
+            cloned.querySelectorAll('[name]').forEach(input => {
+                if (input.name) {
+                    input.name = input.name.replace(
+                        `attacks[${oldIndex}]`, 
+                        `attacks[${newIndex}]`
+                    );
+                }
+            });
+            
+            // Update all id attributes: attack-{level}-{oldIndex} -> attack-{level}-{newIndex}
+            cloned.querySelectorAll('[id]').forEach(el => {
+                if (el.id) {
+                    el.id = el.id.replace(
+                        new RegExp(`-${levelIndex}-${oldIndex}(-|$)`, 'g'),
+                        `-${levelIndex}-${newIndex}$1`
+                    );
+                }
+            });
+            
+            // Update HTMX attributes (hx-target, hx-delete, hx-post)
+            cloned.querySelectorAll('[hx-target]').forEach(el => {
+                const target = el.getAttribute('hx-target');
+                if (target) {
+                    el.setAttribute('hx-target', target.replace(
+                        `-${levelIndex}-${oldIndex}`,
+                        `-${levelIndex}-${newIndex}`
+                    ));
+                }
+            });
+            
+            cloned.querySelectorAll('[hx-delete]').forEach(el => {
+                const url = el.getAttribute('hx-delete');
+                if (url) {
+                    el.setAttribute('hx-delete', url.replace(
+                        `attackIndex=${oldIndex}`,
+                        `attackIndex=${newIndex}`
+                    ));
+                }
+            });
+            
+            cloned.querySelectorAll('[hx-post]').forEach(el => {
+                const url = el.getAttribute('hx-post');
+                if (url) {
+                    el.setAttribute('hx-post', url.replace(
+                        `attackIndex=${oldIndex}`,
+                        `attackIndex=${newIndex}`
+                    ));
+                }
+            });
+            
+            // Update the counter
+            counterInput.value = newIndex + 1;
+            
+            // Append to container
+            container.appendChild(cloned);
+            
+            // Process HTMX attributes on the new element
+            htmx.process(cloned);
+        }
     </script>
 </body>
 </html>

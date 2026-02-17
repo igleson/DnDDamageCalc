@@ -36,8 +36,9 @@ public static class DamageSimulator
             var index = 0;
             for (var i = 0; i < iterations; i++)
             {
+                var hasActionSurge = level.Resources?.HasActionSurge == true;
                 var nextAttackHasAdvantage = false;
-                var actionSurgesRemaining = level.Resources?.HasActionSurge == true ? 1 : 0;
+                var actionSurgesRemaining = hasActionSurge ? 1 : 0;
 
                 foreach (var combat in setting.Combats)
                 {
@@ -47,6 +48,8 @@ public static class DamageSimulator
                     }
 
                     nextAttackHasAdvantage = false;
+                    if (combat.ShortRestAfter && hasActionSurge)
+                        actionSurgesRemaining = 1;
                 }
             }
 

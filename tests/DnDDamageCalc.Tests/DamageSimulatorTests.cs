@@ -426,6 +426,48 @@ public class DamageSimulatorTests
         Assert.Equal(10, results[0].Average, precision: 1);
     }
 
+    [Fact]
+    public void Simulate_ActionSurge_ResetsAfterShortRest()
+    {
+        var attacks = new List<Attack>
+        {
+            new()
+            {
+                Name = "Action Attack", ActionType = "action", HitPercent = 100, CritPercent = 0,
+                FlatModifier = 10, DiceGroups = []
+            }
+        };
+
+        var character = new Character
+        {
+            Name = "Action Surge Short Rest Test",
+            Levels =
+            [
+                new CharacterLevel
+                {
+                    LevelNumber = 1,
+                    Resources = new LevelResources { HasActionSurge = true },
+                    Attacks = attacks
+                }
+            ]
+        };
+
+        var setting = new EncounterSetting
+        {
+            Name = "Two Combats with Short Rest",
+            Combats =
+            [
+                new CombatDefinition { Rounds = 1, ShortRestAfter = true },
+                new CombatDefinition { Rounds = 1, ShortRestAfter = false }
+            ]
+        };
+
+        var results = DamageSimulator.Simulate(character, setting, iterations: 10_000);
+
+        // Each combat round gets base action (10) + action surge replay (10) after short-rest reset.
+        Assert.Equal(20, results[0].Average, precision: 1);
+    }
+
     private static Character MakeCharacter(int hitPercent, int critPercent,
         int flatModifier, List<DiceGroup> diceGroups)
     {

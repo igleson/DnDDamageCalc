@@ -67,6 +67,9 @@ public class Attack
 
     [ProtoMember(12)]
     public string ActionType { get; set; } = "action";
+
+    [ProtoMember(13)]
+    public int ReactionChancePercent { get; set; } = 100;
 }
 
 [ProtoContract]

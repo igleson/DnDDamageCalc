@@ -43,7 +43,8 @@ public static partial class FormParser
                     MasteryGraze = form[$"{prefix}.masteryGraze"] == "on",
                     GrazeValue = ParseInt(form, $"{prefix}.grazeValue"),
                     RequiresSetup = form[$"{prefix}.requiresSetup"] == "on",
-                    ActionType = form[$"{prefix}.actionType"].ToString().Trim()
+                    ActionType = form[$"{prefix}.actionType"].ToString().Trim(),
+                    ReactionChancePercent = ParseInt(form, $"{prefix}.reactionChancePercent", 100)
                 };
 
                 var diceIndices = ExtractIndices(form, DicePattern(li, ai));

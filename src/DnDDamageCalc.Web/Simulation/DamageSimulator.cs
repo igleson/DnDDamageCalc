@@ -112,6 +112,8 @@ public static class DamageSimulator
         {
             if (includeOnlyActionAttacks && !IsActionAttack(attack))
                 continue;
+            if (IsReactionAttack(attack) && !ReactionOccurs(attack))
+                continue;
 
             if (!ignoreSetup && isFirstRoundOfCombat && attack.RequiresSetup)
                 continue;
@@ -175,6 +177,15 @@ public static class DamageSimulator
 
     private static bool IsActionAttack(Attack attack) =>
         string.Equals(attack.ActionType, "action", StringComparison.OrdinalIgnoreCase);
+
+    private static bool IsReactionAttack(Attack attack) =>
+        string.Equals(attack.ActionType, "reaction", StringComparison.OrdinalIgnoreCase);
+
+    private static bool ReactionOccurs(Attack attack)
+    {
+        var chance = Math.Clamp(attack.ReactionChancePercent, 0, 100) / 100.0;
+        return Random.Shared.NextDouble() < chance;
+    }
 
     private static double RollDamage(Attack attack, bool isCrit)
     {

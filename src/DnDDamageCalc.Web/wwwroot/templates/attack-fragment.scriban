@@ -24,12 +24,17 @@
             </div>
             <div>
                 <label for="{{ prefix }}.actionType">Attack Type</label>
-                <select name="{{ prefix }}.actionType" required>
+                <select name="{{ prefix }}.actionType" required
+                        onchange="this.closest('fieldset').querySelector('.reaction-chance').style.display=this.value==='reaction'?'block':'none'">
                     <option value="action"{{ if action_type == "action" }} selected{{ end }}>Action Attack</option>
                     <option value="bonus_action"{{ if action_type == "bonus_action" }} selected{{ end }}>Bonus Action Attack</option>
                     <option value="reaction"{{ if action_type == "reaction" }} selected{{ end }}>Reaction Attack</option>
                 </select>
             </div>
+        </div>
+        <div class="reaction-chance" style="display:{{ if action_type == "reaction" }}block{{ else }}none{{ end }};">
+            <label for="{{ prefix }}.reactionChancePercent">Reaction Trigger %</label>
+            <input type="number" name="{{ prefix }}.reactionChancePercent" value="{{ reaction_chance_percent }}" min="0" max="100" />
         </div>
 
         <div class="grid">

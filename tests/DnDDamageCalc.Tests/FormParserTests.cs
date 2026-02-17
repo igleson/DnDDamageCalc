@@ -45,6 +45,7 @@ public class FormParserTests
             ["level[0].number"] = "1",
             ["level[0].attacks[0].name"] = "Longsword",
             ["level[0].attacks[0].actionType"] = "bonus_action",
+            ["level[0].attacks[0].reactionChancePercent"] = "35",
             ["level[0].attacks[0].hitPercent"] = "65",
             ["level[0].attacks[0].critPercent"] = "5",
             ["level[0].attacks[0].flatModifier"] = "3"
@@ -55,6 +56,7 @@ public class FormParserTests
 
         Assert.Equal("Longsword", attack.Name);
         Assert.Equal("bonus_action", attack.ActionType);
+        Assert.Equal(35, attack.ReactionChancePercent);
         Assert.Equal(65, attack.HitPercent);
         Assert.Equal(5, attack.CritPercent);
         Assert.Equal(3, attack.FlatModifier);

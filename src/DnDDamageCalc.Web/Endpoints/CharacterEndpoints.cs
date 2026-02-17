@@ -186,6 +186,9 @@ public static class CharacterEndpoints
 
                 if (!IsValidActionType(attack.ActionType))
                     errors.Add($"Action type is required for attack \"{attack.Name}\" at level {level.LevelNumber}.");
+
+                if (attack.ActionType == "reaction" && (attack.ReactionChancePercent < 0 || attack.ReactionChancePercent > 100))
+                    errors.Add($"Reaction Trigger% must be 0-100 for attack \"{attack.Name}\" at level {level.LevelNumber}.");
             }
         }
 
@@ -223,6 +226,9 @@ public static class CharacterEndpoints
 
                 if (!IsValidActionType(attack.ActionType))
                     errors.Add($"Action type is required for attack \"{attack.Name}\" at level {level.LevelNumber}.");
+
+                if (attack.ActionType == "reaction" && (attack.ReactionChancePercent < 0 || attack.ReactionChancePercent > 100))
+                    errors.Add($"Reaction Trigger% must be 0-100 for attack \"{attack.Name}\" at level {level.LevelNumber}.");
             }
         }
 

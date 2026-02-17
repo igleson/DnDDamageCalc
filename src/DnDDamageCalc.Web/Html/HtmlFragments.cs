@@ -116,6 +116,7 @@ public static class HtmlFragments
             graze_value = a.GrazeValue,
             requires_setup = a.RequiresSetup,
             action_type = a.ActionType,
+            reaction_chance_percent = a.ReactionChancePercent,
             flat_modifier = a.FlatModifier,
             dice_groups = diceGroups
         };

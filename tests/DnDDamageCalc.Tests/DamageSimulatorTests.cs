@@ -32,6 +32,72 @@ public class DamageSimulatorTests
     }
 
     [Fact]
+    public void Simulate_ReactionAttack_ZeroTriggerChance_DoesNoDamage()
+    {
+        var character = new Character
+        {
+            Name = "Reaction None",
+            Levels =
+            [
+                new CharacterLevel
+                {
+                    LevelNumber = 1,
+                    Attacks =
+                    [
+                        new Attack
+                        {
+                            Name = "Riposte",
+                            ActionType = "reaction",
+                            ReactionChancePercent = 0,
+                            HitPercent = 100,
+                            CritPercent = 0,
+                            FlatModifier = 10,
+                            DiceGroups = []
+                        }
+                    ]
+                }
+            ]
+        };
+
+        var results = DamageSimulator.Simulate(character, iterations: 10_000);
+
+        Assert.Equal(0, results[0].Average);
+    }
+
+    [Fact]
+    public void Simulate_ReactionAttack_FullTriggerChance_DealsDamage()
+    {
+        var character = new Character
+        {
+            Name = "Reaction Always",
+            Levels =
+            [
+                new CharacterLevel
+                {
+                    LevelNumber = 1,
+                    Attacks =
+                    [
+                        new Attack
+                        {
+                            Name = "Riposte",
+                            ActionType = "reaction",
+                            ReactionChancePercent = 100,
+                            HitPercent = 100,
+                            CritPercent = 0,
+                            FlatModifier = 10,
+                            DiceGroups = []
+                        }
+                    ]
+                }
+            ]
+        };
+
+        var results = DamageSimulator.Simulate(character, iterations: 10_000);
+
+        Assert.Equal(10, results[0].Average, precision: 1);
+    }
+
+    [Fact]
     public void Simulate_AlwaysCrits_DiceDoubledFlatNot()
     {
         // 1d6+3 with 100% hit, 100% crit => always crit => 2d6+3 => avg = 7 + 3 = 10

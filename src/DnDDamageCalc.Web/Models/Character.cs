@@ -33,6 +33,9 @@ public class LevelResources
 
     [ProtoMember(3)]
     public int ShieldMasterTopplePercent { get; set; }
+
+    [ProtoMember(4)]
+    public bool HasHeroicInspiration { get; set; }
 }
 
 [ProtoContract]

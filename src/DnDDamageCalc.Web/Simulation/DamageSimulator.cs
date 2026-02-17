@@ -38,6 +38,7 @@ public static class DamageSimulator
             {
                 var hasActionSurge = level.Resources?.HasActionSurge == true;
                 var hasShieldMaster = level.Resources?.HasShieldMaster == true;
+                var hasHeroicInspiration = level.Resources?.HasHeroicInspiration == true;
                 var shieldMasterTopplePercent = level.Resources?.ShieldMasterTopplePercent ?? 0;
                 var nextAttackHasAdvantage = false;
                 var actionSurgesRemaining = hasActionSurge ? 1 : 0;
@@ -52,7 +53,8 @@ public static class DamageSimulator
                             isFirstRoundOfCombat: round == 0,
                             ref actionSurgesRemaining,
                             hasShieldMaster,
-                            shieldMasterTopplePercent);
+                            shieldMasterTopplePercent,
+                            hasHeroicInspiration);
                     }
 
                     nextAttackHasAdvantage = false;
@@ -84,11 +86,13 @@ public static class DamageSimulator
         bool isFirstRoundOfCombat,
         ref int actionSurgesRemaining,
         bool hasShieldMaster,
-        int shieldMasterTopplePercent)
+        int shieldMasterTopplePercent,
+        bool hasHeroicInspiration)
     {
         var totalDamage = 0.0;
         var targetIsProne = false;
         var shieldMasterUsedThisTurn = false;
+        var heroicInspirationAvailableThisTurn = hasHeroicInspiration;
 
         totalDamage += SimulateAttackSequence(
             attacks,
@@ -99,7 +103,8 @@ public static class DamageSimulator
             ignoreSetup: false,
             hasShieldMaster,
             shieldMasterTopplePercent,
-            ref shieldMasterUsedThisTurn);
+            ref shieldMasterUsedThisTurn,
+            ref heroicInspirationAvailableThisTurn);
 
         if (actionSurgesRemaining > 0 && attacks.Any(IsActionAttack))
         {
@@ -112,7 +117,8 @@ public static class DamageSimulator
                 ignoreSetup: true,
                 hasShieldMaster,
                 shieldMasterTopplePercent,
-                ref shieldMasterUsedThisTurn);
+                ref shieldMasterUsedThisTurn,
+                ref heroicInspirationAvailableThisTurn);
             actionSurgesRemaining--;
         }
 
@@ -128,7 +134,8 @@ public static class DamageSimulator
         bool ignoreSetup,
         bool hasShieldMaster,
         int shieldMasterTopplePercent,
-        ref bool shieldMasterUsedThisTurn)
+        ref bool shieldMasterUsedThisTurn,
+        ref bool heroicInspirationAvailableThisTurn)
     {
         var totalDamage = 0.0;
 
@@ -164,9 +171,14 @@ public static class DamageSimulator
             }
 
             var normalHitPct = hitPct - critPct;
-            var roll = Random.Shared.NextDouble();
+            var isHit = RollHits(critPct, normalHitPct, out var isCrit);
+            if (!isHit && heroicInspirationAvailableThisTurn)
+            {
+                heroicInspirationAvailableThisTurn = false;
+                isHit = RollHits(critPct, normalHitPct, out isCrit);
+            }
 
-            if (roll < critPct)
+            if (isHit && isCrit)
             {
                 // Crit: double dice quantity, same flat modifier
                 totalDamage += RollDamage(attack, isCrit: true);
@@ -178,7 +190,7 @@ public static class DamageSimulator
                 if (attack.MasteryTopple)
                     TryTopple(attack, ref targetIsProne);
             }
-            else if (roll < critPct + normalHitPct)
+            else if (isHit)
             {
                 // Normal hit
                 totalDamage += RollDamage(attack, isCrit: false);
@@ -199,6 +211,25 @@ public static class DamageSimulator
         }
 
         return totalDamage;
+    }
+
+    private static bool RollHits(double critPct, double normalHitPct, out bool isCrit)
+    {
+        var roll = Random.Shared.NextDouble();
+        if (roll < critPct)
+        {
+            isCrit = true;
+            return true;
+        }
+
+        if (roll < critPct + normalHitPct)
+        {
+            isCrit = false;
+            return true;
+        }
+
+        isCrit = false;
+        return false;
     }
 
     private static bool IsActionAttack(Attack attack) =>

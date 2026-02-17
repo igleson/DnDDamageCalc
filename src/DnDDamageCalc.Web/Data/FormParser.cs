@@ -24,7 +24,8 @@ public static partial class FormParser
                 {
                     HasActionSurge = ParseCheckbox(form, $"level[{li}].resources.hasActionSurge"),
                     HasShieldMaster = ParseCheckbox(form, $"level[{li}].resources.hasShieldMaster"),
-                    ShieldMasterTopplePercent = ParseInt(form, $"level[{li}].resources.shieldMasterTopplePercent")
+                    ShieldMasterTopplePercent = ParseInt(form, $"level[{li}].resources.shieldMasterTopplePercent"),
+                    HasHeroicInspiration = ParseCheckbox(form, $"level[{li}].resources.hasHeroicInspiration")
                 }
             };
 

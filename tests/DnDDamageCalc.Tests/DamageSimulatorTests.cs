@@ -582,6 +582,40 @@ public class DamageSimulatorTests
         Assert.InRange(results[0].Average, 14.0, 16.0);
     }
 
+    [Fact]
+    public void Simulate_HeroicInspiration_RerollsMissOncePerTurn()
+    {
+        var character = new Character
+        {
+            Name = "Heroic Inspiration Test",
+            Levels =
+            [
+                new CharacterLevel
+                {
+                    LevelNumber = 1,
+                    Resources = new LevelResources { HasHeroicInspiration = true },
+                    Attacks =
+                    [
+                        new Attack
+                        {
+                            Name = "Single Swing",
+                            ActionType = "action",
+                            HitPercent = 50,
+                            CritPercent = 0,
+                            FlatModifier = 10,
+                            DiceGroups = []
+                        }
+                    ]
+                }
+            ]
+        };
+
+        var results = DamageSimulator.Simulate(character, iterations: 50_000);
+
+        // 50% hit with one reroll on miss => 75% effective chance => ~7.5 average.
+        Assert.InRange(results[0].Average, 7.0, 8.0);
+    }
+
     private static Character MakeCharacter(int hitPercent, int critPercent,
         int flatModifier, List<DiceGroup> diceGroups)
     {

@@ -51,6 +51,13 @@
                            min="0"
                            max="100" />
                 </div>
+                <input type="hidden" name="level[{{ level_index }}].resources.hasHeroicInspiration" value="false" />
+                <label>
+                    <input type="checkbox"
+                           name="level[{{ level_index }}].resources.hasHeroicInspiration"
+                           value="true"{{ if has_heroic_inspiration }} checked{{ end }} />
+                    Heroic Inspiration
+                </label>
             </div>
         </fieldset>
 

@@ -66,20 +66,6 @@ public static class CharacterEndpoints
             }
         });
 
-        app.MapPost("/character/level/add", (HttpRequest request, ITemplateService templates) =>
-        {
-            var form = request.Form;
-            int.TryParse(form["levelCounter"], out var counter);
-            var levelNumber = counter + 1;
-            if (levelNumber > 20)
-                return Results.Text(HtmlFragments.ValidationError("Maximum 20 levels.", templates), "text/html");
-
-            var html = HtmlFragments.LevelFragment(counter, new Models.CharacterLevel { LevelNumber = levelNumber }, templates);
-            html += $"""<input type="hidden" id="level-counter" name="levelCounter" value="{levelNumber}" hx-swap-oob="true" />""";
-            html += $"""<span id="clone-level-btn" hx-swap-oob="innerHTML">{HtmlFragments.CloneLevelButton(templates)}</span>""";
-            return Results.Text(html, "text/html");
-        });
-
         app.MapPost("/character/attack/add", (HttpRequest request, int levelIndex, ITemplateService templates) =>
         {
             var form = request.Form;

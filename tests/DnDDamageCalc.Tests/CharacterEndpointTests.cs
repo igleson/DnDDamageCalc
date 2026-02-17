@@ -50,35 +50,6 @@ public class CharacterEndpointTests : IClassFixture<CustomWebApplicationFactory>
     }
 
     [Fact]
-    public async Task AddLevel_ReturnsLevelFragment()
-    {
-        var content = new FormUrlEncodedContent([
-            new KeyValuePair<string, string>("levelCounter", "0")
-        ]);
-        var response = await _client.PostAsync("/character/level/add", content);
-
-        response.EnsureSuccessStatusCode();
-        var html = await response.Content.ReadAsStringAsync();
-        Assert.Contains("level-0", html);
-        Assert.Contains("id=\"level-body-0\"", html);
-        Assert.Contains("data-collapse-target=\"level-body-0\"", html);
-        Assert.Contains("Level 1", html);
-    }
-
-    [Fact]
-    public async Task AddLevel_Over20_ReturnsError()
-    {
-        var content = new FormUrlEncodedContent([
-            new KeyValuePair<string, string>("levelCounter", "20")
-        ]);
-        var response = await _client.PostAsync("/character/level/add", content);
-
-        response.EnsureSuccessStatusCode();
-        var html = await response.Content.ReadAsStringAsync();
-        Assert.Contains("Maximum 20 levels", html);
-    }
-
-    [Fact]
     public async Task AddAttack_ReturnsAttackFragment()
     {
         var content = new FormUrlEncodedContent([

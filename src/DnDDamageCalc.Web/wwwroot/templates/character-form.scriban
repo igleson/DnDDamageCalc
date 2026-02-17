@@ -23,10 +23,7 @@
 
         <div style="display:flex;gap:1rem;">
             <button type="button"
-                    hx-post="/character/level/add"
-                    hx-target="#levels-container"
-                    hx-swap="beforeend"
-                    hx-include="#level-counter"
+                    onclick="addLevel()"
                     class="secondary outline">
                 + Add Level
             </button>

@@ -110,6 +110,7 @@ public static class HtmlFragments
             topple_percent = a.TopplePercent,
             mastery_graze = a.MasteryGraze,
             graze_value = a.GrazeValue,
+            requires_setup = a.RequiresSetup,
             flat_modifier = a.FlatModifier,
             dice_groups = diceGroups
         };

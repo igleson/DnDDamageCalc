@@ -45,6 +45,12 @@
                 <label><input type="checkbox" name="{{ prefix }}.masteryGraze"{{ if mastery_graze }} checked{{ end }}
                        onchange="this.closest('fieldset').querySelector('.graze-value').style.display=this.checked?'block':'none'" /> Graze</label>
             </div>
+            <div>
+                <label title="Cannot be used in round 1 of a combat.">
+                    <input type="checkbox" name="{{ prefix }}.requiresSetup"{{ if requires_setup }} checked{{ end }} />
+                    Requires setup
+                </label>
+            </div>
         </div>
         <div class="topple-pct" style="display:{{ if mastery_topple }}block{{ else }}none{{ end }};">
             <label for="{{ prefix }}.topplePercent">Topple Save Fail %</label>

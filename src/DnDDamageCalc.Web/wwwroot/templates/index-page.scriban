@@ -961,6 +961,11 @@
                                 <label><input type="checkbox" name="ATTACK_PREFIX_PLACEHOLDER.masteryGraze"
                                        onchange="this.closest('fieldset').querySelector('.graze-value').style.display=this.checked?'block':'none'" /> Graze</label>
                             </div>
+                            <div>
+                                <label title="Cannot be used in round 1 of a combat.">
+                                    <input type="checkbox" name="ATTACK_PREFIX_PLACEHOLDER.requiresSetup" /> Requires setup
+                                </label>
+                            </div>
                         </div>
                         <div class="topple-pct" style="display:none;">
                             <label for="ATTACK_PREFIX_PLACEHOLDER.topplePercent">Topple Save Fail %</label>

@@ -76,6 +76,7 @@ public class FormParserTests
 
         Assert.True(attack.MasteryVex);
         Assert.False(attack.MasteryTopple);
+        Assert.False(attack.RequiresSetup);
     }
 
     [Fact]
@@ -214,6 +215,25 @@ public class FormParserTests
 
         Assert.Equal("Gandalf", character.Name);
         Assert.Equal("Staff", character.Levels[0].Attacks[0].Name);
+    }
+
+    [Fact]
+    public void Parse_RequiresSetup_ParsedCorrectly()
+    {
+        var form = CreateForm(new Dictionary<string, string>
+        {
+            ["characterName"] = "Test",
+            ["level[0].number"] = "1",
+            ["level[0].attacks[0].name"] = "Heavy Strike",
+            ["level[0].attacks[0].hitPercent"] = "60",
+            ["level[0].attacks[0].critPercent"] = "5",
+            ["level[0].attacks[0].requiresSetup"] = "on"
+        });
+
+        var character = FormParser.Parse(form);
+        var attack = character.Levels[0].Attacks[0];
+
+        Assert.True(attack.RequiresSetup);
     }
 
     [Fact]

@@ -36,7 +36,8 @@ public static partial class FormParser
                     MasteryTopple = form[$"{prefix}.masteryTopple"] == "on",
                     TopplePercent = ParseInt(form, $"{prefix}.topplePercent"),
                     MasteryGraze = form[$"{prefix}.masteryGraze"] == "on",
-                    GrazeValue = ParseInt(form, $"{prefix}.grazeValue")
+                    GrazeValue = ParseInt(form, $"{prefix}.grazeValue"),
+                    RequiresSetup = form[$"{prefix}.requiresSetup"] == "on"
                 };
 
                 var diceIndices = ExtractIndices(form, DicePattern(li, ai));

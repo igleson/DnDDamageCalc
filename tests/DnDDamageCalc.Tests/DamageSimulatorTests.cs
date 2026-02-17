@@ -285,6 +285,66 @@ public class DamageSimulatorTests
         Assert.InRange(results[0].Average, 7.0, 8.0);
     }
 
+    [Fact]
+    public void Simulate_RequiresSetup_SkipsRoundOneOnly()
+    {
+        var attacks = new List<Attack>
+        {
+            new()
+            {
+                Name = "Setup Attack", HitPercent = 100, CritPercent = 0,
+                RequiresSetup = true, FlatModifier = 10, DiceGroups = []
+            }
+        };
+        var character = new Character
+        {
+            Name = "Setup Test",
+            Levels = [new CharacterLevel { LevelNumber = 1, Attacks = attacks }]
+        };
+        var setting = new EncounterSetting
+        {
+            Name = "Two Rounds",
+            Combats = [new CombatDefinition { Rounds = 2, ShortRestAfter = false }]
+        };
+
+        var results = DamageSimulator.Simulate(character, setting, iterations: 20_000);
+
+        // Round 1 = 0, Round 2 = 10 => per-round average ~5
+        Assert.InRange(results[0].Average, 4.6, 5.4);
+    }
+
+    [Fact]
+    public void Simulate_RequiresSetup_ResetsEachCombat()
+    {
+        var attacks = new List<Attack>
+        {
+            new()
+            {
+                Name = "Setup Attack", HitPercent = 100, CritPercent = 0,
+                RequiresSetup = true, FlatModifier = 10, DiceGroups = []
+            }
+        };
+        var character = new Character
+        {
+            Name = "Setup Reset Test",
+            Levels = [new CharacterLevel { LevelNumber = 1, Attacks = attacks }]
+        };
+        var setting = new EncounterSetting
+        {
+            Name = "Two Combats One Round",
+            Combats =
+            [
+                new CombatDefinition { Rounds = 1, ShortRestAfter = false },
+                new CombatDefinition { Rounds = 1, ShortRestAfter = false }
+            ]
+        };
+
+        var results = DamageSimulator.Simulate(character, setting, iterations: 20_000);
+
+        // Both rounds are combat round 1, so attack is always skipped
+        Assert.Equal(0, results[0].Average);
+    }
+
     private static Character MakeCharacter(int hitPercent, int critPercent,
         int flatModifier, List<DiceGroup> diceGroups)
     {

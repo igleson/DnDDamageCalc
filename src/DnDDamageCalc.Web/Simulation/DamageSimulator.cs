@@ -42,7 +42,7 @@ public static class DamageSimulator
                 {
                     for (var round = 0; round < Math.Max(1, combat.Rounds); round++)
                     {
-                        damages[index++] = SimulateRound(level.Attacks, ref nextAttackHasAdvantage);
+                        damages[index++] = SimulateRound(level.Attacks, ref nextAttackHasAdvantage, isFirstRoundOfCombat: round == 0);
                     }
 
                     nextAttackHasAdvantage = false;
@@ -66,13 +66,16 @@ public static class DamageSimulator
         return results;
     }
 
-    private static double SimulateRound(List<Attack> attacks, ref bool nextAttackHasAdvantage)
+    private static double SimulateRound(List<Attack> attacks, ref bool nextAttackHasAdvantage, bool isFirstRoundOfCombat)
     {
         var totalDamage = 0.0;
         var targetIsProne = false;
 
         foreach (var attack in attacks)
         {
+            if (isFirstRoundOfCombat && attack.RequiresSetup)
+                continue;
+
             var hasAdvantage = nextAttackHasAdvantage || targetIsProne;
             // Vex advantage is consumed after one use; prone persists
             if (nextAttackHasAdvantage && !targetIsProne)

@@ -77,6 +77,7 @@ public class CharacterRepositoryTests : IDisposable
         Assert.Equal(3, attack.FlatModifier);
         Assert.True(attack.MasteryVex);
         Assert.False(attack.MasteryTopple);
+        Assert.True(attack.RequiresSetup);
     }
 
     [Fact]
@@ -196,6 +197,7 @@ public class CharacterRepositoryTests : IDisposable
                             FlatModifier = 3,
                             MasteryVex = true,
                             MasteryTopple = false,
+                            RequiresSetup = true,
                             DiceGroups =
                             [
                                 new DiceGroup { Quantity = 2, DieSize = 6 },

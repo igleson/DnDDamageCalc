@@ -51,6 +51,9 @@ public class Attack
 
     [ProtoMember(10)]
     public int GrazeValue { get; set; }
+
+    [ProtoMember(11)]
+    public bool RequiresSetup { get; set; }
 }
 
 [ProtoContract]

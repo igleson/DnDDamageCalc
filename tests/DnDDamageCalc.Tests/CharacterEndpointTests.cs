@@ -50,30 +50,6 @@ public class CharacterEndpointTests : IClassFixture<CustomWebApplicationFactory>
     }
 
     [Fact]
-    public async Task AddDice_ReturnsDiceFragment()
-    {
-        var content = new FormUrlEncodedContent([
-            new KeyValuePair<string, string>("diceCounter", "0")
-        ]);
-        var response = await _client.PostAsync("/character/dice/add?levelIndex=0&attackIndex=0", content);
-
-        response.EnsureSuccessStatusCode();
-        var html = await response.Content.ReadAsStringAsync();
-        Assert.Contains("dice-0-0-0", html);
-        Assert.Contains("dieSize", html);
-    }
-
-    [Fact]
-    public async Task RemoveDice_ReturnsEmpty()
-    {
-        var response = await _client.DeleteAsync("/character/dice/remove?levelIndex=0&attackIndex=0&diceIndex=0");
-
-        response.EnsureSuccessStatusCode();
-        var html = await response.Content.ReadAsStringAsync();
-        Assert.Equal("", html);
-    }
-
-    [Fact]
     public async Task ValidatePercentages_Valid_ReturnsEmpty()
     {
         var content = new FormUrlEncodedContent([

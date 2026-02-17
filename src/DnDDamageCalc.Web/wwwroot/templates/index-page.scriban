@@ -711,6 +711,66 @@
             }
         }
 
+        // Add dice function - pure client-side
+        function addDice(levelIndex, attackIndex) {
+            const container = document.getElementById(`dice-${levelIndex}-${attackIndex}`);
+            if (!container) return;
+            
+            // Get current dice counter for unique IDs (monotonic)
+            const diceCounter = document.getElementById('dice-counter');
+            if (!diceCounter) return;
+            
+            const currentCounter = parseInt(diceCounter.value) || 0;
+            const newDiceIndex = currentCounter;
+            
+            // Create new dice group HTML
+            const diceId = `dice-${levelIndex}-${attackIndex}-${newDiceIndex}`;
+            const prefix = `level[${levelIndex}].attacks[${attackIndex}].dice[${newDiceIndex}]`;
+            
+            const diceHtml = `
+                <div id="${diceId}" class="grid" style="align-items:end;">
+                    <div>
+                        <label for="${prefix}.quantity">Qty</label>
+                        <input type="number" name="${prefix}.quantity" value="1" min="1" max="99" required />
+                    </div>
+                    <div>
+                        <label for="${prefix}.dieSize">Die</label>
+                        <select name="${prefix}.dieSize">
+                            <option value="4">d4</option>
+                            <option value="6" selected>d6</option>
+                            <option value="8">d8</option>
+                            <option value="10">d10</option>
+                            <option value="12">d12</option>
+                            <option value="20">d20</option>
+                        </select>
+                    </div>
+                    <div>
+                        <button type="button"
+                                onclick="removeDice('${diceId}')"
+                                class="outline secondary btn-sm"
+                                style="margin-bottom:0;">
+                            X
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            // Add to container
+            container.insertAdjacentHTML('beforeend', diceHtml);
+            
+            // Update counter
+            diceCounter.value = currentCounter + 1;
+        }
+
+        // Remove dice function - pure client-side
+        function removeDice(diceId) {
+            const diceElement = document.getElementById(diceId);
+            if (diceElement) {
+                // Remove the dice element
+                diceElement.remove();
+            }
+        }
+
         // Template caching for JavaScript attack creation
         let emptyAttackTemplate = null;
 
@@ -775,10 +835,7 @@
                         </div>
 
                         <button type="button"
-                                hx-post="/character/dice/add?levelIndex=LEVEL_INDEX_PLACEHOLDER&attackIndex=ATTACK_INDEX_PLACEHOLDER"
-                                hx-target="#dice-LEVEL_INDEX_PLACEHOLDER-ATTACK_INDEX_PLACEHOLDER"
-                                hx-swap="beforeend"
-                                hx-include="#dice-counter"
+                                onclick="addDice(LEVEL_INDEX_PLACEHOLDER, ATTACK_INDEX_PLACEHOLDER)"
                                 class="outline btn-sm">
                             + Add Dice
                         </button>

@@ -185,14 +185,12 @@ Extension method `MapCharacterEndpoints()` registers all routes:
 | POST | `/character/level/add` | Add level fragment | beforeend + OOB counter + OOB clone btn |
 | POST | `/character/level/clone` | Clone last level (incremented number) | beforeend + OOB counters + OOB clone btn |
 | POST | `/character/attack/add` | Add attack fragment | beforeend + OOB counter |
-| POST | `/character/dice/add` | Add dice group | beforeend + OOB counter |
-| DELETE | `/character/dice/remove` | Remove dice group | outerHTML (empty) |
 | POST | `/character/save` | Save to SQLite | innerHTML (form + message) |
 | DELETE | `/character/{id}` | Delete character | updated sidebar list |
 | POST | `/character/validate-percentages` | Validate hit%+crit% <= 100 | inline error |
 | POST | `/character/calculate` | Run damage simulation | innerHTML into results div |
 
-**Note**: Level and attack removal are handled entirely client-side via JavaScript (`removeLevel()` and `removeAttack()` functions) and do not require server endpoints.
+**Note**: Level, attack, and dice operations (add/remove) are handled entirely client-side via JavaScript functions and do not require server endpoints.
 
 Server-side validation on save: name required, levels 1-20, attack name required, percentages 0-100, hit%+crit% <= 100.
 
@@ -263,14 +261,16 @@ Monte Carlo damage simulation engine (10,000 iterations per level by default).
 
 ### HTMX Patterns
 
-- Fragment add endpoints return HTML + an `hx-swap-oob="true"` hidden input to update the monotonic counter
-- Remove endpoints return empty string (outerHTML swap deletes the element), **except level and attack removal which are handled client-side via JavaScript**
+- Fragment add endpoints return HTML + an `hx-swap-oob="true"` hidden input to update the monotonic counter, **except for client-side operations**
 - Save returns confirmation message + full re-rendered form
 - Percentage validation returns inline error or empty string
 - **OOB visibility pattern**: clone button wrapped in `<span id="clone-level-btn">`, shown/hidden via `hx-swap-oob="innerHTML"` from add-level and clone endpoints
 - **Clone endpoint** receives full form via `hx-include="#character-form"`, parses with `FormParser`, updates all three counters (level, attack, dice) via OOB to prevent index collisions with cloned content
-- **Level removal**: Pure client-side via `removeLevel(levelId)` JavaScript function, which removes the DOM element and renumbers remaining levels
-- **Attack removal**: Pure client-side via `removeAttack(attackId)` JavaScript function, which removes the DOM element instantly
+- **Client-side operations**: All add/remove operations for levels, attacks, and dice are now pure JavaScript for instant feedback:
+  - **Level removal**: `removeLevel(levelId)` - removes DOM element and renumbers remaining levels
+  - **Attack removal**: `removeAttack(attackId)` - removes DOM element instantly
+  - **Dice add**: `addDice(levelIndex, attackIndex)` - creates new dice group with monotonic counter
+  - **Dice removal**: `removeDice(diceId)` - removes DOM element instantly
 
 ### PicoCSS Conventions
 

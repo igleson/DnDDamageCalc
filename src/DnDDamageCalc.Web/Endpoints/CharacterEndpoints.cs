@@ -68,22 +68,13 @@ public static class CharacterEndpoints
             }
         });
 
-        app.MapPost("/character/dice/add", (HttpRequest request, int levelIndex, int attackIndex, ITemplateService templates) =>
-        {
-            var form = request.Form;
-            int.TryParse(form["diceCounter"], out var counter);
-            var html = HtmlFragments.DiceGroupFragment(levelIndex, attackIndex, counter, null, templates);
-            var newCounter = counter + 1;
-            html += $"""<input type="hidden" id="dice-counter" name="diceCounter" value="{newCounter}" hx-swap-oob="true" />""";
-            return Results.Text(html, "text/html");
-        });
 
 
 
 
 
-        app.MapDelete("/character/dice/remove", (int levelIndex, int attackIndex, int diceIndex) =>
-            Results.Text("", "text/html"));
+
+
 
         app.MapPost("/character/save", async (HttpRequest request, HttpContext ctx, ICharacterRepository repo, ITemplateService templates) =>
         {

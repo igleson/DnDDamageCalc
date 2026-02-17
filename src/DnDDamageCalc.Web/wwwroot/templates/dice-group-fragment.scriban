@@ -13,9 +13,7 @@
     </div>
     <div>
         <button type="button"
-                hx-delete="/character/dice/remove?levelIndex={{ level_index }}&attackIndex={{ attack_index }}&diceIndex={{ dice_index }}"
-                hx-target="#dice-{{ level_index }}-{{ attack_index }}-{{ dice_index }}"
-                hx-swap="outerHTML"
+                onclick="removeDice('dice-{{ level_index }}-{{ attack_index }}-{{ dice_index }}')"
                 class="outline secondary btn-sm"
                 style="margin-bottom:0;">
             X

@@ -53,10 +53,7 @@
         </div>
 
         <button type="button"
-                hx-post="/character/dice/add?levelIndex={{ level_index }}&attackIndex={{ attack_index }}"
-                hx-target="#dice-{{ level_index }}-{{ attack_index }}"
-                hx-swap="beforeend"
-                hx-include="#dice-counter"
+                onclick="addDice({{ level_index }}, {{ attack_index }})"
                 class="outline btn-sm">
             + Add Dice
         </button>

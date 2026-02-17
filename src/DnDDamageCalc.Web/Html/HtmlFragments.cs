@@ -293,6 +293,14 @@ public static class HtmlFragments
     public static string LoginPage(ITemplateService templates) =>
         templates.Render("login-page");
 
+    public static string IndexPage(ITemplateService templates, string characterListHtml, string characterFormHtml, bool showLogout = true) =>
+        templates.Render("index-page", new 
+        { 
+            show_logout = showLogout,
+            character_list = new { html = characterListHtml },
+            character_form = new { html = characterFormHtml }
+        });
+
     private static string F(double value) =>
         value.ToString("0.##", CultureInfo.InvariantCulture);
 

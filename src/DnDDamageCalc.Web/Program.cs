@@ -1,6 +1,7 @@
 using DnDDamageCalc.Web.Auth;
 using DnDDamageCalc.Web.Data;
 using DnDDamageCalc.Web.Endpoints;
+using DnDDamageCalc.Web.Html;
 using DnDDamageCalc.Web.Services;
 using Microsoft.AspNetCore.DataProtection;
 
@@ -80,7 +81,26 @@ else
 app.UseStaticFiles();
 app.UseMiddleware<AuthMiddleware>();
 
-app.MapGet("/", () => Results.Redirect("/index.html"));
+app.MapGet("/", async (HttpContext ctx, ITemplateService templates, ICharacterRepository repo) => 
+{
+    var showLogout = !app.Environment.IsDevelopment();
+    
+    // Get user ID and access token for data fetching
+    var userId = ctx.GetUserId();
+    var accessToken = ctx.GetAccessToken();
+    
+    // Fetch character list
+    var characters = await repo.ListAllAsync(userId, accessToken);
+    var characterListHtml = HtmlFragments.CharacterList(characters, selectedId: null, templates);
+    
+    // Generate empty character form
+    var characterFormHtml = HtmlFragments.CharacterForm(null, templates);
+    
+    var indexPageHtml = HtmlFragments.IndexPage(templates, characterListHtml, characterFormHtml, showLogout);
+    return Results.Content(indexPageHtml, "text/html");
+});
+
+app.MapGet("/index.html", () => Results.Redirect("/"));
 app.MapGet("/health", () => Task.FromResult(Results.Ok()));
 
 if (!app.Environment.IsDevelopment())

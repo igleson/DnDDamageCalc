@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>D&amp;D Damage Calculator</title>
+    <title>"D&D Damage Calculator"</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css" />
     <link rel="stylesheet" href="/style.css" />
     <script src="https://unpkg.com/htmx.org@2.0.4"
@@ -150,14 +150,12 @@
 </head>
 <body>
     <div class="app-layout">
-        <aside class="sidebar" id="sidebar"
-               hx-get="/character/list"
-               hx-trigger="load"
-               hx-target="#character-list"
-               hx-swap="innerHTML">
+        <aside class="sidebar" id="sidebar">
             <h4>Characters</h4>
             <hr />
-            <div id="character-list"></div>
+            <div id="character-list">
+                {{ character_list.html }}
+            </div>
             <hr />
             <button type="button" class="outline"
                     hx-get="/character/form"
@@ -166,10 +164,12 @@
                     style="width:100%;">
                 + New Character
             </button>
+            {{ if show_logout }}
             <hr />
             <form method="post" action="/auth/logout">
                 <button type="submit" class="outline secondary" style="width:100%;">Logout</button>
             </form>
+            {{ end }}
         </aside>
 
         <div class="app-main">
@@ -179,13 +179,14 @@
             </button>
 
             <header class="app-header">
-                <h1>D&amp;D Damage Calculator</h1>
+                <h1>D&D Damage Calculator</h1>
                 <small>Build your character, calculate your damage</small>
             </header>
 
             <div id="messages"></div>
 
-            <div id="form-container" hx-get="/character/form" hx-trigger="load" hx-swap="innerHTML">
+            <div id="form-container">
+                {{ character_form.html }}
             </div>
         </div>
     </div>

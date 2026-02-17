@@ -1,5 +1,6 @@
 using System.Net;
 using DnDDamageCalc.Web.Data;
+using DnDDamageCalc.Web.Models;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -10,9 +11,11 @@ namespace DnDDamageCalc.Tests;
 public class CharacterEndpointTests : IClassFixture<CustomWebApplicationFactory>
 {
     private readonly HttpClient _client;
+    private readonly CustomWebApplicationFactory _factory;
 
     public CharacterEndpointTests(CustomWebApplicationFactory factory)
     {
+        _factory = factory;
         _client = factory.CreateClient(new WebApplicationFactoryClientOptions
         {
             AllowAutoRedirect = false
@@ -136,7 +139,9 @@ public class CharacterEndpointTests : IClassFixture<CustomWebApplicationFactory>
     [Fact]
     public async Task Calculate_ValidData_ReturnsResultsGraph()
     {
+        var encounterSettingId = await CreateEncounterSettingAsync();
         var content = new FormUrlEncodedContent([
+            new KeyValuePair<string, string>("encounterSettingId", encounterSettingId.ToString()),
             new KeyValuePair<string, string>("characterName", "Test"),
             new KeyValuePair<string, string>("level[0].number", "1"),
             new KeyValuePair<string, string>("level[0].attacks[0].name", "Longsword"),
@@ -175,7 +180,9 @@ public class CharacterEndpointTests : IClassFixture<CustomWebApplicationFactory>
     [Fact]
     public async Task Calculate_WithTopple_ReturnsResults()
     {
+        var encounterSettingId = await CreateEncounterSettingAsync();
         var content = new FormUrlEncodedContent([
+            new KeyValuePair<string, string>("encounterSettingId", encounterSettingId.ToString()),
             new KeyValuePair<string, string>("characterName", "Topple Fighter"),
             new KeyValuePair<string, string>("level[0].number", "1"),
             new KeyValuePair<string, string>("level[0].attacks[0].name", "Warhammer"),
@@ -192,6 +199,23 @@ public class CharacterEndpointTests : IClassFixture<CustomWebApplicationFactory>
         response.EnsureSuccessStatusCode();
         var html = await response.Content.ReadAsStringAsync();
         Assert.Contains("Damage Statistics", html);
+    }
+
+    [Fact]
+    public async Task Calculate_WithoutEncounterSetting_ReturnsError()
+    {
+        var content = new FormUrlEncodedContent([
+            new KeyValuePair<string, string>("characterName", "No Encounter"),
+            new KeyValuePair<string, string>("level[0].number", "1"),
+            new KeyValuePair<string, string>("level[0].attacks[0].name", "Longsword"),
+            new KeyValuePair<string, string>("level[0].attacks[0].hitPercent", "65"),
+            new KeyValuePair<string, string>("level[0].attacks[0].critPercent", "5")
+        ]);
+        var response = await _client.PostAsync("/character/calculate", content);
+
+        response.EnsureSuccessStatusCode();
+        var html = await response.Content.ReadAsStringAsync();
+        Assert.Contains("Select an encounter setting", html);
     }
 
     [Fact]
@@ -214,5 +238,16 @@ public class CharacterEndpointTests : IClassFixture<CustomWebApplicationFactory>
         var listResponse = await _client.GetAsync("/character/list");
         var listHtml = await listResponse.Content.ReadAsStringAsync();
         Assert.Contains("Frodo", listHtml);
+    }
+
+    private async Task<int> CreateEncounterSettingAsync()
+    {
+        using var scope = _factory.Services.CreateScope();
+        var repo = scope.ServiceProvider.GetRequiredService<IEncounterSettingRepository>();
+        return await repo.SaveAsync(new EncounterSetting
+        {
+            Name = "Test Encounter",
+            Combats = [new CombatDefinition { Rounds = 3, ShortRestAfter = false }]
+        }, "test-user-id", "fake-token");
     }
 }

@@ -157,6 +157,35 @@ public static class HtmlFragments
     public static string CloneAttackButton(int levelIndex, ITemplateService templates) =>
         templates.Render("clone-attack-button", new { level_index = levelIndex });
 
+    public static string EncounterSettingsPanel(
+        List<(int Id, string Name)> settings,
+        EncounterSetting? editing,
+        int? selectedId,
+        ITemplateService templates)
+    {
+        var edit = editing ?? new EncounterSetting
+        {
+            Combats = [new CombatDefinition { Rounds = 1, ShortRestAfter = false }]
+        };
+
+        if (edit.Combats.Count == 0)
+            edit.Combats.Add(new CombatDefinition { Rounds = 1, ShortRestAfter = false });
+
+        return templates.Render("encounter-settings-panel", new
+        {
+            settings = settings.Select(s => new { id = s.Id, name = s.Name }).ToList(),
+            selected_id = selectedId,
+            encounter_id = edit.Id,
+            encounter_name = edit.Name,
+            combats = edit.Combats.Select((c, i) => new
+            {
+                index = i,
+                rounds = c.Rounds <= 0 ? 1 : c.Rounds,
+                short_rest_after = c.ShortRestAfter
+            }).ToList()
+        });
+    }
+
     public static string ValidationError(string message, ITemplateService templates) =>
         templates.Render("validation-error", new { message });
 
@@ -322,12 +351,13 @@ public static class HtmlFragments
     public static string LoginPage(ITemplateService templates) =>
         templates.Render("login-page");
 
-    public static string IndexPage(ITemplateService templates, string characterListHtml, string characterFormHtml, bool showLogout = true, bool showHotReload = false) =>
+    public static string IndexPage(ITemplateService templates, string characterListHtml, string encounterPanelHtml, string characterFormHtml, bool showLogout = true, bool showHotReload = false) =>
         templates.Render("index-page", new
         {
             show_logout = showLogout,
             show_hot_reload = showHotReload,
             character_list = new { html = characterListHtml },
+            encounter_panel = new { html = encounterPanelHtml },
             character_form = new { html = characterFormHtml }
         });
 

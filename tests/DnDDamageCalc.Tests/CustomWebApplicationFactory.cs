@@ -31,6 +31,8 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IDisp
         {
             services.RemoveAll<ICharacterRepository>();
             services.AddSingleton<ICharacterRepository, SqliteCharacterRepository>();
+            services.RemoveAll<IEncounterSettingRepository>();
+            services.AddSingleton<IEncounterSettingRepository, SqliteEncounterSettingRepository>();
         });
 
         builder.UseSetting("TestUserId", "test-user-id");

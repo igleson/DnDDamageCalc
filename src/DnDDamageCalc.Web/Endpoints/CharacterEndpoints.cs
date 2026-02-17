@@ -22,7 +22,7 @@ public static class CharacterEndpoints
             return Results.Text(HtmlFragments.CharacterList(characters, selectedId: null, templates), "text/html");
         });
 
-        app.MapGet("/character/{id:int}", async (int id, HttpContext ctx, ICharacterRepository repo, ITemplateService templates) =>
+        app.MapGet("/character/{id:int}", async (int id, HttpContext ctx, ICharacterRepository repo, IEncounterSettingRepository encounterRepo, ITemplateService templates) =>
         {
             var userId = ctx.GetUserId();
             var accessToken = ctx.GetAccessToken();
@@ -58,12 +58,14 @@ public static class CharacterEndpoints
                 // Direct browser visit: return full page with character loaded
                 var characters = await repo.ListAllAsync(userId, accessToken);
                 var characterListHtml = HtmlFragments.CharacterList(characters, selectedId: id, templates);
+                var settings = await encounterRepo.ListAllAsync(userId, accessToken);
+                var encounterPanelHtml = HtmlFragments.EncounterSettingsPanel(settings, editing: null, selectedId: null, templates);
                 var characterFormHtml = HtmlFragments.CharacterForm(character, templates);
                 var env = ctx.RequestServices.GetRequiredService<IWebHostEnvironment>();
                 var showLogout = !env.IsDevelopment();
                 var showHotReload = env.IsDevelopment();
                 
-                var fullPageHtml = HtmlFragments.IndexPage(templates, characterListHtml, characterFormHtml, showLogout, showHotReload);
+                var fullPageHtml = HtmlFragments.IndexPage(templates, characterListHtml, encounterPanelHtml, characterFormHtml, showLogout, showHotReload);
                 return Results.Content(fullPageHtml, "text/html");
             }
         });
@@ -120,12 +122,13 @@ public static class CharacterEndpoints
             return Results.Text("", "text/html");
         });
 
-        app.MapPost("/character/calculate", async (HttpRequest request, ITemplateService templates) =>
+        app.MapPost("/character/calculate", async (HttpRequest request, HttpContext ctx, IEncounterSettingRepository encounterRepo, ITemplateService templates) =>
         {
             var form = await request.ReadFormAsync();
             var character = FormParser.Parse(form);
+            var encounterSettingId = FormParser.ParseEncounterSettingId(form);
 
-            var errors = ValidateForCalculation(character);
+            var errors = ValidateForCalculation(character, encounterSettingId);
             if (errors.Count > 0)
             {
                 var errorHtml = string.Join("", errors.Select(e =>
@@ -133,7 +136,13 @@ public static class CharacterEndpoints
                 return Results.Text(errorHtml, "text/html");
             }
 
-            var stats = DamageSimulator.Simulate(character);
+            var userId = ctx.GetUserId();
+            var accessToken = ctx.GetAccessToken();
+            var encounterSetting = await encounterRepo.GetByIdAsync(encounterSettingId, userId, accessToken);
+            if (encounterSetting is null)
+                return Results.Text(HtmlFragments.ValidationError("Selected encounter setting was not found.", templates), "text/html");
+
+            var stats = DamageSimulator.Simulate(character, encounterSetting);
             return Results.Text(HtmlFragments.DamageResultsGraph(stats), "text/html");
         });
     }
@@ -172,9 +181,12 @@ public static class CharacterEndpoints
         return errors;
     }
 
-    private static List<string> ValidateForCalculation(Models.Character character)
+    private static List<string> ValidateForCalculation(Models.Character character, int encounterSettingId)
     {
         var errors = new List<string>();
+
+        if (encounterSettingId <= 0)
+            errors.Add("Select an encounter setting before calculating damage.");
 
         if (character.Levels.Count == 0)
             errors.Add("Add at least one level to calculate damage.");

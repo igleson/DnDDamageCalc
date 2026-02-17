@@ -59,6 +59,30 @@ public static partial class FormParser
         return character;
     }
 
+    public static int ParseEncounterSettingId(IFormCollection form) =>
+        ParseInt(form, "encounterSettingId");
+
+    public static EncounterSetting ParseEncounterSetting(IFormCollection form)
+    {
+        var setting = new EncounterSetting
+        {
+            Id = ParseInt(form, "encounterId"),
+            Name = form["encounterName"].ToString().Trim()
+        };
+
+        var combatIndices = ExtractIndices(form, CombatPattern());
+        foreach (var ci in combatIndices)
+        {
+            setting.Combats.Add(new CombatDefinition
+            {
+                Rounds = ParseInt(form, $"combat[{ci}].rounds", 1),
+                ShortRestAfter = form[$"combat[{ci}].shortRestAfter"] == "on"
+            });
+        }
+
+        return setting;
+    }
+
     private static int ParseInt(IFormCollection form, string key, int defaultValue = 0)
     {
         var value = form[key].ToString();
@@ -81,6 +105,9 @@ public static partial class FormParser
 
     [GeneratedRegex(@"^level\[(\d+)\]\.")]
     private static partial Regex LevelPattern();
+
+    [GeneratedRegex(@"^combat\[(\d+)\]\.")]
+    private static partial Regex CombatPattern();
 
     private static Regex AttackPattern(int levelIndex) =>
         new($@"^level\[{levelIndex}\]\.attacks\[(\d+)\]\.");

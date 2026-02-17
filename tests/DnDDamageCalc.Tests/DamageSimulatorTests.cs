@@ -71,16 +71,16 @@ public class DamageSimulatorTests
     }
 
     [Fact]
-    public void Simulate_VexGrantsAdvantageOnMiss()
+    public void Simulate_VexGrantsAdvantageOnHit()
     {
-        // Two attacks: first always misses with Vex, second has 50% hit
+        // Two attacks: first always hits with Vex, second has 50% hit
         // Without Vex advantage, second attack hits 50% of time
         // With Vex advantage, second attack should hit ~75% of time (1-(1-0.5)^2)
         var attacks = new List<Attack>
         {
             new()
             {
-                Name = "Miss with Vex", HitPercent = 0, CritPercent = 0,
+                Name = "Hit with Vex", HitPercent = 100, CritPercent = 0,
                 MasteryVex = true, FlatModifier = 0, DiceGroups = []
             },
             new()
@@ -105,12 +105,12 @@ public class DamageSimulatorTests
     [Fact]
     public void Simulate_VexConsumedAfterOneUse()
     {
-        // Three attacks: first misses (Vex), second should have advantage, third should NOT
+        // Three attacks: first hits (Vex), second should have advantage, third should NOT
         var attacks = new List<Attack>
         {
             new()
             {
-                Name = "Miss with Vex", HitPercent = 0, CritPercent = 0,
+                Name = "Hit with Vex", HitPercent = 100, CritPercent = 0,
                 MasteryVex = true, FlatModifier = 0, DiceGroups = []
             },
             new()
@@ -215,6 +215,74 @@ public class DamageSimulatorTests
         Assert.True(s.P50 <= s.P75);
         Assert.True(s.P75 <= s.P90);
         Assert.True(s.P90 <= s.P95);
+    }
+
+    [Fact]
+    public void Simulate_WithEncounterSetting_VexPersistsAcrossRounds()
+    {
+        var attacks = new List<Attack>
+        {
+            new()
+            {
+                Name = "Vex Opener", HitPercent = 100, CritPercent = 0,
+                MasteryVex = true, FlatModifier = 0, DiceGroups = []
+            },
+            new()
+            {
+                Name = "Follow-up", HitPercent = 50, CritPercent = 0,
+                FlatModifier = 10, DiceGroups = []
+            }
+        };
+        var character = new Character
+        {
+            Name = "Encounter Vex",
+            Levels = [new CharacterLevel { LevelNumber = 1, Attacks = attacks }]
+        };
+        var setting = new EncounterSetting
+        {
+            Name = "Two Rounds",
+            Combats = [new CombatDefinition { Rounds = 2, ShortRestAfter = false }]
+        };
+
+        var results = DamageSimulator.Simulate(character, setting, iterations: 50_000);
+
+        Assert.True(results[0].Average > 6.5, $"Average {results[0].Average} should reflect persistent Vex across rounds");
+    }
+
+    [Fact]
+    public void Simulate_WithEncounterSetting_ToppleResetsBetweenRounds()
+    {
+        var attacks = new List<Attack>
+        {
+            new()
+            {
+                Name = "Topple", HitPercent = 100, CritPercent = 0,
+                MasteryTopple = true, TopplePercent = 100, FlatModifier = 0, DiceGroups = []
+            },
+            new()
+            {
+                Name = "Follow-up", HitPercent = 50, CritPercent = 0,
+                FlatModifier = 10, DiceGroups = []
+            }
+        };
+        var character = new Character
+        {
+            Name = "Encounter Topple",
+            Levels = [new CharacterLevel { LevelNumber = 1, Attacks = attacks }]
+        };
+        var setting = new EncounterSetting
+        {
+            Name = "Two Combats",
+            Combats =
+            [
+                new CombatDefinition { Rounds = 1, ShortRestAfter = false },
+                new CombatDefinition { Rounds = 1, ShortRestAfter = false }
+            ]
+        };
+
+        var results = DamageSimulator.Simulate(character, setting, iterations: 50_000);
+
+        Assert.InRange(results[0].Average, 7.0, 8.0);
     }
 
     private static Character MakeCharacter(int hitPercent, int critPercent,

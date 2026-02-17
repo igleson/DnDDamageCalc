@@ -17,13 +17,37 @@ public static class DamageSimulator
 {
     public static List<LevelStats> Simulate(Character character, int iterations = 10_000)
     {
+        var defaultSetting = new EncounterSetting
+        {
+            Name = "Default",
+            Combats = [new CombatDefinition { Rounds = 1, ShortRestAfter = false }]
+        };
+        return Simulate(character, defaultSetting, iterations);
+    }
+
+    public static List<LevelStats> Simulate(Character character, EncounterSetting setting, int iterations = 10_000)
+    {
         var results = new List<LevelStats>();
+        var totalRounds = setting.Combats.Sum(c => Math.Max(1, c.Rounds));
 
         foreach (var level in character.Levels)
         {
-            var damages = new double[iterations];
+            var damages = new double[Math.Max(1, iterations * totalRounds)];
+            var index = 0;
             for (var i = 0; i < iterations; i++)
-                damages[i] = SimulateTurn(level.Attacks);
+            {
+                var nextAttackHasAdvantage = false;
+
+                foreach (var combat in setting.Combats)
+                {
+                    for (var round = 0; round < Math.Max(1, combat.Rounds); round++)
+                    {
+                        damages[index++] = SimulateRound(level.Attacks, ref nextAttackHasAdvantage);
+                    }
+
+                    nextAttackHasAdvantage = false;
+                }
+            }
 
             Array.Sort(damages);
 
@@ -42,10 +66,9 @@ public static class DamageSimulator
         return results;
     }
 
-    private static double SimulateTurn(List<Attack> attacks)
+    private static double SimulateRound(List<Attack> attacks, ref bool nextAttackHasAdvantage)
     {
         var totalDamage = 0.0;
-        var nextAttackHasAdvantage = false;
         var targetIsProne = false;
 
         foreach (var attack in attacks)
@@ -79,6 +102,9 @@ public static class DamageSimulator
                 // Crit: double dice quantity, same flat modifier
                 totalDamage += RollDamage(attack, isCrit: true);
 
+                if (attack.MasteryVex)
+                    nextAttackHasAdvantage = true;
+
                 if (attack.MasteryTopple)
                     TryTopple(attack, ref targetIsProne);
             }
@@ -87,15 +113,15 @@ public static class DamageSimulator
                 // Normal hit
                 totalDamage += RollDamage(attack, isCrit: false);
 
+                if (attack.MasteryVex)
+                    nextAttackHasAdvantage = true;
+
                 if (attack.MasteryTopple)
                     TryTopple(attack, ref targetIsProne);
             }
             else
             {
                 // Miss
-                if (attack.MasteryVex)
-                    nextAttackHasAdvantage = true;
-                
                 if (attack.MasteryGraze && attack.GrazeValue > 0)
                     totalDamage += attack.GrazeValue;
             }

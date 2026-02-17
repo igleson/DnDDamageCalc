@@ -216,6 +216,40 @@ public class FormParserTests
         Assert.Equal("Staff", character.Levels[0].Attacks[0].Name);
     }
 
+    [Fact]
+    public void ParseEncounterSetting_ReturnsCombats()
+    {
+        var form = CreateForm(new Dictionary<string, string>
+        {
+            ["encounterId"] = "4",
+            ["encounterName"] = "  Dungeon Crawl  ",
+            ["combat[0].rounds"] = "3",
+            ["combat[1].rounds"] = "2",
+            ["combat[1].shortRestAfter"] = "on"
+        });
+
+        var encounter = FormParser.ParseEncounterSetting(form);
+
+        Assert.Equal(4, encounter.Id);
+        Assert.Equal("Dungeon Crawl", encounter.Name);
+        Assert.Equal(2, encounter.Combats.Count);
+        Assert.Equal(3, encounter.Combats[0].Rounds);
+        Assert.True(encounter.Combats[1].ShortRestAfter);
+    }
+
+    [Fact]
+    public void ParseEncounterSettingId_ReturnsId()
+    {
+        var form = CreateForm(new Dictionary<string, string>
+        {
+            ["encounterSettingId"] = "7"
+        });
+
+        var id = FormParser.ParseEncounterSettingId(form);
+
+        Assert.Equal(7, id);
+    }
+
     private static IFormCollection CreateForm(Dictionary<string, string> values)
     {
         var dict = new Dictionary<string, StringValues>();

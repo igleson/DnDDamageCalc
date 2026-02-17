@@ -35,6 +35,13 @@ public static class Database
                 Data BLOB NOT NULL
             );
             CREATE INDEX IF NOT EXISTS idx_characters_user ON Characters(SupabaseUserId);
+            CREATE TABLE IF NOT EXISTS EncounterSettings (
+                Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                SupabaseUserId TEXT NOT NULL,
+                Name TEXT NOT NULL,
+                Data TEXT NOT NULL
+            );
+            CREATE INDEX IF NOT EXISTS idx_encounter_settings_user ON EncounterSettings(SupabaseUserId);
             """;
         cmd.ExecuteNonQuery();
     }

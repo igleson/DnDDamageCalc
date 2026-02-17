@@ -15,6 +15,7 @@ A D&D Damage Calculator built with ASP.NET Minimal APIs, HTMX, and PicoCSS. Comp
 ## Features
 
 - **Character Management**: Create, edit, and delete D&D characters with multiple levels
+- **Encounter Settings**: Create per-user combat timelines (multiple combats, rounds, short-rest flags)
 - **Damage Simulation**: Monte Carlo simulation (10,000 iterations) for damage statistics
 - **Weapon Masteries**: Support for Vex and Topple masteries
 - **Percentile Stats**: Average, P25, P50, P75, P90, P95 damage per level

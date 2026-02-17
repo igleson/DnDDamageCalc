@@ -187,6 +187,10 @@
                     style="width:100%;">
                 + New Character
             </button>
+            <hr />
+            <div id="encounter-panel">
+                {{ encounter_panel.html }}
+            </div>
             {{ if show_logout }}
             <hr />
             <form method="post" action="/auth/logout">
@@ -214,6 +218,32 @@
         </div>
     </div>
     <script>
+        function addEncounterCombat() {
+            const combatsContainer = document.getElementById('encounter-combats');
+            if (!combatsContainer) return;
+            const newIndex = combatsContainer.querySelectorAll('article[id^="combat-"]').length;
+            const wrapper = document.createElement('article');
+            wrapper.id = `combat-${newIndex}`;
+            wrapper.style.padding = '0.6rem';
+            wrapper.style.margin = '0.5rem 0';
+            wrapper.innerHTML = `
+                <label>Combat ${newIndex + 1} Rounds</label>
+                <input type="number" min="1" name="combat[${newIndex}].rounds" value="1" required />
+                <label>
+                    <input type="checkbox" name="combat[${newIndex}].shortRestAfter" />
+                    Short rest after this combat
+                </label>
+                <button type="button" class="outline secondary btn-sm" onclick="removeEncounterCombat('combat-${newIndex}')">Remove Combat</button>
+            `;
+            combatsContainer.appendChild(wrapper);
+        }
+
+        function removeEncounterCombat(id) {
+            const element = document.getElementById(id);
+            if (!element) return;
+            element.remove();
+        }
+
         function graphContainerFromElement(element) {
             return element.closest('[data-damage-graph]');
         }

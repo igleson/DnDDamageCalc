@@ -32,6 +32,7 @@ if (builder.Environment.IsDevelopment())
     Database.Initialize();
     
     builder.Services.AddSingleton<ICharacterRepository, SqliteCharacterRepository>();
+    builder.Services.AddSingleton<IEncounterSettingRepository, SqliteEncounterSettingRepository>();
 }
 else
 {
@@ -56,6 +57,13 @@ else
         var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
         var httpClient = httpClientFactory.CreateClient();
         return new SupabaseCharacterRepository(httpClient, supabaseUrl, supabaseAnonKey);
+    });
+
+    builder.Services.AddSingleton<IEncounterSettingRepository>(sp =>
+    {
+        var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
+        var httpClient = httpClientFactory.CreateClient();
+        return new SupabaseEncounterSettingRepository(httpClient, supabaseUrl, supabaseAnonKey);
     });
 }
 
@@ -87,7 +95,7 @@ else
 app.UseStaticFiles();
 app.UseMiddleware<AuthMiddleware>();
 
-app.MapGet("/", async (HttpContext ctx, ITemplateService templates, ICharacterRepository repo) => 
+app.MapGet("/", async (HttpContext ctx, ITemplateService templates, ICharacterRepository repo, IEncounterSettingRepository encounterRepo) => 
 {
     var showLogout = !app.Environment.IsDevelopment();
     
@@ -97,12 +105,14 @@ app.MapGet("/", async (HttpContext ctx, ITemplateService templates, ICharacterRe
     
     // Fetch character list
     var characters = await repo.ListAllAsync(userId, accessToken);
+    var settings = await encounterRepo.ListAllAsync(userId, accessToken);
     var characterListHtml = HtmlFragments.CharacterList(characters, selectedId: null, templates);
+    var encounterPanelHtml = HtmlFragments.EncounterSettingsPanel(settings, editing: null, selectedId: null, templates);
     
     // Generate empty character form
     var characterFormHtml = HtmlFragments.CharacterForm(null, templates);
     
-    var indexPageHtml = HtmlFragments.IndexPage(templates, characterListHtml, characterFormHtml, showLogout, app.Environment.IsDevelopment());
+    var indexPageHtml = HtmlFragments.IndexPage(templates, characterListHtml, encounterPanelHtml, characterFormHtml, showLogout, app.Environment.IsDevelopment());
     return Results.Content(indexPageHtml, "text/html");
 });
 
@@ -115,6 +125,7 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.MapCharacterEndpoints();
+app.MapEncounterSettingEndpoints();
 
 // Hot reload endpoints for development
 if (app.Environment.IsDevelopment())

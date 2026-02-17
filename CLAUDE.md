@@ -189,6 +189,10 @@ Extension method `MapCharacterEndpoints()` registers all routes:
 | DELETE | `/character/{id}` | Delete character | updated sidebar list |
 | POST | `/character/validate-percentages` | Validate hit%+crit% <= 100 | inline error |
 | POST | `/character/calculate` | Run damage simulation | innerHTML into results div |
+| GET | `/encounter/panel` | Render encounter settings panel | innerHTML into sidebar panel |
+| POST | `/encounter/save` | Create/update encounter setting | innerHTML into sidebar panel |
+| GET | `/encounter/{id}/edit` | Load encounter setting into editor | innerHTML into sidebar panel |
+| DELETE | `/encounter/{id}` | Delete encounter setting | updated sidebar panel |
 
 **Note**: Level, attack, and dice operations (add/remove) are handled entirely client-side via JavaScript functions and do not require server endpoints.
 
@@ -199,10 +203,13 @@ Server-side validation on save: name required, levels 1-20, attack name required
 Monte Carlo damage simulation engine (10,000 iterations per level by default).
 
 - `LevelStats` — result DTO with LevelNumber, Average, P25, P50, P75, P90, P95
-- `DamageSimulator.Simulate(Character, iterations)` — iterates each level, simulates turns, returns sorted percentile stats
-- `SimulateTurn(attacks)` — processes attacks sequentially within a turn, tracking Vex/Topple state
-- **Vex mastery**: on a miss, grants advantage (roll twice) to the next attack; consumed after one use
+- `DamageSimulator.Simulate(Character, iterations)` — backward-compatible single-round simulation
+- `DamageSimulator.Simulate(Character, EncounterSetting, iterations)` — simulates combats/rounds from the selected encounter setting
+- Round-based simulation tracks Vex and Topple state with encounter rules
+- **Vex mastery**: on a hit/crit, grants advantage (roll twice) to the next attack; consumed after one use
+- **Vex across rounds**: in the same combat, Vex carry-over persists between rounds (same enemy assumption)
 - **Topple mastery**: on a hit/crit, target makes a save (TopplePercent chance to fail); prone grants advantage to all subsequent attacks for the turn
+- **Topple across rounds**: prone resets at each new round (enemy stands up between rounds)
 - **Advantage**: recalculates effective hit/crit rates using `1 - (1-p)^2` formula, preserving crit/hit ratio
 - **Crits**: double dice quantity only, flat modifier applied once
 - Percentile calculation uses linear interpolation on sorted damage arrays

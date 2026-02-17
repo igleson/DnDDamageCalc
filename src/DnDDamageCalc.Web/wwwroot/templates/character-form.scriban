@@ -39,7 +39,7 @@
 
 <button type="button"
         hx-post="/character/calculate"
-        hx-include="#character-form"
+        hx-include="#character-form,#encounter-selection"
         hx-target="#damage-results"
         hx-swap="innerHTML"
         class="contrast"

@@ -41,6 +41,7 @@ public class CharacterEndpointTests : IClassFixture<CustomWebApplicationFactory>
         var html = await response.Content.ReadAsStringAsync();
         Assert.Contains("character-form", html);
         Assert.Contains("characterName", html);
+        Assert.Contains("encounterSettingId", html);
     }
 
     [Fact]

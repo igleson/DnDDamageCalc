@@ -107,12 +107,12 @@ app.MapGet("/", async (HttpContext ctx, ITemplateService templates, ICharacterRe
     var characters = await repo.ListAllAsync(userId, accessToken);
     var settings = await encounterRepo.ListAllAsync(userId, accessToken);
     var characterListHtml = HtmlFragments.CharacterList(characters, selectedId: null, templates);
-    var encounterPanelHtml = HtmlFragments.EncounterSettingsPanel(settings, editing: null, selectedId: null, templates);
+    var encounterListHtml = HtmlFragments.EncounterList(settings, selectedId: null, templates);
     
     // Generate empty character form
-    var characterFormHtml = HtmlFragments.CharacterForm(null, templates);
+    var characterFormHtml = HtmlFragments.CharacterForm(null, settings, selectedEncounterId: null, templates);
     
-    var indexPageHtml = HtmlFragments.IndexPage(templates, characterListHtml, encounterPanelHtml, characterFormHtml, showLogout, app.Environment.IsDevelopment());
+    var indexPageHtml = HtmlFragments.IndexPage(templates, characterListHtml, encounterListHtml, characterFormHtml, showLogout, app.Environment.IsDevelopment());
     return Results.Content(indexPageHtml, "text/html");
 });
 

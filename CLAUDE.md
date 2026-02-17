@@ -189,10 +189,11 @@ Extension method `MapCharacterEndpoints()` registers all routes:
 | DELETE | `/character/{id}` | Delete character | updated sidebar list |
 | POST | `/character/validate-percentages` | Validate hit%+crit% <= 100 | inline error |
 | POST | `/character/calculate` | Run damage simulation | innerHTML into results div |
-| GET | `/encounter/panel` | Render encounter settings panel | innerHTML into sidebar panel |
-| POST | `/encounter/save` | Create/update encounter setting | innerHTML into sidebar panel |
-| GET | `/encounter/{id}/edit` | Load encounter setting into editor | innerHTML into sidebar panel |
-| DELETE | `/encounter/{id}` | Delete encounter setting | updated sidebar panel |
+| GET | `/encounter/list` | List saved encounter settings | innerHTML into sidebar list |
+| GET | `/encounter/form` | Empty encounter form | innerHTML into form container |
+| GET | `/encounter/{id}` | Load saved encounter setting | innerHTML into form container |
+| POST | `/encounter/save` | Create/update encounter setting | form + OOB encounter list |
+| DELETE | `/encounter/{id}` | Delete encounter setting | updated sidebar list |
 
 **Note**: Level, attack, and dice operations (add/remove) are handled entirely client-side via JavaScript functions and do not require server endpoints.
 

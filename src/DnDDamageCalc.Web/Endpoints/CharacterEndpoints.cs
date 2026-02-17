@@ -11,8 +11,13 @@ public static class CharacterEndpoints
 {
     public static void MapCharacterEndpoints(this WebApplication app)
     {
-        app.MapGet("/character/form", (ITemplateService templates) =>
-            Results.Text(HtmlFragments.CharacterForm(null, templates), "text/html"));
+        app.MapGet("/character/form", async (HttpContext ctx, IEncounterSettingRepository encounterRepo, ITemplateService templates) =>
+        {
+            var userId = ctx.GetUserId();
+            var accessToken = ctx.GetAccessToken();
+            var settings = await encounterRepo.ListAllAsync(userId, accessToken);
+            return Results.Text(HtmlFragments.CharacterForm(null, settings, selectedEncounterId: null, templates), "text/html");
+        });
 
         app.MapGet("/character/list", async (HttpContext ctx, ICharacterRepository repo, ITemplateService templates) =>
         {
@@ -51,21 +56,22 @@ public static class CharacterEndpoints
             if (isHtmxRequest)
             {
                 // HTMX request: return just the character form HTML
-                return Results.Text(HtmlFragments.CharacterForm(character, templates), "text/html");
+                var settings = await encounterRepo.ListAllAsync(userId, accessToken);
+                return Results.Text(HtmlFragments.CharacterForm(character, settings, selectedEncounterId: null, templates), "text/html");
             }
             else
             {
                 // Direct browser visit: return full page with character loaded
                 var characters = await repo.ListAllAsync(userId, accessToken);
-                var characterListHtml = HtmlFragments.CharacterList(characters, selectedId: id, templates);
                 var settings = await encounterRepo.ListAllAsync(userId, accessToken);
-                var encounterPanelHtml = HtmlFragments.EncounterSettingsPanel(settings, editing: null, selectedId: null, templates);
-                var characterFormHtml = HtmlFragments.CharacterForm(character, templates);
+                var characterListHtml = HtmlFragments.CharacterList(characters, selectedId: id, templates);
+                var encounterListHtml = HtmlFragments.EncounterList(settings, selectedId: null, templates);
+                var characterFormHtml = HtmlFragments.CharacterForm(character, settings, selectedEncounterId: null, templates);
                 var env = ctx.RequestServices.GetRequiredService<IWebHostEnvironment>();
                 var showLogout = !env.IsDevelopment();
                 var showHotReload = env.IsDevelopment();
                 
-                var fullPageHtml = HtmlFragments.IndexPage(templates, characterListHtml, encounterPanelHtml, characterFormHtml, showLogout, showHotReload);
+                var fullPageHtml = HtmlFragments.IndexPage(templates, characterListHtml, encounterListHtml, characterFormHtml, showLogout, showHotReload);
                 return Results.Content(fullPageHtml, "text/html");
             }
         });
@@ -78,19 +84,21 @@ public static class CharacterEndpoints
 
 
 
-        app.MapPost("/character/save", async (HttpRequest request, HttpContext ctx, ICharacterRepository repo, ITemplateService templates) =>
+        app.MapPost("/character/save", async (HttpRequest request, HttpContext ctx, ICharacterRepository repo, IEncounterSettingRepository encounterRepo, ITemplateService templates) =>
         {
             var userId = ctx.GetUserId();
             var accessToken = ctx.GetAccessToken();
             var form = await request.ReadFormAsync();
             var character = FormParser.Parse(form);
+            var selectedEncounterId = FormParser.ParseEncounterSettingId(form);
+            var settings = await encounterRepo.ListAllAsync(userId, accessToken);
 
             var errors = Validate(character);
             if (errors.Count > 0)
             {
                 var errorHtml = string.Join("", errors.Select(e =>
                     $"""<p style="color:var(--pico-del-color);">{System.Net.WebUtility.HtmlEncode(e)}</p>"""));
-                return Results.Text(errorHtml + HtmlFragments.CharacterForm(character, templates), "text/html");
+                return Results.Text(errorHtml + HtmlFragments.CharacterForm(character, settings, selectedEncounterId, templates), "text/html");
             }
 
             var id = await repo.SaveAsync(character, userId, accessToken);
@@ -98,7 +106,7 @@ public static class CharacterEndpoints
             var confirmation = HtmlFragments.SaveConfirmation(id, character.Name, templates);
             var characters = await repo.ListAllAsync(userId, accessToken);
             var sidebarOob = $"""<div id="character-list" hx-swap-oob="innerHTML">{HtmlFragments.CharacterList(characters, selectedId: id, templates)}</div>""";
-            return Results.Text(confirmation + HtmlFragments.CharacterForm(character, templates) + sidebarOob, "text/html");
+            return Results.Text(confirmation + HtmlFragments.CharacterForm(character, settings, selectedEncounterId, templates) + sidebarOob, "text/html");
         });
 
         app.MapDelete("/character/{id:int}", async (int id, HttpContext ctx, ICharacterRepository repo, ITemplateService templates) =>

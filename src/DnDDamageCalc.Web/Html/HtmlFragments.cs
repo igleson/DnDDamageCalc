@@ -15,9 +15,9 @@ public static class HtmlFragments
     private static string? _emptyAttackForm = null; // Reset cache to pick up new Graze mastery
     private static string? _emptyDiceGroupForm;
 
-    public static string CharacterForm(Character? character, ITemplateService templates)
+    public static string CharacterForm(Character? character, List<(int Id, string Name)> encounterSettings, int? selectedEncounterId, ITemplateService templates)
     {
-        if (character is null && _emptyCharacterForm is not null) return _emptyCharacterForm;
+        if (character is null && _emptyCharacterForm is not null && encounterSettings.Count == 0) return _emptyCharacterForm;
         var c = character ?? new Character();
 
         // Generate level HTML fragments
@@ -34,11 +34,13 @@ public static class HtmlFragments
             level_count = c.Levels.Count,
             levels = levels,
             has_levels = c.Levels.Count > 0,
-            clone_level_button = c.Levels.Count > 0 ? new { html = CloneLevelButton(templates) } : null
+            clone_level_button = c.Levels.Count > 0 ? new { html = CloneLevelButton(templates) } : null,
+            encounter_settings = encounterSettings.Select(s => new { id = s.Id, name = s.Name }).ToList(),
+            selected_encounter_id = selectedEncounterId
         };
 
         var renderedResult = templates.Render("character-form", model);
-        if (_emptyCharacterForm is null && character is null) _emptyCharacterForm = renderedResult;
+        if (_emptyCharacterForm is null && character is null && encounterSettings.Count == 0) _emptyCharacterForm = renderedResult;
 
         return renderedResult;
     }
@@ -157,27 +159,30 @@ public static class HtmlFragments
     public static string CloneAttackButton(int levelIndex, ITemplateService templates) =>
         templates.Render("clone-attack-button", new { level_index = levelIndex });
 
-    public static string EncounterSettingsPanel(
-        List<(int Id, string Name)> settings,
-        EncounterSetting? editing,
-        int? selectedId,
-        ITemplateService templates)
+    public static string EncounterList(List<(int Id, string Name)> settings, int? selectedId, ITemplateService templates)
     {
-        var edit = editing ?? new EncounterSetting
+        return templates.Render("encounter-list", new
+        {
+            settings = settings.Select(s => new { id = s.Id, name = s.Name }).ToList(),
+            selected_id = selectedId
+        });
+    }
+
+    public static string EncounterForm(EncounterSetting? encounter, ITemplateService templates)
+    {
+        var e = encounter ?? new EncounterSetting
         {
             Combats = [new CombatDefinition { Rounds = 1, ShortRestAfter = false }]
         };
 
-        if (edit.Combats.Count == 0)
-            edit.Combats.Add(new CombatDefinition { Rounds = 1, ShortRestAfter = false });
+        if (e.Combats.Count == 0)
+            e.Combats.Add(new CombatDefinition { Rounds = 1, ShortRestAfter = false });
 
-        return templates.Render("encounter-settings-panel", new
+        return templates.Render("encounter-form", new
         {
-            settings = settings.Select(s => new { id = s.Id, name = s.Name }).ToList(),
-            selected_id = selectedId,
-            encounter_id = edit.Id,
-            encounter_name = edit.Name,
-            combats = edit.Combats.Select((c, i) => new
+            encounter_id = e.Id,
+            encounter_name = e.Name,
+            combats = e.Combats.Select((c, i) => new
             {
                 index = i,
                 rounds = c.Rounds <= 0 ? 1 : c.Rounds,
@@ -191,6 +196,9 @@ public static class HtmlFragments
 
     public static string SaveConfirmation(int id, string name, ITemplateService templates) =>
         templates.Render("save-confirmation", new { name });
+
+    public static string EncounterSaveConfirmation(string name, ITemplateService templates) =>
+        templates.Render("encounter-save-confirmation", new { name });
 
     public static string DamageResultsGraph(List<LevelStats> stats)
     {
@@ -351,13 +359,13 @@ public static class HtmlFragments
     public static string LoginPage(ITemplateService templates) =>
         templates.Render("login-page");
 
-    public static string IndexPage(ITemplateService templates, string characterListHtml, string encounterPanelHtml, string characterFormHtml, bool showLogout = true, bool showHotReload = false) =>
+    public static string IndexPage(ITemplateService templates, string characterListHtml, string encounterListHtml, string characterFormHtml, bool showLogout = true, bool showHotReload = false) =>
         templates.Render("index-page", new
         {
             show_logout = showLogout,
             show_hot_reload = showHotReload,
             character_list = new { html = characterListHtml },
-            encounter_panel = new { html = encounterPanelHtml },
+            encounter_list = new { html = encounterListHtml },
             character_form = new { html = characterFormHtml }
         });
 

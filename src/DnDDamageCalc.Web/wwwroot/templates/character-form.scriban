@@ -35,15 +35,27 @@
 
     <hr />
     <button type="submit">Save Character</button>
-</form>
 
-<button type="button"
-        hx-post="/character/calculate"
-        hx-include="#character-form,#encounter-selection"
-        hx-target="#damage-results"
-        hx-swap="innerHTML"
-        class="contrast"
-        style="margin-top:1rem;width:100%;">
-    Calculate Damage
-</button>
-<div id="damage-results"></div>
+    <div style="margin-top:1rem;">
+        <label for="encounterSettingId">Encounter Setting</label>
+        <select id="encounterSettingId" name="encounterSettingId" required>
+            <option value="">Select encounter setting</option>
+            {{ for setting in encounter_settings }}
+            <option value="{{ setting.id }}"{{ if setting.id == selected_encounter_id }} selected{{ end }}>
+                {{ setting.name | html.escape }}
+            </option>
+            {{ end }}
+        </select>
+    </div>
+
+    <button type="button"
+            hx-post="/character/calculate"
+            hx-include="#character-form"
+            hx-target="#damage-results"
+            hx-swap="innerHTML"
+            class="contrast"
+            style="margin-top:1rem;width:100%;">
+        Calculate Damage
+    </button>
+    <div id="damage-results"></div>
+</form>

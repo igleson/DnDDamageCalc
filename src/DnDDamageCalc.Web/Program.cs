@@ -17,6 +17,12 @@ builder.Services.AddDataProtection().SetApplicationName("DnDDamageCalc");
 // Register template service
 builder.Services.AddSingleton<ITemplateService, TemplateService>();
 
+// Register file watcher service for hot reloading in development
+if (builder.Environment.IsDevelopment())
+{
+    builder.Services.AddSingleton<IFileWatcherService, FileWatcherService>();
+}
+
 // Register repository based on environment
 if (builder.Environment.IsDevelopment())
 {
@@ -96,7 +102,7 @@ app.MapGet("/", async (HttpContext ctx, ITemplateService templates, ICharacterRe
     // Generate empty character form
     var characterFormHtml = HtmlFragments.CharacterForm(null, templates);
     
-    var indexPageHtml = HtmlFragments.IndexPage(templates, characterListHtml, characterFormHtml, showLogout);
+    var indexPageHtml = HtmlFragments.IndexPage(templates, characterListHtml, characterFormHtml, showLogout, app.Environment.IsDevelopment());
     return Results.Content(indexPageHtml, "text/html");
 });
 
@@ -109,6 +115,19 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.MapCharacterEndpoints();
+
+// Hot reload endpoints for development
+if (app.Environment.IsDevelopment())
+{
+    app.MapGet("/dev/hot-reload-check", (IFileWatcherService fileWatcher) =>
+        Results.Ok(new { lastModified = fileWatcher.GetLastModifiedTicks() }));
+
+    app.MapPost("/dev/clear-template-cache", (ITemplateService templateService) =>
+    {
+        templateService.ClearCache();
+        return Results.Ok(new { message = "Template cache cleared" });
+    });
+}
 
 app.Run();
 

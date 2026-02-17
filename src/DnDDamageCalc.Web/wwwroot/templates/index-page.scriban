@@ -919,6 +919,65 @@
             // Process HTMX attributes on the new element
             htmx.process(cloned);
         }
+
+        // Hot reload functionality for development
+        {% raw %}{{ if show_hot_reload }}{% endraw %}
+        let lastModifiedTicks = 0;
+        let hotReloadCheckInterval;
+
+        function startHotReloadChecking() {
+            // Check for file changes every 1 second
+            hotReloadCheckInterval = setInterval(async () => {
+                try {
+                    const response = await fetch('/dev/hot-reload-check');
+                    const data = await response.json();
+                    
+                    if (lastModifiedTicks === 0) {
+                        // First check, just store the value
+                        lastModifiedTicks = data.lastModified;
+                        return;
+                    }
+                    
+                    if (data.lastModified > lastModifiedTicks) {
+                        console.log('🔥 Hot reload: Files changed, clearing cache and reloading...');
+                        
+                        // Clear server-side template cache
+                        await fetch('/dev/clear-template-cache', { method: 'POST' });
+                        
+                        // Reload the page
+                        window.location.reload();
+                    }
+                } catch (error) {
+                    console.warn('Hot reload check failed:', error);
+                }
+            }, 1000);
+        }
+
+        function stopHotReloadChecking() {
+            if (hotReloadCheckInterval) {
+                clearInterval(hotReloadCheckInterval);
+                hotReloadCheckInterval = null;
+            }
+        }
+
+        // Start hot reload checking when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('🔥 Hot reload enabled - watching for template and CSS changes...');
+            startHotReloadChecking();
+        });
+
+        // Stop checking when page is about to unload
+        window.addEventListener('beforeunload', stopHotReloadChecking);
+        
+        // Stop checking when page is hidden (tab switched, etc.)
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                stopHotReloadChecking();
+            } else {
+                startHotReloadChecking();
+            }
+        });
+        {% raw %}{{ end }}{% endraw %}
     </script>
 </body>
 </html>

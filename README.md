@@ -123,7 +123,30 @@ flyctl deploy
 
 ## Development
 
+### Hot Reload Development
+
+For the best development experience with automatic reloading:
+
 ```bash
+# Windows
+.\run-dev.ps1
+
+# macOS/Linux  
+./run-dev.sh
+```
+
+This enables:
+- **✅ .NET Hot Reload** - Code changes reload automatically
+- **✅ Template Hot Reload** - Scriban template changes reload the page
+- **✅ CSS Hot Reload** - Style changes reload the page  
+- **✅ Browser Auto-Refresh** - No manual refresh needed
+
+### Manual Development
+
+```bash
+# Run with hot reload manually
+dotnet watch run --project src/DnDDamageCalc.Web
+
 # Run tests (uses SQLite, not Supabase)
 dotnet test
 

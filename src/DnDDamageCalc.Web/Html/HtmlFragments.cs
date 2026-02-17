@@ -319,10 +319,11 @@ public static class HtmlFragments
     public static string LoginPage(ITemplateService templates) =>
         templates.Render("login-page");
 
-    public static string IndexPage(ITemplateService templates, string characterListHtml, string characterFormHtml, bool showLogout = true) =>
+    public static string IndexPage(ITemplateService templates, string characterListHtml, string characterFormHtml, bool showLogout = true, bool showHotReload = false) =>
         templates.Render("index-page", new
         {
             show_logout = showLogout,
+            show_hot_reload = showHotReload,
             character_list = new { html = characterListHtml },
             character_form = new { html = characterFormHtml }
         });

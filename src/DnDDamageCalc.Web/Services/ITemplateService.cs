@@ -12,4 +12,9 @@ public interface ITemplateService
     /// <param name="model">Model object to pass to the template</param>
     /// <returns>Rendered HTML string</returns>
     string Render(string templateName, object? model = null);
+
+    /// <summary>
+    /// Clears the template cache. Used for hot reloading in development.
+    /// </summary>
+    void ClearCache();
 }

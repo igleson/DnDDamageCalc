@@ -59,9 +59,11 @@ public static class CharacterEndpoints
                 var characters = await repo.ListAllAsync(userId, accessToken);
                 var characterListHtml = HtmlFragments.CharacterList(characters, selectedId: id, templates);
                 var characterFormHtml = HtmlFragments.CharacterForm(character, templates);
-                var showLogout = !ctx.RequestServices.GetRequiredService<IWebHostEnvironment>().IsDevelopment();
+                var env = ctx.RequestServices.GetRequiredService<IWebHostEnvironment>();
+                var showLogout = !env.IsDevelopment();
+                var showHotReload = env.IsDevelopment();
                 
-                var fullPageHtml = HtmlFragments.IndexPage(templates, characterListHtml, characterFormHtml, showLogout);
+                var fullPageHtml = HtmlFragments.IndexPage(templates, characterListHtml, characterFormHtml, showLogout, showHotReload);
                 return Results.Content(fullPageHtml, "text/html");
             }
         });

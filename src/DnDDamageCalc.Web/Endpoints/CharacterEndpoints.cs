@@ -80,8 +80,7 @@ public static class CharacterEndpoints
 
 
 
-        app.MapDelete("/character/attack/remove", (int levelIndex, int attackIndex) =>
-            Results.Text("", "text/html"));
+
 
         app.MapDelete("/character/dice/remove", (int levelIndex, int attackIndex, int diceIndex) =>
             Results.Text("", "text/html"));

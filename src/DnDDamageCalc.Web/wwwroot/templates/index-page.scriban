@@ -702,6 +702,15 @@
             }
         }
 
+        // Remove attack function - pure client-side
+        function removeAttack(attackId) {
+            const attackElement = document.getElementById(attackId);
+            if (attackElement) {
+                // Remove the attack element
+                attackElement.remove();
+            }
+        }
+
         // Template caching for JavaScript attack creation
         let emptyAttackTemplate = null;
 
@@ -781,9 +790,7 @@
 
                         <div class="attack-actions">
                             <button type="button"
-                                    hx-delete="/character/attack/remove?levelIndex=LEVEL_INDEX_PLACEHOLDER&attackIndex=ATTACK_INDEX_PLACEHOLDER"
-                                    hx-target="#ATTACK_ID_PLACEHOLDER"
-                                    hx-swap="outerHTML"
+                                    onclick="removeAttack('ATTACK_ID_PLACEHOLDER')"
                                     class="outline secondary btn-sm">
                                 Remove Attack
                             </button>

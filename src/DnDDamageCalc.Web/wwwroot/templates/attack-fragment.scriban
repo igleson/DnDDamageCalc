@@ -68,9 +68,7 @@
 
         <div class="attack-actions">
             <button type="button"
-                    hx-delete="/character/attack/remove?levelIndex={{ level_index }}&attackIndex={{ attack_index }}"
-                    hx-target="#{{ attack_id }}"
-                    hx-swap="outerHTML"
+                    onclick="removeAttack('{{ attack_id }}')"
                     class="outline secondary btn-sm">
                 Remove Attack
             </button>

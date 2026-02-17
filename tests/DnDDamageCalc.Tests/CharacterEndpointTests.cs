@@ -64,16 +64,6 @@ public class CharacterEndpointTests : IClassFixture<CustomWebApplicationFactory>
     }
 
     [Fact]
-    public async Task RemoveAttack_ReturnsEmpty()
-    {
-        var response = await _client.DeleteAsync("/character/attack/remove?levelIndex=0&attackIndex=0");
-
-        response.EnsureSuccessStatusCode();
-        var html = await response.Content.ReadAsStringAsync();
-        Assert.Equal("", html);
-    }
-
-    [Fact]
     public async Task RemoveDice_ReturnsEmpty()
     {
         var response = await _client.DeleteAsync("/character/dice/remove?levelIndex=0&attackIndex=0&diceIndex=0");

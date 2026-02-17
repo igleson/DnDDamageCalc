@@ -27,6 +27,7 @@ public static partial class FormParser
             };
 
             var attackIndices = ExtractIndices(form, AttackPattern(li));
+            var orderedAttacks = new List<(int Order, int Index, Attack Attack)>();
             foreach (var ai in attackIndices)
             {
                 var prefix = $"level[{li}].attacks[{ai}]";
@@ -56,7 +57,13 @@ public static partial class FormParser
                     });
                 }
 
-                level.Attacks.Add(attack);
+                var order = ParseInt(form, $"{prefix}.order", ai);
+                orderedAttacks.Add((order, ai, attack));
+            }
+
+            foreach (var ordered in orderedAttacks.OrderBy(a => a.Order).ThenBy(a => a.Index))
+            {
+                level.Attacks.Add(ordered.Attack);
             }
 
             character.Levels.Add(level);

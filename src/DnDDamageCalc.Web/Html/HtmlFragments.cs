@@ -102,6 +102,7 @@ public static class HtmlFragments
         {
             level_index = levelIndex,
             attack_index = attackIndex,
+            attack_order = attackIndex,
             prefix = prefix,
             attack_id = attackId,
             attack_body_id = attackBodyId,

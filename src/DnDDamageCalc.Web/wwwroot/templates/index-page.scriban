@@ -128,6 +128,26 @@
             gap: 0.5rem;
             margin-top: 0.5rem;
         }
+        .attack-draggable {
+            transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease, opacity 0.12s ease;
+        }
+        .attack-draggable.dragging {
+            opacity: 0.5;
+            transform: scale(0.99);
+            box-shadow: 0 0 0 2px var(--pico-primary);
+        }
+        .attack-draggable.drop-above {
+            border-top: 3px solid var(--pico-primary);
+        }
+        .attack-draggable.drop-below {
+            border-bottom: 3px solid var(--pico-primary);
+        }
+        .drag-handle {
+            cursor: grab;
+        }
+        .drag-handle:active {
+            cursor: grabbing;
+        }
         .btn-sm {
             width: auto !important;
             margin: 0 !important;
@@ -534,6 +554,95 @@
             }
         }
 
+        let draggedAttackElement = null;
+
+        function clearAttackDropIndicators(container) {
+            if (!container) return;
+            container.querySelectorAll('.drop-above, .drop-below').forEach(el => {
+                el.classList.remove('drop-above', 'drop-below');
+            });
+        }
+
+        function updateAttackOrderForLevel(levelIndex) {
+            const container = document.getElementById(`attacks-${levelIndex}`);
+            if (!container) return;
+
+            const attacks = container.querySelectorAll('fieldset[id^="attack-"]');
+            attacks.forEach((attack, order) => {
+                const orderInput = attack.querySelector('input[name$=".order"]');
+                if (orderInput) {
+                    orderInput.value = order.toString();
+                }
+            });
+        }
+
+        function onAttackDragStart(event) {
+            const attack = event.currentTarget;
+            if (!(attack instanceof HTMLElement)) return;
+            draggedAttackElement = attack;
+            attack.classList.add('dragging');
+            if (event.dataTransfer) {
+                event.dataTransfer.effectAllowed = 'move';
+                event.dataTransfer.setData('text/plain', attack.id);
+            }
+        }
+
+        function onAttackDragOver(event) {
+            event.preventDefault();
+            const dropTarget = event.currentTarget;
+            if (!(dropTarget instanceof HTMLElement) || !draggedAttackElement || dropTarget === draggedAttackElement) return;
+
+            const container = dropTarget.parentElement;
+            if (!container) return;
+            clearAttackDropIndicators(container);
+
+            const rect = dropTarget.getBoundingClientRect();
+            const insertBefore = event.clientY < rect.top + (rect.height / 2);
+            dropTarget.classList.add(insertBefore ? 'drop-above' : 'drop-below');
+
+            const nextSibling = insertBefore ? dropTarget : dropTarget.nextElementSibling;
+            if (nextSibling !== draggedAttackElement) {
+                container.insertBefore(draggedAttackElement, nextSibling);
+                const levelMatch = container.id.match(/^attacks-(\d+)$/);
+                if (levelMatch) {
+                    updateAttackOrderForLevel(parseInt(levelMatch[1], 10));
+                }
+            }
+
+            if (event.dataTransfer) {
+                event.dataTransfer.dropEffect = 'move';
+            }
+        }
+
+        function onAttackDragLeave(event) {
+            const dropTarget = event.currentTarget;
+            if (!(dropTarget instanceof HTMLElement)) return;
+            if (dropTarget.contains(event.relatedTarget)) return;
+            dropTarget.classList.remove('drop-above', 'drop-below');
+        }
+
+        function onAttackDrop(event) {
+            event.preventDefault();
+            const dropTarget = event.currentTarget;
+            if (!(dropTarget instanceof HTMLElement) || !draggedAttackElement) return;
+            const container = draggedAttackElement.parentElement;
+            if (!container) return;
+            clearAttackDropIndicators(container);
+            const levelMatch = container.id.match(/^attacks-(\d+)$/);
+            if (levelMatch) {
+                updateAttackOrderForLevel(parseInt(levelMatch[1], 10));
+            }
+        }
+
+        function onAttackDragEnd(event) {
+            const attack = event.currentTarget;
+            if (attack instanceof HTMLElement) {
+                attack.classList.remove('dragging');
+                clearAttackDropIndicators(attack.parentElement);
+            }
+            draggedAttackElement = null;
+        }
+
         // Clone attack function - pure client-side
         function cloneAttack(levelIndex) {
             const container = document.getElementById(`attacks-${levelIndex}`);
@@ -662,7 +771,8 @@
             
             // Append to container
             container.appendChild(cloned);
-            
+            updateAttackOrderForLevel(levelIndex);
+             
             // Process HTMX attributes on the new element
             htmx.process(cloned);
         }
@@ -909,8 +1019,13 @@
         function removeAttack(attackId) {
             const attackElement = document.getElementById(attackId);
             if (attackElement) {
+                const container = attackElement.parentElement;
                 // Remove the attack element
                 attackElement.remove();
+                const levelMatch = container?.id.match(/^attacks-(\d+)$/);
+                if (levelMatch) {
+                    updateAttackOrderForLevel(parseInt(levelMatch[1], 10));
+                }
             }
         }
 
@@ -983,8 +1098,16 @@
             
             // Use the server-rendered template structure
             emptyAttackTemplate = `
-                <fieldset id="ATTACK_ID_PLACEHOLDER">
+                <fieldset id="ATTACK_ID_PLACEHOLDER"
+                          class="attack-draggable"
+                          draggable="true"
+                          ondragstart="onAttackDragStart(event)"
+                          ondragover="onAttackDragOver(event)"
+                          ondragleave="onAttackDragLeave(event)"
+                          ondrop="onAttackDrop(event)"
+                          ondragend="onAttackDragEnd(event)">
                     <legend style="display:flex;align-items:center;gap:0.5rem;">
+                        <button type="button" class="outline secondary btn-sm drag-handle" title="Drag to reorder">&#x2630;</button>
                         <button type="button"
                                 data-collapse-target="ATTACK_BODY_ID_PLACEHOLDER"
                                 onclick="toggleSectionById(this)"
@@ -993,6 +1116,7 @@
                     </legend>
 
                     <div id="ATTACK_BODY_ID_PLACEHOLDER">
+                        <input type="hidden" name="ATTACK_PREFIX_PLACEHOLDER.order" value="ATTACK_INDEX_PLACEHOLDER" />
                         <div class="grid">
                             <div>
                                 <label for="ATTACK_PREFIX_PLACEHOLDER.name">Attack Name</label>
@@ -1120,7 +1244,8 @@
             
             // Append to container
             container.appendChild(newAttack);
-            
+            updateAttackOrderForLevel(levelIndex);
+             
             // Process HTMX attributes on the new element
             htmx.process(newAttack);
         }

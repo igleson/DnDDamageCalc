@@ -152,6 +152,32 @@ public class FormParserTests
     }
 
     [Fact]
+    public void Parse_AttackOrder_UsesOrderField()
+    {
+        var form = CreateForm(new Dictionary<string, string>
+        {
+            ["characterName"] = "Fighter",
+            ["level[0].number"] = "1",
+            ["level[0].attacks[10].name"] = "Second",
+            ["level[0].attacks[10].actionType"] = "action",
+            ["level[0].attacks[10].hitPercent"] = "60",
+            ["level[0].attacks[10].critPercent"] = "5",
+            ["level[0].attacks[10].order"] = "1",
+            ["level[0].attacks[4].name"] = "First",
+            ["level[0].attacks[4].actionType"] = "action",
+            ["level[0].attacks[4].hitPercent"] = "70",
+            ["level[0].attacks[4].critPercent"] = "5",
+            ["level[0].attacks[4].order"] = "0"
+        });
+
+        var character = FormParser.Parse(form);
+
+        Assert.Equal(2, character.Levels[0].Attacks.Count);
+        Assert.Equal("First", character.Levels[0].Attacks[0].Name);
+        Assert.Equal("Second", character.Levels[0].Attacks[1].Name);
+    }
+
+    [Fact]
     public void Parse_ExistingCharacterId_PreservesId()
     {
         var form = CreateForm(new Dictionary<string, string>

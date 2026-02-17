@@ -1,5 +1,13 @@
-<fieldset id="{{ attack_id }}">
+<fieldset id="{{ attack_id }}"
+          class="attack-draggable"
+          draggable="true"
+          ondragstart="onAttackDragStart(event)"
+          ondragover="onAttackDragOver(event)"
+          ondragleave="onAttackDragLeave(event)"
+          ondrop="onAttackDrop(event)"
+          ondragend="onAttackDragEnd(event)">
     <legend style="display:flex;align-items:center;gap:0.5rem;">
+        <button type="button" class="outline secondary btn-sm drag-handle" title="Drag to reorder">&#x2630;</button>
         <button type="button"
                 data-collapse-target="{{ attack_body_id }}"
                 onclick="toggleSectionById(this)"
@@ -8,6 +16,7 @@
     </legend>
 
     <div id="{{ attack_body_id }}">
+        <input type="hidden" name="{{ prefix }}.order" value="{{ attack_order }}" />
         <div class="grid">
             <div>
                 <label for="{{ prefix }}.name">Attack Name</label>

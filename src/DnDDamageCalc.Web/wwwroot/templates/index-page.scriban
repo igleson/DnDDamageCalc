@@ -67,20 +67,30 @@
             flex: 1;
             min-width: 0;
             padding: 1rem 2rem;
-            max-width: 900px;
             overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
         }
         header.app-header {
             text-align: center;
             padding: 1rem 0;
             margin-bottom: 1.5rem;
             border-bottom: 1px solid var(--pico-muted-border-color);
+            width: 100%;
+            max-width: 700px;
         }
         header.app-header h1 {
             margin-bottom: 0.25rem;
         }
         header.app-header small {
             color: var(--pico-muted-color);
+        }
+
+        #form-container {
+            width: 100%;
+            max-width: 700px;
         }
 
         /* Form styles */

@@ -83,20 +83,23 @@ public static class HtmlFragments
     {
         var l = level ?? new CharacterLevel();
         var levelNum = l.LevelNumber > 0 ? l.LevelNumber : levelIndex + 1;
+        var levelId = $"level-{levelIndex}";
+        var levelBodyId = $"level-body-{levelIndex}";
         var sb = new StringBuilder();
 
         sb.Append($"""
-            <article id="level-{levelIndex}">
+            <article id="{levelId}">
                 <header>
                     <div style="display:flex;justify-content:space-between;align-items:center;">
                         <strong>Level {levelNum}</strong>
                         <div style="display:flex;gap:0.5rem;">
                             <button type="button"
-                                    onclick="var b=document.getElementById('level-body-{levelIndex}');b.style.display=b.style.display==='none'?'':'none';this.textContent=b.style.display==='none'?'\u25b6':'\u25bc'"
+                                    data-collapse-target="{levelBodyId}"
+                                    onclick="toggleSectionById(this)"
                                     class="outline secondary btn-sm">&#x25bc;</button>
                             <button type="button"
                                     hx-delete="/character/level/remove?index={levelIndex}"
-                                    hx-target="#level-{levelIndex}"
+                                    hx-target="#{levelId}"
                                     hx-swap="outerHTML"
                                     class="outline secondary btn-sm">
                                 Remove Level
@@ -107,7 +110,7 @@ public static class HtmlFragments
 
                 <input type="hidden" name="level[{levelIndex}].number" value="{levelNum}" />
 
-                <div id="level-body-{levelIndex}">
+                <div id="{levelBodyId}">
                     <div id="attacks-{levelIndex}">
             """);
 
@@ -141,18 +144,21 @@ public static class HtmlFragments
     {
         var a = attack ?? new Attack();
         var prefix = $"level[{levelIndex}].attacks[{attackIndex}]";
+        var attackId = $"attack-{levelIndex}-{attackIndex}";
+        var attackBodyId = $"attack-body-{levelIndex}-{attackIndex}";
         var sb = new StringBuilder();
 
         sb.Append($"""
-            <fieldset id="attack-{levelIndex}-{attackIndex}">
+            <fieldset id="{attackId}">
                 <legend style="display:flex;align-items:center;gap:0.5rem;">
                     <button type="button"
-                            onclick="var b=document.getElementById('attack-body-{levelIndex}-{attackIndex}');b.style.display=b.style.display==='none'?'':'none';this.textContent=b.style.display==='none'?'\u25b6':'\u25bc'"
+                            data-collapse-target="{attackBodyId}"
+                            onclick="toggleSectionById(this)"
                             class="outline secondary btn-sm">&#x25bc;</button>
                     {(string.IsNullOrEmpty(a.Name) ? "New Attack" : Encode(a.Name))}
                 </legend>
 
-                <div id="attack-body-{levelIndex}-{attackIndex}">
+                <div id="{attackBodyId}">
                     <label for="{prefix}.name">Attack Name</label>
                     <input type="text" name="{prefix}.name" value="{Encode(a.Name)}" required placeholder="e.g. Longsword" />
 
@@ -221,7 +227,7 @@ public static class HtmlFragments
                     <div class="attack-actions">
                         <button type="button"
                                 hx-delete="/character/attack/remove?levelIndex={levelIndex}&attackIndex={attackIndex}"
-                                hx-target="#attack-{levelIndex}-{attackIndex}"
+                                hx-target="#{attackId}"
                                 hx-swap="outerHTML"
                                 class="outline secondary btn-sm">
                             Remove Attack

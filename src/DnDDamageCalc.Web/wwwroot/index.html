@@ -194,6 +194,18 @@
             return element.closest('[data-damage-graph]');
         }
 
+        function toggleSectionById(button) {
+            const targetId = button.getAttribute('data-collapse-target');
+            if (!targetId) return;
+
+            const target = document.getElementById(targetId);
+            if (!target) return;
+
+            const shouldExpand = target.style.display === 'none';
+            target.style.display = shouldExpand ? '' : 'none';
+            button.textContent = shouldExpand ? '▼' : '▶';
+        }
+
         function moveDamageTooltip(event) {
             const point = event.currentTarget;
             const graph = graphContainerFromElement(point);
@@ -311,6 +323,7 @@
             const counterInput = document.getElementById('attack-counter');
             const currentCounter = parseInt(counterInput.value) || attacks.length;
             const newIndex = currentCounter;
+            cloned.id = `attack-${levelIndex}-${newIndex}`;
             
             // Find the old attack index from the last attack's id attribute
             const lastAttackId = lastAttack.id;
@@ -366,6 +379,28 @@
                         `attackIndex=${newIndex}`
                     ));
                 }
+            });
+
+            cloned.querySelectorAll('[data-collapse-target]').forEach(el => {
+                const targetId = el.getAttribute('data-collapse-target');
+                if (targetId) {
+                    el.setAttribute('data-collapse-target', targetId.replace(
+                        `-${levelIndex}-${oldIndex}`,
+                        `-${levelIndex}-${newIndex}`
+                    ));
+                }
+            });
+
+            cloned.querySelectorAll('[data-collapse-target]').forEach(toggle => {
+                const targetId = toggle.getAttribute('data-collapse-target');
+                if (!targetId) return;
+
+                const target = cloned.querySelector(`[id="${targetId}"]`);
+                if (target) {
+                    target.style.display = '';
+                }
+
+                toggle.textContent = '▼';
             });
             
             // Update the counter
@@ -475,15 +510,26 @@
                 }
             });
             
-            // Update onclick attributes for collapse button
-            cloned.querySelectorAll('[onclick]').forEach(el => {
-                const onclick = el.getAttribute('onclick');
-                if (onclick && onclick.includes('level-body-')) {
-                    el.setAttribute('onclick', onclick.replace(
-                        `level-body-${oldIndex}`,
-                        `level-body-${newIndex}`
+            cloned.querySelectorAll('[data-collapse-target]').forEach(el => {
+                const targetId = el.getAttribute('data-collapse-target');
+                if (targetId) {
+                    el.setAttribute('data-collapse-target', targetId.replace(
+                        new RegExp(`-(${oldIndex})(-|$)`, 'g'),
+                        `-${newIndex}$2`
                     ));
                 }
+            });
+
+            cloned.querySelectorAll('[data-collapse-target]').forEach(toggle => {
+                const targetId = toggle.getAttribute('data-collapse-target');
+                if (!targetId) return;
+
+                const target = cloned.querySelector(`[id="${targetId}"]`);
+                if (target) {
+                    target.style.display = '';
+                }
+
+                toggle.textContent = '▼';
             });
             
             // Update counters

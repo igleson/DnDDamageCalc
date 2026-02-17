@@ -511,6 +511,29 @@
         // Also run after HTMX settles (in case page was loaded via HTMX)
         document.addEventListener('htmx:afterSettle', initializeUrlState);
 
+        function copyFormControlState(sourceRoot, clonedRoot) {
+            const sourceControls = sourceRoot.querySelectorAll('input, select, textarea');
+            const clonedControls = clonedRoot.querySelectorAll('input, select, textarea');
+            const count = Math.min(sourceControls.length, clonedControls.length);
+
+            for (let i = 0; i < count; i++) {
+                const source = sourceControls[i];
+                const cloned = clonedControls[i];
+
+                if (source instanceof HTMLInputElement && cloned instanceof HTMLInputElement) {
+                    if (source.type === 'checkbox' || source.type === 'radio') {
+                        cloned.checked = source.checked;
+                    } else {
+                        cloned.value = source.value;
+                    }
+                } else if (source instanceof HTMLSelectElement && cloned instanceof HTMLSelectElement) {
+                    cloned.value = source.value;
+                } else if (source instanceof HTMLTextAreaElement && cloned instanceof HTMLTextAreaElement) {
+                    cloned.value = source.value;
+                }
+            }
+        }
+
         // Clone attack function - pure client-side
         function cloneAttack(levelIndex) {
             const container = document.getElementById(`attacks-${levelIndex}`);
@@ -522,6 +545,7 @@
             // Clone the last attack
             const lastAttack = attacks[attacks.length - 1];
             const cloned = lastAttack.cloneNode(true);
+            copyFormControlState(lastAttack, cloned);
             
             // Get current counter and increment
             const counterInput = document.getElementById('attack-counter');
@@ -946,8 +970,20 @@
                     </legend>
 
                     <div id="ATTACK_BODY_ID_PLACEHOLDER">
-                        <label for="ATTACK_PREFIX_PLACEHOLDER.name">Attack Name</label>
-                        <input type="text" name="ATTACK_PREFIX_PLACEHOLDER.name" value="" required placeholder="e.g. Longsword" />
+                        <div class="grid">
+                            <div>
+                                <label for="ATTACK_PREFIX_PLACEHOLDER.name">Attack Name</label>
+                                <input type="text" name="ATTACK_PREFIX_PLACEHOLDER.name" value="" required placeholder="e.g. Longsword" />
+                            </div>
+                            <div>
+                                <label for="ATTACK_PREFIX_PLACEHOLDER.actionType">Attack Type</label>
+                                <select name="ATTACK_PREFIX_PLACEHOLDER.actionType" required>
+                                    <option value="action" selected>Action Attack</option>
+                                    <option value="bonus_action">Bonus Action Attack</option>
+                                    <option value="reaction">Reaction Attack</option>
+                                </select>
+                            </div>
+                        </div>
 
                         <div class="grid">
                             <div>
@@ -1077,6 +1113,7 @@
             // Clone the last level
             const lastLevel = levels[levels.length - 1];
             const cloned = lastLevel.cloneNode(true);
+            copyFormControlState(lastLevel, cloned);
             
             // Extract old level index from id
             const oldIndex = parseInt(lastLevel.id.replace('level-', '')) || (levels.length - 1);

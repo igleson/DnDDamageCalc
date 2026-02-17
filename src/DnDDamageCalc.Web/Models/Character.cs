@@ -54,6 +54,9 @@ public class Attack
 
     [ProtoMember(11)]
     public bool RequiresSetup { get; set; }
+
+    [ProtoMember(12)]
+    public string ActionType { get; set; } = "action";
 }
 
 [ProtoContract]

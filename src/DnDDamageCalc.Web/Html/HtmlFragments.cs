@@ -111,6 +111,7 @@ public static class HtmlFragments
             mastery_graze = a.MasteryGraze,
             graze_value = a.GrazeValue,
             requires_setup = a.RequiresSetup,
+            action_type = a.ActionType,
             flat_modifier = a.FlatModifier,
             dice_groups = diceGroups
         };

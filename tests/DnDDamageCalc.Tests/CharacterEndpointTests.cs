@@ -89,6 +89,7 @@ public class CharacterEndpointTests : IClassFixture<CustomWebApplicationFactory>
             new KeyValuePair<string, string>("characterName", "Gandalf"),
             new KeyValuePair<string, string>("level[0].number", "1"),
             new KeyValuePair<string, string>("level[0].attacks[0].name", "Staff Strike"),
+            new KeyValuePair<string, string>("level[0].attacks[0].actionType", "action"),
             new KeyValuePair<string, string>("level[0].attacks[0].hitPercent", "65"),
             new KeyValuePair<string, string>("level[0].attacks[0].critPercent", "5"),
             new KeyValuePair<string, string>("level[0].attacks[0].flatModifier", "3"),
@@ -101,6 +102,8 @@ public class CharacterEndpointTests : IClassFixture<CustomWebApplicationFactory>
         var html = await response.Content.ReadAsStringAsync();
         Assert.Contains("saved successfully", html);
         Assert.Contains("Gandalf", html);
+        Assert.Contains("level[0].attacks[0].actionType", html);
+        Assert.Contains("Action Attack", html);
     }
 
     [Fact]
@@ -146,6 +149,7 @@ public class CharacterEndpointTests : IClassFixture<CustomWebApplicationFactory>
             new KeyValuePair<string, string>("characterName", "Test"),
             new KeyValuePair<string, string>("level[0].number", "1"),
             new KeyValuePair<string, string>("level[0].attacks[0].name", "Longsword"),
+            new KeyValuePair<string, string>("level[0].attacks[0].actionType", "action"),
             new KeyValuePair<string, string>("level[0].attacks[0].hitPercent", "65"),
             new KeyValuePair<string, string>("level[0].attacks[0].critPercent", "5"),
             new KeyValuePair<string, string>("level[0].attacks[0].flatModifier", "3"),
@@ -187,6 +191,7 @@ public class CharacterEndpointTests : IClassFixture<CustomWebApplicationFactory>
             new KeyValuePair<string, string>("characterName", "Topple Fighter"),
             new KeyValuePair<string, string>("level[0].number", "1"),
             new KeyValuePair<string, string>("level[0].attacks[0].name", "Warhammer"),
+            new KeyValuePair<string, string>("level[0].attacks[0].actionType", "action"),
             new KeyValuePair<string, string>("level[0].attacks[0].hitPercent", "65"),
             new KeyValuePair<string, string>("level[0].attacks[0].critPercent", "5"),
             new KeyValuePair<string, string>("level[0].attacks[0].flatModifier", "4"),
@@ -209,6 +214,7 @@ public class CharacterEndpointTests : IClassFixture<CustomWebApplicationFactory>
             new KeyValuePair<string, string>("characterName", "No Encounter"),
             new KeyValuePair<string, string>("level[0].number", "1"),
             new KeyValuePair<string, string>("level[0].attacks[0].name", "Longsword"),
+            new KeyValuePair<string, string>("level[0].attacks[0].actionType", "action"),
             new KeyValuePair<string, string>("level[0].attacks[0].hitPercent", "65"),
             new KeyValuePair<string, string>("level[0].attacks[0].critPercent", "5")
         ]);
@@ -227,6 +233,7 @@ public class CharacterEndpointTests : IClassFixture<CustomWebApplicationFactory>
             new KeyValuePair<string, string>("characterName", "Frodo"),
             new KeyValuePair<string, string>("level[0].number", "1"),
             new KeyValuePair<string, string>("level[0].attacks[0].name", "Sting"),
+            new KeyValuePair<string, string>("level[0].attacks[0].actionType", "action"),
             new KeyValuePair<string, string>("level[0].attacks[0].hitPercent", "70"),
             new KeyValuePair<string, string>("level[0].attacks[0].critPercent", "5"),
             new KeyValuePair<string, string>("level[0].attacks[0].flatModifier", "2"),

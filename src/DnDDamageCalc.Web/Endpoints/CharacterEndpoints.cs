@@ -183,6 +183,9 @@ public static class CharacterEndpoints
 
                 if (attack.MasteryTopple && (attack.TopplePercent < 0 || attack.TopplePercent > 100))
                     errors.Add($"Topple% must be 0-100 for attack \"{attack.Name}\" at level {level.LevelNumber}.");
+
+                if (!IsValidActionType(attack.ActionType))
+                    errors.Add($"Action type is required for attack \"{attack.Name}\" at level {level.LevelNumber}.");
             }
         }
 
@@ -217,9 +220,15 @@ public static class CharacterEndpoints
 
                 if (attack.MasteryTopple && (attack.TopplePercent < 0 || attack.TopplePercent > 100))
                     errors.Add($"Topple% must be 0-100 for attack \"{attack.Name}\" at level {level.LevelNumber}.");
+
+                if (!IsValidActionType(attack.ActionType))
+                    errors.Add($"Action type is required for attack \"{attack.Name}\" at level {level.LevelNumber}.");
             }
         }
 
         return errors;
     }
+
+    private static bool IsValidActionType(string? actionType) =>
+        actionType is "action" or "bonus_action" or "reaction";
 }

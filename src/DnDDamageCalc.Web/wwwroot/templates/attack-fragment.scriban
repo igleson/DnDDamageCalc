@@ -8,8 +8,20 @@
     </legend>
 
     <div id="{{ attack_body_id }}">
-        <label for="{{ prefix }}.name">Attack Name</label>
-        <input type="text" name="{{ prefix }}.name" value="{{ name | html.escape }}" required placeholder="e.g. Longsword" />
+        <div class="grid">
+            <div>
+                <label for="{{ prefix }}.name">Attack Name</label>
+                <input type="text" name="{{ prefix }}.name" value="{{ name | html.escape }}" required placeholder="e.g. Longsword" />
+            </div>
+            <div>
+                <label for="{{ prefix }}.actionType">Attack Type</label>
+                <select name="{{ prefix }}.actionType" required>
+                    <option value="action"{{ if action_type == "action" }} selected{{ end }}>Action Attack</option>
+                    <option value="bonus_action"{{ if action_type == "bonus_action" }} selected{{ end }}>Bonus Action Attack</option>
+                    <option value="reaction"{{ if action_type == "reaction" }} selected{{ end }}>Reaction Attack</option>
+                </select>
+            </div>
+        </div>
 
         <div class="grid">
             <div>

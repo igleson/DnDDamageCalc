@@ -1,0 +1,5 @@
+<button type="button"
+        onclick="cloneLevel()"
+        class="secondary outline">
+    Clone Last Level
+</button>

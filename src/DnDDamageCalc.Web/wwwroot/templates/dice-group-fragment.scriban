@@ -1,0 +1,24 @@
+<div id="dice-{{ level_index }}-{{ attack_index }}-{{ dice_index }}" class="grid" style="align-items:end;">
+    <div>
+        <label for="{{ prefix }}.quantity">Qty</label>
+        <input type="number" name="{{ prefix }}.quantity" value="{{ quantity }}" min="1" max="99" required />
+    </div>
+    <div>
+        <label for="{{ prefix }}.dieSize">Die</label>
+        <select name="{{ prefix }}.dieSize">
+            {{ for size in die_sizes }}
+            <option value="{{ size }}"{{ if size == die_size }} selected{{ end }}>d{{ size }}</option>
+            {{ end }}
+        </select>
+    </div>
+    <div>
+        <button type="button"
+                hx-delete="/character/dice/remove?levelIndex={{ level_index }}&attackIndex={{ attack_index }}&diceIndex={{ dice_index }}"
+                hx-target="#dice-{{ level_index }}-{{ attack_index }}-{{ dice_index }}"
+                hx-swap="outerHTML"
+                class="outline secondary btn-sm"
+                style="margin-bottom:0;">
+            X
+        </button>
+    </div>
+</div>

@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text;
 using DnDDamageCalc.Web.Models;
+using DnDDamageCalc.Web.Services;
 using DnDDamageCalc.Web.Simulation;
 
 namespace DnDDamageCalc.Web.Html;
@@ -9,327 +10,130 @@ public static class HtmlFragments
 {
     private static readonly int[] DieSizes = [4, 6, 8, 10, 12, 20];
 
-    public static string CharacterForm(Character? character = null)
+    public static string CharacterForm(Character? character, ITemplateService templates)
     {
         var c = character ?? new Character();
-        var sb = new StringBuilder();
-
-        sb.Append($"""
-            <form id="character-form" hx-post="/character/save" hx-target="#form-container" hx-swap="innerHTML">
-                <input type="hidden" name="characterId" value="{c.Id}" />
-                <input type="hidden" id="level-counter" name="levelCounter" value="{c.Levels.Count}" />
-                <input type="hidden" id="attack-counter" name="attackCounter" value="0" />
-                <input type="hidden" id="dice-counter" name="diceCounter" value="0" />
-
-                <article>
-                    <header><strong>Character Info</strong></header>
-                    <label for="characterName">Character Name</label>
-                    <input type="text" id="characterName" name="characterName"
-                           value="{Encode(c.Name)}" required placeholder="Enter character name" />
-                </article>
-
-                <section>
-                    <hgroup>
-                        <h3>Levels</h3>
-                        <p>Add levels and define attacks for each one.</p>
-                    </hgroup>
-
-                    <div id="levels-container">
-            """);
-
+        
+        // Generate level HTML fragments
+        var levels = new List<object>();
         for (var i = 0; i < c.Levels.Count; i++)
         {
-            sb.Append(LevelFragment(i, c.Levels[i]));
+            levels.Add(new { html = LevelFragment(i, c.Levels[i], templates) });
         }
 
-        sb.Append($"""
-                    </div>
+        var model = new
+        {
+            character_id = c.Id,
+            character_name = c.Name ?? "",
+            level_count = c.Levels.Count,
+            levels = levels,
+            has_levels = c.Levels.Count > 0,
+            clone_level_button = c.Levels.Count > 0 ? new { html = CloneLevelButton(templates) } : null
+        };
 
-                    <div style="display:flex;gap:1rem;">
-                        <button type="button"
-                                hx-post="/character/level/add"
-                                hx-target="#levels-container"
-                                hx-swap="beforeend"
-                                hx-include="#level-counter"
-                                class="secondary outline">
-                            + Add Level
-                        </button>
-                        <span id="clone-level-btn">
-                            {(c.Levels.Count > 0 ? CloneLevelButton() : "")}
-                        </span>
-                    </div>
-                </section>
-
-                <hr />
-                <button type="submit">Save Character</button>
-            </form>
-
-            <button type="button"
-                    hx-post="/character/calculate"
-                    hx-include="#character-form"
-                    hx-target="#damage-results"
-                    hx-swap="innerHTML"
-                    class="contrast"
-                    style="margin-top:1rem;width:100%;">
-                Calculate Damage
-            </button>
-            <div id="damage-results"></div>
-            """);
-
-        return sb.ToString();
+        return templates.Render("character-form", model);
     }
 
-    public static string LevelFragment(int levelIndex, CharacterLevel? level = null)
+    public static string LevelFragment(int levelIndex, CharacterLevel? level, ITemplateService templates)
     {
         var l = level ?? new CharacterLevel();
         var levelNum = l.LevelNumber > 0 ? l.LevelNumber : levelIndex + 1;
         var levelId = $"level-{levelIndex}";
         var levelBodyId = $"level-body-{levelIndex}";
-        var sb = new StringBuilder();
 
-        sb.Append($"""
-            <article id="{levelId}">
-                <header>
-                    <div style="display:flex;justify-content:space-between;align-items:center;">
-                        <strong>Level {levelNum}</strong>
-                        <div style="display:flex;gap:0.5rem;">
-                            <button type="button"
-                                    data-collapse-target="{levelBodyId}"
-                                    onclick="toggleSectionById(this)"
-                                    class="outline secondary btn-sm">&#x25BE;</button>
-                            <button type="button"
-                                    hx-delete="/character/level/remove?index={levelIndex}"
-                                    hx-target="#{levelId}"
-                                    hx-swap="outerHTML"
-                                    class="outline secondary btn-sm">
-                                Remove Level
-                            </button>
-                        </div>
-                    </div>
-                </header>
-
-                <input type="hidden" name="level[{levelIndex}].number" value="{levelNum}" />
-
-                <div id="{levelBodyId}">
-                    <div id="attacks-{levelIndex}">
-            """);
-
+        // Generate attack HTML fragments
+        var attacks = new List<object>();
         for (var j = 0; j < l.Attacks.Count; j++)
         {
-            sb.Append(AttackFragment(levelIndex, j, l.Attacks[j]));
+            attacks.Add(new { html = AttackFragment(levelIndex, j, l.Attacks[j], templates) });
         }
 
-        sb.Append($"""
-                    </div>
+        var model = new
+        {
+            level_index = levelIndex,
+            level_number = levelNum,
+            level_id = levelId,
+            level_body_id = levelBodyId,
+            attacks = attacks,
+            has_attacks = l.Attacks.Count > 0,
+            clone_attack_button = l.Attacks.Count > 0 ? new { html = CloneAttackButton(levelIndex, templates) } : null
+        };
 
-                    <div style="display:flex;gap:1rem;">
-                        <button type="button"
-                                hx-post="/character/attack/add?levelIndex={levelIndex}"
-                                hx-target="#attacks-{levelIndex}"
-                                hx-swap="beforeend"
-                                hx-include="#attack-counter"
-                                class="outline btn-sm">
-                            + Add Attack
-                        </button>
-                        {(l.Attacks.Count > 0 ? CloneAttackButton(levelIndex) : "")}
-                    </div>
-                </div>
-            </article>
-            """);
-
-        return sb.ToString();
+        return templates.Render("level-fragment", model);
     }
 
-    public static string AttackFragment(int levelIndex, int attackIndex, Attack? attack = null)
+    public static string AttackFragment(int levelIndex, int attackIndex, Attack? attack, ITemplateService templates)
     {
         var a = attack ?? new Attack();
         var prefix = $"level[{levelIndex}].attacks[{attackIndex}]";
         var attackId = $"attack-{levelIndex}-{attackIndex}";
         var attackBodyId = $"attack-body-{levelIndex}-{attackIndex}";
-        var sb = new StringBuilder();
 
-        sb.Append($"""
-            <fieldset id="{attackId}">
-                <legend style="display:flex;align-items:center;gap:0.5rem;">
-                    <button type="button"
-                            data-collapse-target="{attackBodyId}"
-                            onclick="toggleSectionById(this)"
-                            class="outline secondary btn-sm">&#x25BE;</button>
-                    {(string.IsNullOrEmpty(a.Name) ? "New Attack" : Encode(a.Name))}
-                </legend>
-
-                <div id="{attackBodyId}">
-                    <label for="{prefix}.name">Attack Name</label>
-                    <input type="text" name="{prefix}.name" value="{Encode(a.Name)}" required placeholder="e.g. Longsword" />
-
-                    <div class="grid">
-                        <div>
-                            <label for="{prefix}.hitPercent">Hit %</label>
-                            <input type="number" name="{prefix}.hitPercent" value="{a.HitPercent}" min="0" max="100"
-                                   hx-post="/character/validate-percentages"
-                                   hx-trigger="change"
-                                   hx-target="#pct-error-{levelIndex}-{attackIndex}"
-                                   hx-swap="innerHTML"
-                                   hx-include="[name='{prefix}.hitPercent'],[name='{prefix}.critPercent']" />
-                        </div>
-                        <div>
-                            <label for="{prefix}.critPercent">Crit %</label>
-                            <input type="number" name="{prefix}.critPercent" value="{a.CritPercent}" min="0" max="100"
-                                   hx-post="/character/validate-percentages"
-                                   hx-trigger="change"
-                                   hx-target="#pct-error-{levelIndex}-{attackIndex}"
-                                   hx-swap="innerHTML"
-                                   hx-include="[name='{prefix}.hitPercent'],[name='{prefix}.critPercent']" />
-                        </div>
-                    </div>
-                    <small id="pct-error-{levelIndex}-{attackIndex}" style="color:var(--pico-del-color);"></small>
-
-                    <div class="grid">
-                        <div>
-                            <label><input type="checkbox" name="{prefix}.masteryVex" {(a.MasteryVex ? "checked" : "")} /> Vex</label>
-                        </div>
-                        <div>
-                            <label><input type="checkbox" name="{prefix}.masteryTopple" {(a.MasteryTopple ? "checked" : "")}
-                                   onchange="this.closest('fieldset').querySelector('.topple-pct').style.display=this.checked?'block':'none'" /> Topple</label>
-                        </div>
-                    </div>
-                    <div class="topple-pct" style="display:{(a.MasteryTopple ? "block" : "none")};">
-                        <label for="{prefix}.topplePercent">Topple Save Fail %</label>
-                        <input type="number" name="{prefix}.topplePercent" value="{a.TopplePercent}" min="0" max="100" placeholder="e.g. 40" />
-                    </div>
-
-                    <h6>Damage</h6>
-                    <div id="dice-{levelIndex}-{attackIndex}">
-            """);
-
+        // Generate dice group HTML fragments
+        var diceGroups = new List<object>();
         for (var k = 0; k < a.DiceGroups.Count; k++)
         {
-            sb.Append(DiceGroupFragment(levelIndex, attackIndex, k, a.DiceGroups[k]));
+            diceGroups.Add(new { html = DiceGroupFragment(levelIndex, attackIndex, k, a.DiceGroups[k], templates) });
         }
 
-        sb.Append($"""
-                    </div>
+        var model = new
+        {
+            level_index = levelIndex,
+            attack_index = attackIndex,
+            prefix = prefix,
+            attack_id = attackId,
+            attack_body_id = attackBodyId,
+            name = a.Name,
+            hit_percent = a.HitPercent,
+            crit_percent = a.CritPercent,
+            mastery_vex = a.MasteryVex,
+            mastery_topple = a.MasteryTopple,
+            topple_percent = a.TopplePercent,
+            flat_modifier = a.FlatModifier,
+            dice_groups = diceGroups
+        };
 
-                    <button type="button"
-                            hx-post="/character/dice/add?levelIndex={levelIndex}&attackIndex={attackIndex}"
-                            hx-target="#dice-{levelIndex}-{attackIndex}"
-                            hx-swap="beforeend"
-                            hx-include="#dice-counter"
-                            class="outline btn-sm">
-                        + Add Dice
-                    </button>
-
-                    <div style="margin-top:1rem;">
-                        <label for="{prefix}.flatModifier">Damage Modifier (+/-)</label>
-                        <input type="number" name="{prefix}.flatModifier" value="{a.FlatModifier}" placeholder="e.g. 5 for +5" />
-                    </div>
-
-                    <div class="attack-actions">
-                        <button type="button"
-                                hx-delete="/character/attack/remove?levelIndex={levelIndex}&attackIndex={attackIndex}"
-                                hx-target="#{attackId}"
-                                hx-swap="outerHTML"
-                                class="outline secondary btn-sm">
-                            Remove Attack
-                        </button>
-                    </div>
-                </div>
-            </fieldset>
-            """);
-
-        return sb.ToString();
+        return templates.Render("attack-fragment", model);
     }
 
-    public static string DiceGroupFragment(int levelIndex, int attackIndex, int diceIndex, DiceGroup? dice = null)
+    public static string DiceGroupFragment(int levelIndex, int attackIndex, int diceIndex, DiceGroup? dice, ITemplateService templates)
     {
         var d = dice ?? new DiceGroup { Quantity = 1, DieSize = 6 };
         var prefix = $"level[{levelIndex}].attacks[{attackIndex}].dice[{diceIndex}]";
 
-        var sizeOptions = new StringBuilder();
-        foreach (var size in DieSizes)
+        var model = new
         {
-            var selected = size == d.DieSize ? " selected" : "";
-            sizeOptions.Append($"""<option value="{size}"{selected}>d{size}</option>""");
-        }
-
-        return $"""
-            <div id="dice-{levelIndex}-{attackIndex}-{diceIndex}" class="grid" style="align-items:end;">
-                <div>
-                    <label for="{prefix}.quantity">Qty</label>
-                    <input type="number" name="{prefix}.quantity" value="{d.Quantity}" min="1" max="99" required />
-                </div>
-                <div>
-                    <label for="{prefix}.dieSize">Die</label>
-                    <select name="{prefix}.dieSize">{sizeOptions}</select>
-                </div>
-                <div>
-                    <button type="button"
-                            hx-delete="/character/dice/remove?levelIndex={levelIndex}&attackIndex={attackIndex}&diceIndex={diceIndex}"
-                            hx-target="#dice-{levelIndex}-{attackIndex}-{diceIndex}"
-                            hx-swap="outerHTML"
-                            class="outline secondary btn-sm"
-                            style="margin-bottom:0;">
-                        X
-                    </button>
-                </div>
-            </div>
-            """;
+            level_index = levelIndex,
+            attack_index = attackIndex,
+            dice_index = diceIndex,
+            prefix = prefix,
+            quantity = d.Quantity,
+            die_size = d.DieSize,
+            die_sizes = DieSizes
+        };
+        return templates.Render("dice-group-fragment", model);
     }
 
-    public static string CharacterList(List<(int Id, string Name)> characters, int? selectedId = null)
+    public static string CharacterList(List<(int Id, string Name)> characters, int? selectedId, ITemplateService templates)
     {
-        if (characters.Count == 0)
-            return "<p><em>No saved characters.</em></p>";
-
-        var sb = new StringBuilder();
-        foreach (var (id, name) in characters)
+        return templates.Render("character-list", new
         {
-            var selectedClass = id == selectedId ? " selected" : "";
-            sb.Append($"""
-                <div class="char-item{selectedClass}">
-                    <a href="#"
-                       hx-get="/character/{id}"
-                       hx-target="#form-container"
-                       hx-swap="innerHTML">
-                        {Encode(name)}
-                    </a>
-                    <button type="button"
-                            hx-delete="/character/{id}"
-                            hx-target="#character-list"
-                            hx-swap="innerHTML"
-                            hx-confirm="Delete {Encode(name)}?"
-                            class="outline secondary btn-sm">
-                        &times;
-                    </button>
-                </div>
-                """);
-        }
-        return sb.ToString();
+            characters = characters.Select(c => new { id = c.Id, name = c.Name }).ToList(),
+            selected_id = selectedId
+        });
     }
 
-    public static string CloneLevelButton() =>
-        """
-        <button type="button"
-                onclick="cloneLevel()"
-                class="secondary outline">
-            Clone Last Level
-        </button>
-        """;
+    public static string CloneLevelButton(ITemplateService templates) =>
+        templates.Render("clone-level-button");
 
-    public static string CloneAttackButton(int levelIndex) =>
-        $"""
-        <button type="button"
-                onclick="cloneAttack({levelIndex})"
-                class="outline btn-sm">
-            Clone Last Attack
-        </button>
-        """;
+    public static string CloneAttackButton(int levelIndex, ITemplateService templates) =>
+        templates.Render("clone-attack-button", new { level_index = levelIndex });
 
-    public static string ValidationError(string message) =>
-        $"""<span style="color:var(--pico-del-color);">{Encode(message)}</span>""";
+    public static string ValidationError(string message, ITemplateService templates) =>
+        templates.Render("validation-error", new { message });
 
-    public static string SaveConfirmation(int id, string name) =>
-        $"""<article style="padding:0.75rem;margin-bottom:1rem;border-left:4px solid var(--pico-ins-color);">Character "{Encode(name)}" saved successfully.</article>""";
+    public static string SaveConfirmation(int id, string name, ITemplateService templates) =>
+        templates.Render("save-confirmation", new { name });
 
     public static string DamageResultsGraph(List<LevelStats> stats)
     {
@@ -486,32 +290,8 @@ public static class HtmlFragments
         return sb.ToString();
     }
 
-    public static string LoginPage() =>
-        """
-        <!DOCTYPE html>
-        <html lang="en" data-theme="dark">
-        <head>
-            <meta charset="utf-8" />
-            <meta name="viewport" content="width=device-width, initial-scale=1" />
-            <title>D&amp;D Damage Calculator - Login</title>
-            <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css" />
-            <style>
-                :root { font-size: 12px; }
-                body { display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
-            </style>
-        </head>
-        <body>
-            <article style="max-width:400px;width:100%;text-align:center;">
-                <header><strong>D&amp;D Damage Calculator</strong></header>
-                <p>Sign in to manage your characters and calculate damage statistics.</p>
-                <a href="/auth/login" role="button">Sign in with Google</a>
-            </article>
-        </body>
-        </html>
-        """;
-
-    private static string Encode(string value) =>
-        System.Net.WebUtility.HtmlEncode(value);
+    public static string LoginPage(ITemplateService templates) =>
+        templates.Render("login-page");
 
     private static string F(double value) =>
         value.ToString("0.##", CultureInfo.InvariantCulture);

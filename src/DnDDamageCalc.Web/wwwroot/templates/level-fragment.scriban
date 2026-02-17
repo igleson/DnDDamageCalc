@@ -1,0 +1,40 @@
+<article id="{{ level_id }}">
+    <header>
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+            <strong>Level {{ level_number }}</strong>
+            <div style="display:flex;gap:0.5rem;">
+                <button type="button"
+                        data-collapse-target="{{ level_body_id }}"
+                        onclick="toggleSectionById(this)"
+                        class="outline secondary btn-sm">&#x25BE;</button>
+                <button type="button"
+                        hx-delete="/character/level/remove?index={{ level_index }}"
+                        hx-target="#{{ level_id }}"
+                        hx-swap="outerHTML"
+                        class="outline secondary btn-sm">
+                    Remove Level
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <input type="hidden" name="level[{{ level_index }}].number" value="{{ level_number }}" />
+
+    <div id="{{ level_body_id }}">
+        <div id="attacks-{{ level_index }}">
+            {{ for attack in attacks }}{{ attack.html }}{{ end }}
+        </div>
+
+        <div style="display:flex;gap:1rem;">
+            <button type="button"
+                    hx-post="/character/attack/add?levelIndex={{ level_index }}"
+                    hx-target="#attacks-{{ level_index }}"
+                    hx-swap="beforeend"
+                    hx-include="#attack-counter"
+                    class="outline btn-sm">
+                + Add Attack
+            </button>
+            {{ if has_attacks }}{{ clone_attack_button.html }}{{ end }}
+        </div>
+    </div>
+</article>

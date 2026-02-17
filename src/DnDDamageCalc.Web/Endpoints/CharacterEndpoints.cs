@@ -1,6 +1,8 @@
 using DnDDamageCalc.Web.Auth;
 using DnDDamageCalc.Web.Data;
 using DnDDamageCalc.Web.Html;
+using DnDDamageCalc.Web.Models;
+using DnDDamageCalc.Web.Services;
 using DnDDamageCalc.Web.Simulation;
 
 namespace DnDDamageCalc.Web.Endpoints;
@@ -9,55 +11,55 @@ public static class CharacterEndpoints
 {
     public static void MapCharacterEndpoints(this WebApplication app)
     {
-        app.MapGet("/character/form", () =>
-            Results.Text(HtmlFragments.CharacterForm(), "text/html"));
+        app.MapGet("/character/form", (ITemplateService templates) =>
+            Results.Text(HtmlFragments.CharacterForm(null, templates), "text/html"));
 
-        app.MapGet("/character/list", async (HttpContext ctx, ICharacterRepository repo) =>
+        app.MapGet("/character/list", async (HttpContext ctx, ICharacterRepository repo, ITemplateService templates) =>
         {
             var userId = ctx.GetUserId();
             var accessToken = ctx.GetAccessToken();
             var characters = await repo.ListAllAsync(userId, accessToken);
-            return Results.Text(HtmlFragments.CharacterList(characters, selectedId: null), "text/html");
+            return Results.Text(HtmlFragments.CharacterList(characters, selectedId: null, templates), "text/html");
         });
 
-        app.MapGet("/character/{id:int}", async (int id, HttpContext ctx, ICharacterRepository repo) =>
+        app.MapGet("/character/{id:int}", async (int id, HttpContext ctx, ICharacterRepository repo, ITemplateService templates) =>
         {
             var userId = ctx.GetUserId();
             var accessToken = ctx.GetAccessToken();
             var character = await repo.GetByIdAsync(id, userId, accessToken);
             if (character is null) return Results.NotFound();
-            return Results.Text(HtmlFragments.CharacterForm(character), "text/html");
+            return Results.Text(HtmlFragments.CharacterForm(character, templates), "text/html");
         });
 
-        app.MapPost("/character/level/add", (HttpRequest request) =>
+        app.MapPost("/character/level/add", (HttpRequest request, ITemplateService templates) =>
         {
             var form = request.Form;
             int.TryParse(form["levelCounter"], out var counter);
             var levelNumber = counter + 1;
             if (levelNumber > 20)
-                return Results.Text(HtmlFragments.ValidationError("Maximum 20 levels."), "text/html");
+                return Results.Text(HtmlFragments.ValidationError("Maximum 20 levels.", templates), "text/html");
 
-            var html = HtmlFragments.LevelFragment(counter, new Models.CharacterLevel { LevelNumber = levelNumber });
+            var html = HtmlFragments.LevelFragment(counter, new Models.CharacterLevel { LevelNumber = levelNumber }, templates);
             html += $"""<input type="hidden" id="level-counter" name="levelCounter" value="{levelNumber}" hx-swap-oob="true" />""";
-            html += $"""<span id="clone-level-btn" hx-swap-oob="innerHTML">{HtmlFragments.CloneLevelButton()}</span>""";
+            html += $"""<span id="clone-level-btn" hx-swap-oob="innerHTML">{HtmlFragments.CloneLevelButton(templates)}</span>""";
             return Results.Text(html, "text/html");
         });
 
-        app.MapPost("/character/attack/add", (HttpRequest request, int levelIndex) =>
+        app.MapPost("/character/attack/add", (HttpRequest request, int levelIndex, ITemplateService templates) =>
         {
             var form = request.Form;
             int.TryParse(form["attackCounter"], out var counter);
-            var html = HtmlFragments.AttackFragment(levelIndex, counter);
+            var html = HtmlFragments.AttackFragment(levelIndex, counter, new Attack(), templates);
             var newCounter = counter + 1;
             html += $"""<input type="hidden" id="attack-counter" name="attackCounter" value="{newCounter}" hx-swap-oob="true" />""";
             return Results.Text(html, "text/html");
         });
 
-        app.MapPost("/character/dice/add", (HttpRequest request, int levelIndex, int attackIndex) =>
+        app.MapPost("/character/dice/add", (HttpRequest request, int levelIndex, int attackIndex, ITemplateService templates) =>
         {
             var form = request.Form;
             int.TryParse(form["diceCounter"], out var counter);
-            var html = HtmlFragments.DiceGroupFragment(levelIndex, attackIndex, counter);
+            var html = HtmlFragments.DiceGroupFragment(levelIndex, attackIndex, counter, null, templates);
             var newCounter = counter + 1;
             html += $"""<input type="hidden" id="dice-counter" name="diceCounter" value="{newCounter}" hx-swap-oob="true" />""";
             return Results.Text(html, "text/html");
@@ -72,7 +74,7 @@ public static class CharacterEndpoints
         app.MapDelete("/character/dice/remove", (int levelIndex, int attackIndex, int diceIndex) =>
             Results.Text("", "text/html"));
 
-        app.MapPost("/character/save", async (HttpRequest request, HttpContext ctx, ICharacterRepository repo) =>
+        app.MapPost("/character/save", async (HttpRequest request, HttpContext ctx, ICharacterRepository repo, ITemplateService templates) =>
         {
             var userId = ctx.GetUserId();
             var accessToken = ctx.GetAccessToken();
@@ -84,39 +86,39 @@ public static class CharacterEndpoints
             {
                 var errorHtml = string.Join("", errors.Select(e =>
                     $"""<p style="color:var(--pico-del-color);">{System.Net.WebUtility.HtmlEncode(e)}</p>"""));
-                return Results.Text(errorHtml + HtmlFragments.CharacterForm(character), "text/html");
+                return Results.Text(errorHtml + HtmlFragments.CharacterForm(character, templates), "text/html");
             }
 
             var id = await repo.SaveAsync(character, userId, accessToken);
             character.Id = id;
-            var confirmation = HtmlFragments.SaveConfirmation(id, character.Name);
+            var confirmation = HtmlFragments.SaveConfirmation(id, character.Name, templates);
             var characters = await repo.ListAllAsync(userId, accessToken);
-            var sidebarOob = $"""<div id="character-list" hx-swap-oob="innerHTML">{HtmlFragments.CharacterList(characters, selectedId: id)}</div>""";
-            return Results.Text(confirmation + HtmlFragments.CharacterForm(character) + sidebarOob, "text/html");
+            var sidebarOob = $"""<div id="character-list" hx-swap-oob="innerHTML">{HtmlFragments.CharacterList(characters, selectedId: id, templates)}</div>""";
+            return Results.Text(confirmation + HtmlFragments.CharacterForm(character, templates) + sidebarOob, "text/html");
         });
 
-        app.MapDelete("/character/{id:int}", async (int id, HttpContext ctx, ICharacterRepository repo) =>
+        app.MapDelete("/character/{id:int}", async (int id, HttpContext ctx, ICharacterRepository repo, ITemplateService templates) =>
         {
             var userId = ctx.GetUserId();
             var accessToken = ctx.GetAccessToken();
             await repo.DeleteAsync(id, userId, accessToken);
             var characters = await repo.ListAllAsync(userId, accessToken);
-            return Results.Text(HtmlFragments.CharacterList(characters, selectedId: null), "text/html");
+            return Results.Text(HtmlFragments.CharacterList(characters, selectedId: null, templates), "text/html");
         });
 
-        app.MapPost("/character/validate-percentages", async (HttpRequest request) =>
+        app.MapPost("/character/validate-percentages", async (HttpRequest request, ITemplateService templates) =>
         {
             var form = await request.ReadFormAsync();
             int.TryParse(form.Keys.FirstOrDefault(k => k.EndsWith(".hitPercent")) is string hitKey ? form[hitKey].ToString() : "0", out var hit);
             int.TryParse(form.Keys.FirstOrDefault(k => k.EndsWith(".critPercent")) is string critKey ? form[critKey].ToString() : "0", out var crit);
 
             if (hit + crit > 100)
-                return Results.Text(HtmlFragments.ValidationError("Hit% + Crit% cannot exceed 100."), "text/html");
+                return Results.Text(HtmlFragments.ValidationError("Hit% + Crit% cannot exceed 100.", templates), "text/html");
 
             return Results.Text("", "text/html");
         });
 
-        app.MapPost("/character/calculate", async (HttpRequest request) =>
+        app.MapPost("/character/calculate", async (HttpRequest request, ITemplateService templates) =>
         {
             var form = await request.ReadFormAsync();
             var character = FormParser.Parse(form);

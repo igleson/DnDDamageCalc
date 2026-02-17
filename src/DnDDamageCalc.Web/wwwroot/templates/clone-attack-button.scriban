@@ -1,0 +1,5 @@
+<button type="button"
+        onclick="cloneAttack({{ level_index }})"
+        class="outline btn-sm">
+    Clone Last Attack
+</button>

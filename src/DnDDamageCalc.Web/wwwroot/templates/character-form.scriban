@@ -1,0 +1,52 @@
+<form id="character-form" hx-post="/character/save" hx-target="#form-container" hx-swap="innerHTML">
+    <input type="hidden" name="characterId" value="{{ character_id }}" />
+    <input type="hidden" id="level-counter" name="levelCounter" value="{{ level_count }}" />
+    <input type="hidden" id="attack-counter" name="attackCounter" value="0" />
+    <input type="hidden" id="dice-counter" name="diceCounter" value="0" />
+
+    <article>
+        <header><strong>Character Info</strong></header>
+        <label for="characterName">Character Name</label>
+        <input type="text" id="characterName" name="characterName"
+               value="{{ character_name | html.escape }}" required placeholder="Enter character name" />
+    </article>
+
+    <section>
+        <hgroup>
+            <h3>Levels</h3>
+            <p>Add levels and define attacks for each one.</p>
+        </hgroup>
+
+        <div id="levels-container">
+            {{ for level in levels }}{{ level.html }}{{ end }}
+        </div>
+
+        <div style="display:flex;gap:1rem;">
+            <button type="button"
+                    hx-post="/character/level/add"
+                    hx-target="#levels-container"
+                    hx-swap="beforeend"
+                    hx-include="#level-counter"
+                    class="secondary outline">
+                + Add Level
+            </button>
+            <span id="clone-level-btn">
+                {{ if has_levels }}{{ clone_level_button.html }}{{ end }}
+            </span>
+        </div>
+    </section>
+
+    <hr />
+    <button type="submit">Save Character</button>
+</form>
+
+<button type="button"
+        hx-post="/character/calculate"
+        hx-include="#character-form"
+        hx-target="#damage-results"
+        hx-swap="innerHTML"
+        class="contrast"
+        style="margin-top:1rem;width:100%;">
+    Calculate Damage
+</button>
+<div id="damage-results"></div>

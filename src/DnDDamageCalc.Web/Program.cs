@@ -1,6 +1,7 @@
 using DnDDamageCalc.Web.Auth;
 using DnDDamageCalc.Web.Data;
 using DnDDamageCalc.Web.Endpoints;
+using DnDDamageCalc.Web.Services;
 using Microsoft.AspNetCore.DataProtection;
 
 var builder = WebApplication.CreateSlimBuilder(args);
@@ -11,6 +12,9 @@ builder.Logging.AddConsole();
 builder.Logging.SetMinimumLevel(LogLevel.Information);
 
 builder.Services.AddDataProtection().SetApplicationName("DnDDamageCalc");
+
+// Register template service
+builder.Services.AddSingleton<ITemplateService, TemplateService>();
 
 // Register repository based on environment
 if (builder.Environment.IsDevelopment())

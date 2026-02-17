@@ -6,7 +6,7 @@ A web application that receives D&D character information and calculates damage 
 
 ```bash
 dotnet build                     # Build the solution
-dotnet test                      # Run all 54 tests
+dotnet test                      # Run all 53 tests
 dotnet run --project src/DnDDamageCalc.Web  # Run the app (http://localhost:5082)
 dotnet publish -c Release        # AOT-compiled release build
 ```
@@ -19,6 +19,7 @@ dotnet publish -c Release        # AOT-compiled release build
 - **Supabase PostgreSQL** via REST API (AOT-compatible, no SDK)
 - **Supabase Auth** for Google OAuth authentication
 - **System.Text.Json** with source generation for JSONB serialization
+- **Scriban 5.10.0** for reusable HTML templates (with AOT trimming support)
 - **SQLite** (for tests only) via `Microsoft.Data.Sqlite` (WAL mode, AOT-compatible)
 - **xUnit** + `WebApplicationFactory<Program>` for testing
 
@@ -27,7 +28,7 @@ dotnet publish -c Release        # AOT-compiled release build
 ```
 src/DnDDamageCalc.Web/
 ├── Program.cs                          # Entry point: DB init, static files, endpoint mapping
-├── DnDDamageCalc.Web.csproj            # .NET 10, AOT, Sqlite + protobuf-net packages
+├── DnDDamageCalc.Web.csproj            # .NET 10, AOT, Sqlite + protobuf-net + Scriban packages
 ├── Models/
 │   └── Character.cs                    # Domain models with protobuf annotations
 ├── Data/
@@ -37,13 +38,17 @@ src/DnDDamageCalc.Web/
 │   ├── Database.cs                     # SQLite connection factory (tests only)
 │   └── FormParser.cs                   # IFormCollection -> Character parsing
 ├── Html/
-│   └── HtmlFragments.cs               # All HTML fragment rendering (C# string interpolation)
+│   └── HtmlFragments.cs               # HTML fragment rendering (C# + Scriban templates)
+├── Services/
+│   ├── ITemplateService.cs            # Template service interface
+│   └── TemplateService.cs             # Scriban template loader + cacher
 ├── Endpoints/
 │   └── CharacterEndpoints.cs          # All character-related routes
 ├── Simulation/
 │   └── DamageSimulator.cs             # Monte Carlo damage simulation engine
 └── wwwroot/
-    └── index.html                      # Shell page: sidebar + form container
+    ├── index.html                      # Shell page: sidebar + form container
+    └── templates/                      # Scriban template files (.scriban)
 
 tests/DnDDamageCalc.Tests/
 ├── CharacterEndpointTests.cs           # Integration tests (WebApplicationFactory)
@@ -107,19 +112,64 @@ DiceGroup        { Quantity, DieSize (4/6/8/10/12/20) }
 - Uses `[GeneratedRegex]` for the level pattern (AOT-compatible)
 - Trims whitespace from string values
 
-### HTML Fragments (`Html/HtmlFragments.cs`)
+### HTML Fragments & Templates (`Html/HtmlFragments.cs` + `Services/TemplateService.cs`)
 
-All HTML rendered via C# `$"""..."""` raw string interpolation (AOT-safe, no template engine).
+HTML is rendered using a **hybrid approach**:
+- **Complex fragments** (loops/conditionals): C# string interpolation in `HtmlFragments.cs`
+- **Reusable simple templates**: Scriban `.scriban` files in `wwwroot/templates/`
+
+#### Scriban Templates
+
+Templates are loaded by `ITemplateService` (Scriban engine) at runtime and cached. This enables:
+- Template composition and reusability
+- Easy HTML editing without code recompilation (in development)
+- AOT compatibility via `<TrimmerRootAssembly Include="Scriban" />` in .csproj
+
+**Current Scriban templates** (in `wwwroot/templates/`):
+- `clone-level-button.scriban` — "Clone Last Level" button HTML
+- `clone-attack-button.scriban` — "Clone Last Attack" button (parameterized by level index)
+- `validation-error.scriban` — Error message span (HTML-encoded message)
+- `save-confirmation.scriban` — Success confirmation message (HTML-encoded character name)
+- `login-page.scriban` — Full login page HTML
+- `character-list.scriban` — Sidebar character list (iterates items, HTML-escaped names)
+- `dice-group-fragment.scriban` — Dice quantity/die selector row (parameterized indices & values)
+
+**Hybrid fragments** (remain in C#):
+- `CharacterForm(Character?, ITemplateService?)` — full form with embedded CloneLevelButton template call
+- `LevelFragment(levelIndex, CharacterLevel?, ITemplateService?)` — level card with embedded CloneAttackButton template call
+- `AttackFragment(levelIndex, attackIndex, Attack?)` — attack fieldset (loops over DiceGroups in C#)
+- `DamageResultsGraph(List<LevelStats>)` — SVG graph with mathematical rendering (complex calculations)
+
+**Template Usage Pattern:**
+```csharp
+// In endpoints (with DI):
+app.MapGet("/login", (ITemplateService templates) =>
+    Results.Text(HtmlFragments.LoginPage(templates), "text/html"));
+
+// In HtmlFragments (optional parameter for fallback):
+public static string ValidationError(string message, ITemplateService templates) =>
+    templates.Render("validation-error", new { message });
+
+// Fallback for tests (without service):
+if (templates is null) { /* return hardcoded HTML */ }
+```
+
+**Template Variable Naming:**
+- Use `snake_case` for template variables: `{{ message }}`, `{{ level_index }}`
+- Use `{{ variable | html.escape }}` to prevent XSS
+- Use Scriban conditionals: `{{ if condition }}...{{ end }}`
+- Use Scriban loops: `{{ for item in items }}...{{ end }}`
 
 Key methods:
 - `CharacterForm(Character?)` — full form with hidden monotonic counters; level buttons in flex row with conditional clone button
 - `LevelFragment(levelIndex, CharacterLevel?)` — single level card with attacks container
 - `AttackFragment(levelIndex, attackIndex, Attack?)` — attack fieldset with hit/crit/masteries/topple%/damage
 - `DiceGroupFragment(levelIndex, attackIndex, diceIndex, DiceGroup?)` — inline dice row (qty + die size + remove)
-- `CloneLevelButton()` — reusable clone button HTML, used in form and OOB responses
-- `CharacterList(List<(int,string)>)` — sidebar character items
-- `DamageResultsTable(List<LevelStats>)` — damage statistics table with percentiles
-- `ValidationError(string)` / `SaveConfirmation(int, string)` — feedback messages
+- `CloneLevelButton()` → **Scriban template**
+- `CharacterList(List<(int,string)>)` → **Scriban template**
+- `DamageResultsGraph(List<LevelStats>)` — damage statistics table with percentiles
+- `ValidationError(string)` → **Scriban template**
+- `SaveConfirmation(int, string)` → **Scriban template**
 
 Counter management: monotonic hidden fields (`levelCounter`, `attackCounter`, `diceCounter`) that only increment, updated via `hx-swap-oob="true"` on add responses. This avoids index collisions when elements are removed.
 

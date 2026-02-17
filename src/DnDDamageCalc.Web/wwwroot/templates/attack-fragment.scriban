@@ -1,0 +1,79 @@
+<fieldset id="{{ attack_id }}">
+    <legend style="display:flex;align-items:center;gap:0.5rem;">
+        <button type="button"
+                data-collapse-target="{{ attack_body_id }}"
+                onclick="toggleSectionById(this)"
+                class="outline secondary btn-sm">&#x25BE;</button>
+        {{ if name && name != "" }}{{ name | html.escape }}{{ else }}New Attack{{ end }}
+    </legend>
+
+    <div id="{{ attack_body_id }}">
+        <label for="{{ prefix }}.name">Attack Name</label>
+        <input type="text" name="{{ prefix }}.name" value="{{ name | html.escape }}" required placeholder="e.g. Longsword" />
+
+        <div class="grid">
+            <div>
+                <label for="{{ prefix }}.hitPercent">Hit %</label>
+                <input type="number" name="{{ prefix }}.hitPercent" value="{{ hit_percent }}" min="0" max="100"
+                       hx-post="/character/validate-percentages"
+                       hx-trigger="change"
+                       hx-target="#pct-error-{{ level_index }}-{{ attack_index }}"
+                       hx-swap="innerHTML"
+                       hx-include="[name='{{ prefix }}.hitPercent'],[name='{{ prefix }}.critPercent']" />
+            </div>
+            <div>
+                <label for="{{ prefix }}.critPercent">Crit %</label>
+                <input type="number" name="{{ prefix }}.critPercent" value="{{ crit_percent }}" min="0" max="100"
+                       hx-post="/character/validate-percentages"
+                       hx-trigger="change"
+                       hx-target="#pct-error-{{ level_index }}-{{ attack_index }}"
+                       hx-swap="innerHTML"
+                       hx-include="[name='{{ prefix }}.hitPercent'],[name='{{ prefix }}.critPercent']" />
+            </div>
+        </div>
+        <small id="pct-error-{{ level_index }}-{{ attack_index }}" style="color:var(--pico-del-color);"></small>
+
+        <div class="grid">
+            <div>
+                <label><input type="checkbox" name="{{ prefix }}.masteryVex"{{ if mastery_vex }} checked{{ end }} /> Vex</label>
+            </div>
+            <div>
+                <label><input type="checkbox" name="{{ prefix }}.masteryTopple"{{ if mastery_topple }} checked{{ end }}
+                       onchange="this.closest('fieldset').querySelector('.topple-pct').style.display=this.checked?'block':'none'" /> Topple</label>
+            </div>
+        </div>
+        <div class="topple-pct" style="display:{{ if mastery_topple }}block{{ else }}none{{ end }};">
+            <label for="{{ prefix }}.topplePercent">Topple Save Fail %</label>
+            <input type="number" name="{{ prefix }}.topplePercent" value="{{ topple_percent }}" min="0" max="100" placeholder="e.g. 40" />
+        </div>
+
+        <h6>Damage</h6>
+        <div id="dice-{{ level_index }}-{{ attack_index }}">
+            {{ for dice_group in dice_groups }}{{ dice_group.html }}{{ end }}
+        </div>
+
+        <button type="button"
+                hx-post="/character/dice/add?levelIndex={{ level_index }}&attackIndex={{ attack_index }}"
+                hx-target="#dice-{{ level_index }}-{{ attack_index }}"
+                hx-swap="beforeend"
+                hx-include="#dice-counter"
+                class="outline btn-sm">
+            + Add Dice
+        </button>
+
+        <div style="margin-top:1rem;">
+            <label for="{{ prefix }}.flatModifier">Damage Modifier (+/-)</label>
+            <input type="number" name="{{ prefix }}.flatModifier" value="{{ flat_modifier }}" placeholder="e.g. 5 for +5" />
+        </div>
+
+        <div class="attack-actions">
+            <button type="button"
+                    hx-delete="/character/attack/remove?levelIndex={{ level_index }}&attackIndex={{ attack_index }}"
+                    hx-target="#{{ attack_id }}"
+                    hx-swap="outerHTML"
+                    class="outline secondary btn-sm">
+                Remove Attack
+            </button>
+        </div>
+    </div>
+</fieldset>

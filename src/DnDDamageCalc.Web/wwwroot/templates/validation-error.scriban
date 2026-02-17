@@ -1,0 +1,1 @@
+<span style="color:var(--pico-del-color);">{{ message | html.escape }}</span>

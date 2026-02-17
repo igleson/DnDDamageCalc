@@ -1,5 +1,6 @@
 using DnDDamageCalc.Web.Auth;
 using DnDDamageCalc.Web.Html;
+using DnDDamageCalc.Web.Services;
 
 namespace DnDDamageCalc.Web.Endpoints;
 
@@ -11,7 +12,7 @@ public static class AuthEndpoints
     {
         var logger = app.Logger;
         
-        app.MapGet("/login", () => Results.Text(HtmlFragments.LoginPage(), "text/html"));
+        app.MapGet("/login", (ITemplateService templates) => Results.Text(HtmlFragments.LoginPage(templates), "text/html"));
         logger.LogInformation("Registered: GET /login");
 
         app.MapGet("/auth/login", (HttpRequest request, HttpResponse response) =>

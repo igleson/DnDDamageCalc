@@ -190,6 +190,80 @@
         </div>
     </div>
     <script>
+        function graphContainerFromElement(element) {
+            return element.closest('[data-damage-graph]');
+        }
+
+        function moveDamageTooltip(event) {
+            const point = event.currentTarget;
+            const graph = graphContainerFromElement(point);
+            if (!graph) return;
+
+            const tooltip = graph.querySelector('[data-damage-tooltip]');
+            if (!tooltip || tooltip.dataset.visible !== 'true') return;
+
+            const graphRect = graph.getBoundingClientRect();
+            let left = event.clientX - graphRect.left + 12;
+            let top = event.clientY - graphRect.top - 30;
+
+            const maxLeft = graph.clientWidth - tooltip.offsetWidth - 8;
+            const maxTop = graph.clientHeight - tooltip.offsetHeight - 8;
+            left = Math.max(8, Math.min(left, maxLeft));
+            top = Math.max(8, Math.min(top, maxTop));
+
+            tooltip.style.left = `${left}px`;
+            tooltip.style.top = `${top}px`;
+        }
+
+        function showDamageTooltip(event) {
+            const point = event.currentTarget;
+            const graph = graphContainerFromElement(point);
+            if (!graph) return;
+
+            const tooltip = graph.querySelector('[data-damage-tooltip]');
+            if (!tooltip) return;
+
+            const stat = point.getAttribute('data-stat-label');
+            const level = point.getAttribute('data-level');
+            const damage = point.getAttribute('data-damage');
+            tooltip.textContent = `${stat} - Level ${level}: ${damage}`;
+            tooltip.dataset.series = point.getAttribute('data-series') || '';
+            tooltip.dataset.visible = 'true';
+            tooltip.style.display = 'block';
+            moveDamageTooltip(event);
+        }
+
+        function hideDamageTooltip(element) {
+            const graph = graphContainerFromElement(element);
+            if (!graph) return;
+
+            const tooltip = graph.querySelector('[data-damage-tooltip]');
+            if (!tooltip) return;
+
+            tooltip.dataset.visible = 'false';
+            tooltip.dataset.series = '';
+            tooltip.style.display = 'none';
+        }
+
+        function toggleDamageSeries(toggle) {
+            const graph = toggle.closest('[data-damage-graph]');
+            if (!graph) return;
+
+            const key = toggle.getAttribute('data-series-toggle');
+            if (!key) return;
+
+            graph.querySelectorAll(`[data-series="${key}"]`).forEach(el => {
+                el.style.display = toggle.checked ? '' : 'none';
+            });
+
+            if (!toggle.checked) {
+                const tooltip = graph.querySelector('[data-damage-tooltip]');
+                if (tooltip && tooltip.dataset.series === key) {
+                    hideDamageTooltip(toggle);
+                }
+            }
+        }
+
         // Handle 401 unauthorized responses
         document.addEventListener('htmx:responseError', function(e) {
             if (e.detail.xhr.status === 401) window.location.href = '/login';

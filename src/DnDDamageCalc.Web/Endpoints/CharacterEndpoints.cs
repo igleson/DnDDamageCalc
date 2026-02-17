@@ -130,7 +130,7 @@ public static class CharacterEndpoints
             }
 
             var stats = DamageSimulator.Simulate(character);
-            return Results.Text(HtmlFragments.DamageResultsTable(stats), "text/html");
+            return Results.Text(HtmlFragments.DamageResultsGraph(stats), "text/html");
         });
     }
 

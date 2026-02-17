@@ -219,7 +219,7 @@ public class CharacterEndpointTests : IClassFixture<CustomWebApplicationFactory>
     }
 
     [Fact]
-    public async Task Calculate_ValidData_ReturnsResultsTable()
+    public async Task Calculate_ValidData_ReturnsResultsGraph()
     {
         var content = new FormUrlEncodedContent([
             new KeyValuePair<string, string>("characterName", "Test"),
@@ -236,7 +236,12 @@ public class CharacterEndpointTests : IClassFixture<CustomWebApplicationFactory>
         response.EnsureSuccessStatusCode();
         var html = await response.Content.ReadAsStringAsync();
         Assert.Contains("Damage Statistics", html);
-        Assert.Contains("<table>", html);
+        Assert.Contains("id=\"damage-results-graph\"", html);
+        Assert.Contains("data-series-toggle=\"average\"", html);
+        Assert.Contains("data-damage-tooltip", html);
+        Assert.Contains("onmouseenter=\"showDamageTooltip(event)\"", html);
+        Assert.Contains("data-stat-label=\"Average\"", html);
+        Assert.DoesNotContain("<table>", html);
     }
 
     [Fact]

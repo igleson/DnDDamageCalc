@@ -610,7 +610,29 @@
 
                 toggle.textContent = '\u25BE';
             });
-            
+
+            // Update onclick handlers that still reference old attack index/ids
+            cloned.querySelectorAll('[onclick]').forEach(btn => {
+                const onclickStr = btn.getAttribute('onclick');
+                if (!onclickStr) return;
+
+                let updatedOnclick = onclickStr;
+                updatedOnclick = updatedOnclick.replace(
+                    new RegExp(`addDice\\(${oldLevelIndex},\\s*${oldIndex}\\)`, 'g'),
+                    `addDice(${levelIndex}, ${newIndex})`
+                );
+                updatedOnclick = updatedOnclick.replace(
+                    new RegExp(`removeAttack\\('attack-${oldLevelIndex}-${oldIndex}'\\)`, 'g'),
+                    `removeAttack('attack-${levelIndex}-${newIndex}')`
+                );
+                updatedOnclick = updatedOnclick.replace(
+                    new RegExp(`removeDice\\('dice-${oldLevelIndex}-${oldIndex}-`, 'g'),
+                    `removeDice('dice-${levelIndex}-${newIndex}-`
+                );
+
+                btn.setAttribute('onclick', updatedOnclick);
+            });
+             
             // Update the counter
             counterInput.value = newIndex + 1;
             

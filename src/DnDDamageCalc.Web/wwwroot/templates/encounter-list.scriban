@@ -1,0 +1,22 @@
+{{ if settings.size == 0 }}
+<p><em>No saved encounters.</em></p>
+{{ else }}
+{{ for item in settings }}
+<div class="char-item{{ if item.id == selected_id }} selected{{ end }}">
+    <a href="#"
+       hx-get="/encounter/{{ item.id }}"
+       hx-target="#form-container"
+       hx-swap="innerHTML">
+        {{ item.name | html.escape }}
+    </a>
+    <button type="button"
+            hx-delete="/encounter/{{ item.id }}"
+            hx-target="#encounter-list"
+            hx-swap="innerHTML"
+            hx-confirm="Delete {{ item.name | html.escape }}?"
+            class="outline secondary btn-sm">
+        &times;
+    </button>
+</div>
+{{ end }}
+{{ end }}

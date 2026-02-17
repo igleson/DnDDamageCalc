@@ -1,0 +1,57 @@
+<h4>Encounter Settings</h4>
+<small>Select one for calculation</small>
+<div id="encounter-selection" style="margin-top:0.5rem;">
+    <select name="encounterSettingId" required>
+        <option value="">Select encounter setting</option>
+        {{ for setting in settings }}
+        <option value="{{ setting.id }}"{{ if selected_id == setting.id }} selected{{ end }}>
+            {{ setting.name | html.escape }}
+        </option>
+        {{ end }}
+    </select>
+</div>
+<hr />
+<form id="encounter-form"
+      hx-post="/encounter/save"
+      hx-target="#encounter-panel"
+      hx-swap="innerHTML">
+    <input type="hidden" name="encounterId" value="{{ encounter_id }}" />
+    <label for="encounterName">Name</label>
+    <input id="encounterName"
+           name="encounterName"
+           value="{{ encounter_name | html.escape }}"
+           required
+           placeholder="e.g. Adventuring Day" />
+
+    <div id="encounter-combats">
+        {{ for combat in combats }}
+        <article id="combat-{{ combat.index }}" style="padding:0.6rem;margin:0.5rem 0;">
+            <label>Combat {{ combat.index + 1 }} Rounds</label>
+            <input type="number" min="1" name="combat[{{ combat.index }}].rounds" value="{{ combat.rounds }}" required />
+            <label>
+                <input type="checkbox" name="combat[{{ combat.index }}].shortRestAfter"{{ if combat.short_rest_after }} checked{{ end }} />
+                Short rest after this combat
+            </label>
+            <button type="button" class="outline secondary btn-sm" onclick="removeEncounterCombat('combat-{{ combat.index }}')">Remove Combat</button>
+        </article>
+        {{ end }}
+    </div>
+    <button type="button" class="outline secondary" onclick="addEncounterCombat()">+ Add Combat</button>
+    <button type="submit">Save Encounter</button>
+</form>
+<div id="encounter-list" style="margin-top:0.75rem;">
+    {{ for setting in settings }}
+    <div class="char-item">
+        <a href="#"
+           hx-get="/encounter/{{ setting.id }}/edit"
+           hx-target="#encounter-panel"
+           hx-swap="innerHTML"
+           onclick="return false;">{{ setting.name | html.escape }}</a>
+        <button type="button"
+                class="btn-sm outline secondary"
+                hx-delete="/encounter/{{ setting.id }}"
+                hx-target="#encounter-panel"
+                hx-swap="innerHTML">x</button>
+    </div>
+    {{ end }}
+</div>

@@ -1,0 +1,36 @@
+<form id="encounter-form" hx-post="/encounter/save" hx-target="#form-container" hx-swap="innerHTML">
+    <input type="hidden" name="encounterId" value="{{ encounter_id }}" />
+
+    <article>
+        <header><strong>Encounter Info</strong></header>
+        <label for="encounterName">Encounter Name</label>
+        <input type="text" id="encounterName" name="encounterName"
+               value="{{ encounter_name | html.escape }}" required placeholder="Enter encounter name" />
+    </article>
+
+    <section>
+        <hgroup>
+            <h3>Combats</h3>
+            <p>Add combats, rounds, and short-rest markers.</p>
+        </hgroup>
+
+        <div id="encounter-combats">
+            {{ for combat in combats }}
+            <article id="combat-{{ combat.index }}" style="padding:0.6rem;margin:0.5rem 0;">
+                <label>Combat {{ combat.index + 1 }} Rounds</label>
+                <input type="number" min="1" name="combat[{{ combat.index }}].rounds" value="{{ combat.rounds }}" required />
+                <label>
+                    <input type="checkbox" name="combat[{{ combat.index }}].shortRestAfter"{{ if combat.short_rest_after }} checked{{ end }} />
+                    Short rest after this combat
+                </label>
+                <button type="button" class="outline secondary btn-sm" onclick="removeEncounterCombat('combat-{{ combat.index }}')">Remove Combat</button>
+            </article>
+            {{ end }}
+        </div>
+
+        <button type="button" class="outline secondary" onclick="addEncounterCombat()">+ Add Combat</button>
+    </section>
+
+    <hr />
+    <button type="submit">Save Encounter</button>
+</form>

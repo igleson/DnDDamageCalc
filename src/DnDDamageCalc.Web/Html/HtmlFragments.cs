@@ -10,10 +10,16 @@ public static class HtmlFragments
 {
     private static readonly int[] DieSizes = [4, 6, 8, 10, 12, 20];
 
+    private static string? _emptyCharacterForm;
+    private static string? _emptyCharacterLevelForm;
+    private static string? _emptyAttackForm;
+    private static string? _emptyDiceGroupForm;
+
     public static string CharacterForm(Character? character, ITemplateService templates)
     {
+        if (character is null && _emptyCharacterForm is not null) return _emptyCharacterForm;
         var c = character ?? new Character();
-        
+
         // Generate level HTML fragments
         var levels = new List<object>();
         for (var i = 0; i < c.Levels.Count; i++)
@@ -31,11 +37,15 @@ public static class HtmlFragments
             clone_level_button = c.Levels.Count > 0 ? new { html = CloneLevelButton(templates) } : null
         };
 
-        return templates.Render("character-form", model);
+        var renderedResult = templates.Render("character-form", model);
+        if (_emptyCharacterForm is null && character is null) _emptyCharacterForm = renderedResult;
+
+        return renderedResult;
     }
 
     public static string LevelFragment(int levelIndex, CharacterLevel? level, ITemplateService templates)
     {
+        if (level is null && _emptyCharacterLevelForm is not null) return _emptyCharacterLevelForm;
         var l = level ?? new CharacterLevel();
         var levelNum = l.LevelNumber > 0 ? l.LevelNumber : levelIndex + 1;
         var levelId = $"level-{levelIndex}";
@@ -59,11 +69,17 @@ public static class HtmlFragments
             clone_attack_button = l.Attacks.Count > 0 ? new { html = CloneAttackButton(levelIndex, templates) } : null
         };
 
-        return templates.Render("level-fragment", model);
+        var renderedResult = templates.Render("level-fragment", model);
+
+        if (_emptyCharacterLevelForm is null && level is null) _emptyCharacterLevelForm = renderedResult;
+
+        return renderedResult;
     }
 
     public static string AttackFragment(int levelIndex, int attackIndex, Attack? attack, ITemplateService templates)
     {
+        if (attack is null && _emptyAttackForm is not null) return _emptyAttackForm;
+        
         var a = attack ?? new Attack();
         var prefix = $"level[{levelIndex}].attacks[{attackIndex}]";
         var attackId = $"attack-{levelIndex}-{attackIndex}";
@@ -93,11 +109,16 @@ public static class HtmlFragments
             dice_groups = diceGroups
         };
 
-        return templates.Render("attack-fragment", model);
+        var renderedResult = templates.Render("attack-fragment", model);
+
+        if (_emptyAttackForm is null && attack is null) _emptyAttackForm = renderedResult;
+        
+        return renderedResult;
     }
 
     public static string DiceGroupFragment(int levelIndex, int attackIndex, int diceIndex, DiceGroup? dice, ITemplateService templates)
     {
+        if (dice is null && _emptyDiceGroupForm is not null) return _emptyDiceGroupForm;
         var d = dice ?? new DiceGroup { Quantity = 1, DieSize = 6 };
         var prefix = $"level[{levelIndex}].attacks[{attackIndex}].dice[{diceIndex}]";
 
@@ -111,7 +132,11 @@ public static class HtmlFragments
             die_size = d.DieSize,
             die_sizes = DieSizes
         };
-        return templates.Render("dice-group-fragment", model);
+        var renderedResult = templates.Render("dice-group-fragment", model);
+
+        if (_emptyDiceGroupForm is null && dice is null) _emptyDiceGroupForm = renderedResult;
+        
+        return renderedResult;
     }
 
     public static string CharacterList(List<(int Id, string Name)> characters, int? selectedId, ITemplateService templates)
@@ -177,37 +202,37 @@ public static class HtmlFragments
         const int yTickCount = 5;
         var sb = new StringBuilder();
         sb.Append("""
-            <article style="margin-top:1rem;">
-                <header><strong>Damage Statistics</strong></header>
-                <div data-damage-graph style="position:relative;">
-                    <div style="display:flex;flex-wrap:wrap;gap:0.75rem;margin-bottom:0.75rem;">
-            """);
+                  <article style="margin-top:1rem;">
+                      <header><strong>Damage Statistics</strong></header>
+                      <div data-damage-graph style="position:relative;">
+                          <div style="display:flex;flex-wrap:wrap;gap:0.75rem;margin-bottom:0.75rem;">
+                  """);
 
         foreach (var metric in series)
         {
             sb.Append($"""
-                        <label style="display:flex;align-items:center;gap:0.4rem;margin:0;">
-                            <input type="checkbox"
-                                   data-series-toggle="{metric.Key}"
-                                   onchange="toggleDamageSeries(this)"
-                                   checked />
-                            <span style="display:inline-block;width:0.85rem;height:0.85rem;border-radius:50%;background:{metric.Color};"></span>
-                            {metric.Label}
-                        </label>
-                """);
+                               <label style="display:flex;align-items:center;gap:0.4rem;margin:0;">
+                                   <input type="checkbox"
+                                          data-series-toggle="{metric.Key}"
+                                          onchange="toggleDamageSeries(this)"
+                                          checked />
+                                   <span style="display:inline-block;width:0.85rem;height:0.85rem;border-radius:50%;background:{metric.Color};"></span>
+                                   {metric.Label}
+                               </label>
+                       """);
         }
 
         sb.Append($"""
-                    </div>
-                    <div data-damage-tooltip
-                         style="display:none;position:absolute;z-index:20;pointer-events:none;padding:0.35rem 0.55rem;background:var(--pico-card-background-color);border:1px solid var(--pico-muted-border-color);border-radius:var(--pico-border-radius);font-size:0.78rem;line-height:1.2;box-shadow:0 4px 12px rgba(0,0,0,0.35);"></div>
-                    <svg id="damage-results-graph"
-                         viewBox="0 0 {F(width)} {F(height)}"
-                         width="100%"
-                         role="img"
-                         aria-label="Damage by level graph">
-                        <rect x="0" y="0" width="{F(width)}" height="{F(height)}" fill="transparent"></rect>
-            """);
+                           </div>
+                           <div data-damage-tooltip
+                                style="display:none;position:absolute;z-index:20;pointer-events:none;padding:0.35rem 0.55rem;background:var(--pico-card-background-color);border:1px solid var(--pico-muted-border-color);border-radius:var(--pico-border-radius);font-size:0.78rem;line-height:1.2;box-shadow:0 4px 12px rgba(0,0,0,0.35);"></div>
+                           <svg id="damage-results-graph"
+                                viewBox="0 0 {F(width)} {F(height)}"
+                                width="100%"
+                                role="img"
+                                aria-label="Damage by level graph">
+                               <rect x="0" y="0" width="{F(width)}" height="{F(height)}" fill="transparent"></rect>
+                   """);
 
         for (var i = 0; i <= yTickCount; i++)
         {
@@ -215,77 +240,78 @@ public static class HtmlFragments
             var y = marginTop + (fraction * plotHeight);
             var value = maxDamage - (fraction * (maxDamage - minDamage));
             sb.Append($"""
-                        <line x1="{F(marginLeft)}" y1="{F(y)}" x2="{F(width - marginRight)}" y2="{F(y)}"
-                              stroke="var(--pico-muted-border-color)" stroke-width="1"></line>
-                        <text x="{F(marginLeft - 8)}" y="{F(y + 4)}" text-anchor="end" fill="var(--pico-muted-color)" font-size="10">
-                            {F1(value)}
-                        </text>
-                """);
+                               <line x1="{F(marginLeft)}" y1="{F(y)}" x2="{F(width - marginRight)}" y2="{F(y)}"
+                                     stroke="var(--pico-muted-border-color)" stroke-width="1"></line>
+                               <text x="{F(marginLeft - 8)}" y="{F(y + 4)}" text-anchor="end" fill="var(--pico-muted-color)" font-size="10">
+                                   {F1(value)}
+                               </text>
+                       """);
         }
 
         foreach (var level in ordered.Select(s => s.LevelNumber))
         {
             var x = MapX(level);
             sb.Append($"""
-                        <line x1="{F(x)}" y1="{F(marginTop)}" x2="{F(x)}" y2="{F(height - marginBottom)}"
-                              stroke="var(--pico-muted-border-color)" stroke-width="1" stroke-dasharray="2,4"></line>
-                        <text x="{F(x)}" y="{F(height - marginBottom + 18)}" text-anchor="middle" fill="var(--pico-muted-color)" font-size="10">
-                            {level}
-                        </text>
-                """);
+                               <line x1="{F(x)}" y1="{F(marginTop)}" x2="{F(x)}" y2="{F(height - marginBottom)}"
+                                     stroke="var(--pico-muted-border-color)" stroke-width="1" stroke-dasharray="2,4"></line>
+                               <text x="{F(x)}" y="{F(height - marginBottom + 18)}" text-anchor="middle" fill="var(--pico-muted-color)" font-size="10">
+                                   {level}
+                               </text>
+                       """);
         }
 
         sb.Append($"""
-                        <line x1="{F(marginLeft)}" y1="{F(height - marginBottom)}" x2="{F(width - marginRight)}" y2="{F(height - marginBottom)}"
-                              stroke="var(--pico-color)" stroke-width="1.5"></line>
-                        <line x1="{F(marginLeft)}" y1="{F(marginTop)}" x2="{F(marginLeft)}" y2="{F(height - marginBottom)}"
-                              stroke="var(--pico-color)" stroke-width="1.5"></line>
-                        <text x="{F(marginLeft + (plotWidth / 2.0))}" y="{F(height - 10)}" text-anchor="middle" fill="var(--pico-color)" font-size="12">
-                            Level
-                        </text>
-                        <text x="18" y="{F(marginTop + (plotHeight / 2.0))}" text-anchor="middle" fill="var(--pico-color)" font-size="12"
-                              transform="rotate(-90 18 {F(marginTop + (plotHeight / 2.0))})">
-                            Damage
-                        </text>
-            """);
+                               <line x1="{F(marginLeft)}" y1="{F(height - marginBottom)}" x2="{F(width - marginRight)}" y2="{F(height - marginBottom)}"
+                                     stroke="var(--pico-color)" stroke-width="1.5"></line>
+                               <line x1="{F(marginLeft)}" y1="{F(marginTop)}" x2="{F(marginLeft)}" y2="{F(height - marginBottom)}"
+                                     stroke="var(--pico-color)" stroke-width="1.5"></line>
+                               <text x="{F(marginLeft + (plotWidth / 2.0))}" y="{F(height - 10)}" text-anchor="middle" fill="var(--pico-color)" font-size="12">
+                                   Level
+                               </text>
+                               <text x="18" y="{F(marginTop + (plotHeight / 2.0))}" text-anchor="middle" fill="var(--pico-color)" font-size="12"
+                                     transform="rotate(-90 18 {F(marginTop + (plotHeight / 2.0))})">
+                                   Damage
+                               </text>
+                   """);
 
         foreach (var metric in series)
         {
             var points = string.Join(" ", ordered.Select(s => $"{F(MapX(s.LevelNumber))},{F(MapY(metric.Selector(s)))}"));
             sb.Append($"""
-                        <g data-series="{metric.Key}">
-                            <polyline points="{points}" fill="none" stroke="{metric.Color}" stroke-width="2.25"></polyline>
-                """);
+                               <g data-series="{metric.Key}">
+                                   <polyline points="{points}" fill="none" stroke="{metric.Color}" stroke-width="2.25"></polyline>
+                       """);
             foreach (var stat in ordered)
             {
                 var x = MapX(stat.LevelNumber);
                 var value = metric.Selector(stat);
                 var y = MapY(value);
                 sb.Append($"""
-                            <circle cx="{F(x)}"
-                                    cy="{F(y)}"
-                                    r="3.25"
-                                    fill="{metric.Color}"
-                                    style="cursor:pointer;"
-                                    data-series="{metric.Key}"
-                                    data-stat-label="{metric.Label}"
-                                    data-level="{stat.LevelNumber}"
-                                    data-damage="{F1(value)}"
-                                    onmouseenter="showDamageTooltip(event)"
-                                    onmousemove="moveDamageTooltip(event)"
-                                    onmouseleave="hideDamageTooltip(this)"></circle>
-                    """);
+                                   <circle cx="{F(x)}"
+                                           cy="{F(y)}"
+                                           r="3.25"
+                                           fill="{metric.Color}"
+                                           style="cursor:pointer;"
+                                           data-series="{metric.Key}"
+                                           data-stat-label="{metric.Label}"
+                                           data-level="{stat.LevelNumber}"
+                                           data-damage="{F1(value)}"
+                                           onmouseenter="showDamageTooltip(event)"
+                                           onmousemove="moveDamageTooltip(event)"
+                                           onmouseleave="hideDamageTooltip(this)"></circle>
+                           """);
             }
+
             sb.Append("""
-                        </g>
-                """);
+                              </g>
+                      """);
         }
 
         sb.Append("""
-                    </svg>
-                </div>
-            </article>
-            """);
+                          </svg>
+                      </div>
+                  </article>
+                  """);
 
         return sb.ToString();
     }
@@ -294,8 +320,8 @@ public static class HtmlFragments
         templates.Render("login-page");
 
     public static string IndexPage(ITemplateService templates, string characterListHtml, string characterFormHtml, bool showLogout = true) =>
-        templates.Render("index-page", new 
-        { 
+        templates.Render("index-page", new
+        {
             show_logout = showLogout,
             character_list = new { html = characterListHtml },
             character_form = new { html = characterFormHtml }

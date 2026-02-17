@@ -30,6 +30,7 @@
             flex-direction: column;
             transition: margin-left 0.25s ease;
             overflow-y: auto;
+            overflow-x: hidden; /* Prevent horizontal scrolling */
         }
         .sidebar.collapsed {
             margin-left: -280px;
@@ -43,6 +44,7 @@
         #character-list {
             flex: 1;
             overflow-y: auto;
+            overflow-x: hidden; /* Prevent horizontal scrolling */
         }
 
         /* Toggle button */
@@ -123,6 +125,7 @@
             padding: 0.5rem;
             border-radius: var(--pico-border-radius);
             margin-bottom: 0.25rem;
+            min-width: 0; /* Allow flex children to shrink below their content size */
         }
         .char-item:hover {
             background: var(--pico-secondary-hover-background);
@@ -130,6 +133,16 @@
         .char-item a {
             flex: 1;
             text-decoration: none;
+            min-width: 0; /* Allow text to shrink */
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            margin-right: 0.5rem; /* Space between name and delete button */
+        }
+        .char-item .btn-sm {
+            flex-shrink: 0; /* Prevent delete button from shrinking */
+            min-width: auto;
+            padding: 0.25rem 0.5rem !important; /* Smaller padding for delete button */
         }
 
         /* Responsive: stack on small screens */

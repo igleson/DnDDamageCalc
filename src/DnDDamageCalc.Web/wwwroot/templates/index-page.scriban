@@ -473,13 +473,17 @@
             const oldIndexMatch = lastAttackId.match(/attack-\d+-(\d+)$/);
             const oldIndex = oldIndexMatch ? parseInt(oldIndexMatch[1]) : attacks.length - 1;
             
-            // Update all name attributes: attacks[oldIndex] -> attacks[newIndex]
+            // Find the old level index from the last attack's name attribute
+            const sampleInput = lastAttack.querySelector('[name]');
+            const oldLevelIndex = sampleInput && sampleInput.name ? 
+                (sampleInput.name.match(/level\[(\d+)\]/) || [null, levelIndex])[1] : levelIndex;
+            
+            // Update all name attributes: level[oldLevelIndex].attacks[oldIndex] -> level[levelIndex].attacks[newIndex]
             cloned.querySelectorAll('[name]').forEach(input => {
                 if (input.name) {
-                    input.name = input.name.replace(
-                        `attacks[${oldIndex}]`, 
-                        `attacks[${newIndex}]`
-                    );
+                    input.name = input.name
+                        .replace(`level[${oldLevelIndex}]`, `level[${levelIndex}]`)
+                        .replace(`attacks[${oldIndex}]`, `attacks[${newIndex}]`);
                 }
             });
             
@@ -668,13 +672,82 @@
             
             const levels = container.querySelectorAll('article[id^="level-"]');
             levels.forEach((level, index) => {
+                const oldIndex = parseInt(level.id.replace('level-', ''));
+                const newIndex = index;
                 const correctLevelNumber = index + 1;
+                
+                // Update level ID
+                level.id = `level-${newIndex}`;
+                
+                // Update level body ID
+                const levelBody = level.querySelector('[id^="level-body-"]');
+                if (levelBody) {
+                    levelBody.id = `level-body-${newIndex}`;
+                }
+                
+                // Update attacks container ID
+                const attacksContainer = level.querySelector('[id^="attacks-"]');
+                if (attacksContainer) {
+                    attacksContainer.id = `attacks-${newIndex}`;
+                }
                 
                 // Update the level number in the header
                 const header = level.querySelector('header strong');
                 if (header) {
                     header.textContent = `Level ${correctLevelNumber}`;
                 }
+                
+                // Update all form field names within this level
+                level.querySelectorAll('[name]').forEach(input => {
+                    if (input.name && input.name.includes(`level[${oldIndex}]`)) {
+                        input.name = input.name.replace(`level[${oldIndex}]`, `level[${newIndex}]`);
+                    }
+                });
+                
+                // Update all IDs within this level
+                level.querySelectorAll('[id]').forEach(el => {
+                    if (el.id && el !== level) {
+                        el.id = el.id.replace(new RegExp(`-${oldIndex}(-|$)`), `-${newIndex}$1`);
+                    }
+                });
+                
+                // Update onclick handlers for buttons within this level
+                level.querySelectorAll('[onclick*="addAttack"], [onclick*="cloneAttack"], [onclick*="addDice"], [onclick*="removeAttack"], [onclick*="removeDice"], [onclick*="removeLevel"]').forEach(btn => {
+                    const onclickStr = btn.getAttribute('onclick');
+                    if (onclickStr) {
+                        let updatedOnclick = onclickStr;
+                        
+                        // Update addAttack(oldIndex) -> addAttack(newIndex)
+                        updatedOnclick = updatedOnclick.replace(new RegExp(`addAttack\\(${oldIndex}\\)`, 'g'), `addAttack(${newIndex})`);
+                        
+                        // Update cloneAttack(oldIndex) -> cloneAttack(newIndex)
+                        updatedOnclick = updatedOnclick.replace(new RegExp(`cloneAttack\\(${oldIndex}\\)`, 'g'), `cloneAttack(${newIndex})`);
+                        
+                        // Update addDice(oldIndex, ...) -> addDice(newIndex, ...)
+                        updatedOnclick = updatedOnclick.replace(new RegExp(`addDice\\(${oldIndex},`, 'g'), `addDice(${newIndex},`);
+                        
+                        // Update removeAttack('attack-oldIndex-...') -> removeAttack('attack-newIndex-...')
+                        updatedOnclick = updatedOnclick.replace(new RegExp(`removeAttack\\('attack-${oldIndex}-`, 'g'), `removeAttack('attack-${newIndex}-`);
+                        
+                        // Update removeDice('dice-oldIndex-...') -> removeDice('dice-newIndex-...')
+                        updatedOnclick = updatedOnclick.replace(new RegExp(`removeDice\\('dice-${oldIndex}-`, 'g'), `removeDice('dice-${newIndex}-`);
+                        
+                        // Update removeLevel('level-oldIndex') -> removeLevel('level-newIndex')
+                        updatedOnclick = updatedOnclick.replace(new RegExp(`removeLevel\\('level-${oldIndex}'\\)`, 'g'), `removeLevel('level-${newIndex}')`);
+                        
+                        btn.setAttribute('onclick', updatedOnclick);
+                    }
+                });
+                
+                // Update data attributes and other level-specific references
+                level.querySelectorAll('[data-collapse-target], [hx-target], [hx-delete]').forEach(el => {
+                    ['data-collapse-target', 'hx-target', 'hx-delete'].forEach(attr => {
+                        const value = el.getAttribute(attr);
+                        if (value && value.includes(`-${oldIndex}-`)) {
+                            el.setAttribute(attr, value.replace(`-${oldIndex}-`, `-${newIndex}-`));
+                        }
+                    });
+                });
                 
                 // Update the hidden input value
                 const levelNumberInput = level.querySelector('input[name$="].number"]');
@@ -823,10 +896,18 @@
                                 <label><input type="checkbox" name="ATTACK_PREFIX_PLACEHOLDER.masteryTopple"
                                        onchange="this.closest('fieldset').querySelector('.topple-pct').style.display=this.checked?'block':'none'" /> Topple</label>
                             </div>
+                            <div>
+                                <label><input type="checkbox" name="ATTACK_PREFIX_PLACEHOLDER.masteryGraze"
+                                       onchange="this.closest('fieldset').querySelector('.graze-value').style.display=this.checked?'block':'none'" /> Graze</label>
+                            </div>
                         </div>
                         <div class="topple-pct" style="display:none;">
                             <label for="ATTACK_PREFIX_PLACEHOLDER.topplePercent">Topple Save Fail %</label>
                             <input type="number" name="ATTACK_PREFIX_PLACEHOLDER.topplePercent" value="0" min="0" max="100" placeholder="e.g. 40" />
+                        </div>
+                        <div class="graze-value" style="display:none;">
+                            <label for="ATTACK_PREFIX_PLACEHOLDER.grazeValue">Graze Damage</label>
+                            <input type="number" name="ATTACK_PREFIX_PLACEHOLDER.grazeValue" value="0" min="0" placeholder="e.g. 2" />
                         </div>
 
                         <h6>Damage</h6>
@@ -981,6 +1062,34 @@
                         `index=${oldIndex}`,
                         `index=${newIndex}`
                     ));
+                }
+            });
+            
+            // Update onclick handlers for buttons within this cloned level
+            cloned.querySelectorAll('[onclick*="addAttack"], [onclick*="cloneAttack"], [onclick*="addDice"], [onclick*="removeAttack"], [onclick*="removeDice"], [onclick*="removeLevel"]').forEach(btn => {
+                const onclickStr = btn.getAttribute('onclick');
+                if (onclickStr) {
+                    let updatedOnclick = onclickStr;
+                    
+                    // Update addAttack(oldIndex) -> addAttack(newIndex)
+                    updatedOnclick = updatedOnclick.replace(new RegExp(`addAttack\\(${oldIndex}\\)`, 'g'), `addAttack(${newIndex})`);
+                    
+                    // Update cloneAttack(oldIndex) -> cloneAttack(newIndex)
+                    updatedOnclick = updatedOnclick.replace(new RegExp(`cloneAttack\\(${oldIndex}\\)`, 'g'), `cloneAttack(${newIndex})`);
+                    
+                    // Update addDice(oldIndex, ...) -> addDice(newIndex, ...)
+                    updatedOnclick = updatedOnclick.replace(new RegExp(`addDice\\(${oldIndex},`, 'g'), `addDice(${newIndex},`);
+                    
+                    // Update removeAttack('attack-oldIndex-...') -> removeAttack('attack-newIndex-...')
+                    updatedOnclick = updatedOnclick.replace(new RegExp(`removeAttack\\('attack-${oldIndex}-`, 'g'), `removeAttack('attack-${newIndex}-`);
+                    
+                    // Update removeDice('dice-oldIndex-...') -> removeDice('dice-newIndex-...')
+                    updatedOnclick = updatedOnclick.replace(new RegExp(`removeDice\\('dice-${oldIndex}-`, 'g'), `removeDice('dice-${newIndex}-`);
+                    
+                    // Update removeLevel('level-oldIndex') -> removeLevel('level-newIndex')
+                    updatedOnclick = updatedOnclick.replace(new RegExp(`removeLevel\\('level-${oldIndex}'\\)`, 'g'), `removeLevel('level-${newIndex}')`);
+                    
+                    btn.setAttribute('onclick', updatedOnclick);
                 }
             });
             

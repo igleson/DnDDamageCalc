@@ -95,6 +95,9 @@ public static class DamageSimulator
                 // Miss
                 if (attack.MasteryVex)
                     nextAttackHasAdvantage = true;
+                
+                if (attack.MasteryGraze && attack.GrazeValue > 0)
+                    totalDamage += attack.GrazeValue;
             }
         }
 

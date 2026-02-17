@@ -41,10 +41,18 @@
                 <label><input type="checkbox" name="{{ prefix }}.masteryTopple"{{ if mastery_topple }} checked{{ end }}
                        onchange="this.closest('fieldset').querySelector('.topple-pct').style.display=this.checked?'block':'none'" /> Topple</label>
             </div>
+            <div>
+                <label><input type="checkbox" name="{{ prefix }}.masteryGraze"{{ if mastery_graze }} checked{{ end }}
+                       onchange="this.closest('fieldset').querySelector('.graze-value').style.display=this.checked?'block':'none'" /> Graze</label>
+            </div>
         </div>
         <div class="topple-pct" style="display:{{ if mastery_topple }}block{{ else }}none{{ end }};">
             <label for="{{ prefix }}.topplePercent">Topple Save Fail %</label>
             <input type="number" name="{{ prefix }}.topplePercent" value="{{ topple_percent }}" min="0" max="100" placeholder="e.g. 40" />
+        </div>
+        <div class="graze-value" style="display:{{ if mastery_graze }}block{{ else }}none{{ end }};">
+            <label for="{{ prefix }}.grazeValue">Graze Damage</label>
+            <input type="number" name="{{ prefix }}.grazeValue" value="{{ graze_value }}" min="0" placeholder="e.g. 2" />
         </div>
 
         <h6>Damage</h6>

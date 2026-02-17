@@ -45,6 +45,12 @@ public class Attack
 
     [ProtoMember(8)]
     public int TopplePercent { get; set; }
+
+    [ProtoMember(9)]
+    public bool MasteryGraze { get; set; }
+
+    [ProtoMember(10)]
+    public int GrazeValue { get; set; }
 }
 
 [ProtoContract]

@@ -12,7 +12,7 @@ public static class HtmlFragments
 
     private static string? _emptyCharacterForm;
     private static string? _emptyCharacterLevelForm;
-    private static string? _emptyAttackForm;
+    private static string? _emptyAttackForm = null; // Reset cache to pick up new Graze mastery
     private static string? _emptyDiceGroupForm;
 
     public static string CharacterForm(Character? character, ITemplateService templates)
@@ -78,7 +78,8 @@ public static class HtmlFragments
 
     public static string AttackFragment(int levelIndex, int attackIndex, Attack? attack, ITemplateService templates)
     {
-        if (attack is null && _emptyAttackForm is not null) return _emptyAttackForm;
+        // Temporarily bypass cache to pick up template changes
+        // if (attack is null && _emptyAttackForm is not null) return _emptyAttackForm;
         
         var a = attack ?? new Attack();
         var prefix = $"level[{levelIndex}].attacks[{attackIndex}]";
@@ -105,13 +106,15 @@ public static class HtmlFragments
             mastery_vex = a.MasteryVex,
             mastery_topple = a.MasteryTopple,
             topple_percent = a.TopplePercent,
+            mastery_graze = a.MasteryGraze,
+            graze_value = a.GrazeValue,
             flat_modifier = a.FlatModifier,
             dice_groups = diceGroups
         };
 
         var renderedResult = templates.Render("attack-fragment", model);
 
-        if (_emptyAttackForm is null && attack is null) _emptyAttackForm = renderedResult;
+        // if (_emptyAttackForm is null && attack is null) _emptyAttackForm = renderedResult;
         
         return renderedResult;
     }

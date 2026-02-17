@@ -96,7 +96,7 @@ public static class HtmlFragments
                             <button type="button"
                                     data-collapse-target="{levelBodyId}"
                                     onclick="toggleSectionById(this)"
-                                    class="outline secondary btn-sm">&#x25bc;</button>
+                                    class="outline secondary btn-sm">&#x25BE;</button>
                             <button type="button"
                                     hx-delete="/character/level/remove?index={levelIndex}"
                                     hx-target="#{levelId}"
@@ -154,7 +154,7 @@ public static class HtmlFragments
                     <button type="button"
                             data-collapse-target="{attackBodyId}"
                             onclick="toggleSectionById(this)"
-                            class="outline secondary btn-sm">&#x25bc;</button>
+                            class="outline secondary btn-sm">&#x25BE;</button>
                     {(string.IsNullOrEmpty(a.Name) ? "New Attack" : Encode(a.Name))}
                 </legend>
 

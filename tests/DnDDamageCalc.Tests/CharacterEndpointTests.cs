@@ -50,22 +50,6 @@ public class CharacterEndpointTests : IClassFixture<CustomWebApplicationFactory>
     }
 
     [Fact]
-    public async Task AddAttack_ReturnsAttackFragment()
-    {
-        var content = new FormUrlEncodedContent([
-            new KeyValuePair<string, string>("attackCounter", "0")
-        ]);
-        var response = await _client.PostAsync("/character/attack/add?levelIndex=0", content);
-
-        response.EnsureSuccessStatusCode();
-        var html = await response.Content.ReadAsStringAsync();
-        Assert.Contains("attack-0-0", html);
-        Assert.Contains("id=\"attack-body-0-0\"", html);
-        Assert.Contains("data-collapse-target=\"attack-body-0-0\"", html);
-        Assert.Contains("hitPercent", html);
-    }
-
-    [Fact]
     public async Task AddDice_ReturnsDiceFragment()
     {
         var content = new FormUrlEncodedContent([

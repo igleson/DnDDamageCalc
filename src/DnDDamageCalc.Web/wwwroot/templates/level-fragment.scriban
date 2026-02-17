@@ -27,10 +27,7 @@
 
         <div style="display:flex;gap:1rem;">
             <button type="button"
-                    hx-post="/character/attack/add?levelIndex={{ level_index }}"
-                    hx-target="#attacks-{{ level_index }}"
-                    hx-swap="beforeend"
-                    hx-include="#attack-counter"
+                    onclick="addAttack({{ level_index }})"
                     class="outline btn-sm">
                 + Add Attack
             </button>

@@ -66,16 +66,6 @@ public static class CharacterEndpoints
             }
         });
 
-        app.MapPost("/character/attack/add", (HttpRequest request, int levelIndex, ITemplateService templates) =>
-        {
-            var form = request.Form;
-            int.TryParse(form["attackCounter"], out var counter);
-            var html = HtmlFragments.AttackFragment(levelIndex, counter, new Attack(), templates);
-            var newCounter = counter + 1;
-            html += $"""<input type="hidden" id="attack-counter" name="attackCounter" value="{newCounter}" hx-swap-oob="true" />""";
-            return Results.Text(html, "text/html");
-        });
-
         app.MapPost("/character/dice/add", (HttpRequest request, int levelIndex, int attackIndex, ITemplateService templates) =>
         {
             var form = request.Form;

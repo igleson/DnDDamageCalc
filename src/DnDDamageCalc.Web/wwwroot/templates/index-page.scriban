@@ -432,6 +432,7 @@
         document.addEventListener('DOMContentLoaded', function() {
             initializeUrlState();
             initializeLevelTemplate();
+            initializeAttackTemplate();
         });
         // Also run after HTMX settles (in case page was loaded via HTMX)
         document.addEventListener('htmx:afterSettle', initializeUrlState);
@@ -580,10 +581,7 @@
 
                         <div style="display:flex;gap:1rem;">
                             <button type="button"
-                                    hx-post="/character/attack/add?levelIndex=LEVEL_INDEX_PLACEHOLDER"
-                                    hx-target="#attacks-LEVEL_INDEX_PLACEHOLDER"
-                                    hx-swap="beforeend"
-                                    hx-include="#attack-counter"
+                                    onclick="addAttack(LEVEL_INDEX_PLACEHOLDER)"
                                     class="outline btn-sm">
                                 + Add Attack
                             </button>
@@ -648,6 +646,137 @@
             
             // Process HTMX attributes on the new element
             htmx.process(newLevel);
+        }
+
+        // Template caching for JavaScript attack creation
+        let emptyAttackTemplate = null;
+
+        function initializeAttackTemplate() {
+            // Create a temporary empty attack to use as template
+            if (emptyAttackTemplate) return;
+            
+            // Use the server-rendered template structure
+            emptyAttackTemplate = `
+                <fieldset id="ATTACK_ID_PLACEHOLDER">
+                    <legend style="display:flex;align-items:center;gap:0.5rem;">
+                        <button type="button"
+                                data-collapse-target="ATTACK_BODY_ID_PLACEHOLDER"
+                                onclick="toggleSectionById(this)"
+                                class="outline secondary btn-sm">&#x25BE;</button>
+                        New Attack
+                    </legend>
+
+                    <div id="ATTACK_BODY_ID_PLACEHOLDER">
+                        <label for="ATTACK_PREFIX_PLACEHOLDER.name">Attack Name</label>
+                        <input type="text" name="ATTACK_PREFIX_PLACEHOLDER.name" value="" required placeholder="e.g. Longsword" />
+
+                        <div class="grid">
+                            <div>
+                                <label for="ATTACK_PREFIX_PLACEHOLDER.hitPercent">Hit %</label>
+                                <input type="number" name="ATTACK_PREFIX_PLACEHOLDER.hitPercent" value="0" min="0" max="100"
+                                       hx-post="/character/validate-percentages"
+                                       hx-trigger="change"
+                                       hx-target="#pct-error-LEVEL_INDEX_PLACEHOLDER-ATTACK_INDEX_PLACEHOLDER"
+                                       hx-swap="innerHTML"
+                                       hx-include="[name='ATTACK_PREFIX_PLACEHOLDER.hitPercent'],[name='ATTACK_PREFIX_PLACEHOLDER.critPercent']" />
+                            </div>
+                            <div>
+                                <label for="ATTACK_PREFIX_PLACEHOLDER.critPercent">Crit %</label>
+                                <input type="number" name="ATTACK_PREFIX_PLACEHOLDER.critPercent" value="0" min="0" max="100"
+                                       hx-post="/character/validate-percentages"
+                                       hx-trigger="change"
+                                       hx-target="#pct-error-LEVEL_INDEX_PLACEHOLDER-ATTACK_INDEX_PLACEHOLDER"
+                                       hx-swap="innerHTML"
+                                       hx-include="[name='ATTACK_PREFIX_PLACEHOLDER.hitPercent'],[name='ATTACK_PREFIX_PLACEHOLDER.critPercent']" />
+                            </div>
+                        </div>
+                        <small id="pct-error-LEVEL_INDEX_PLACEHOLDER-ATTACK_INDEX_PLACEHOLDER" style="color:var(--pico-del-color);"></small>
+
+                        <div class="grid">
+                            <div>
+                                <label><input type="checkbox" name="ATTACK_PREFIX_PLACEHOLDER.masteryVex" /> Vex</label>
+                            </div>
+                            <div>
+                                <label><input type="checkbox" name="ATTACK_PREFIX_PLACEHOLDER.masteryTopple"
+                                       onchange="this.closest('fieldset').querySelector('.topple-pct').style.display=this.checked?'block':'none'" /> Topple</label>
+                            </div>
+                        </div>
+                        <div class="topple-pct" style="display:none;">
+                            <label for="ATTACK_PREFIX_PLACEHOLDER.topplePercent">Topple Save Fail %</label>
+                            <input type="number" name="ATTACK_PREFIX_PLACEHOLDER.topplePercent" value="0" min="0" max="100" placeholder="e.g. 40" />
+                        </div>
+
+                        <h6>Damage</h6>
+                        <div id="dice-LEVEL_INDEX_PLACEHOLDER-ATTACK_INDEX_PLACEHOLDER">
+                            <!-- Empty dice container -->
+                        </div>
+
+                        <button type="button"
+                                hx-post="/character/dice/add?levelIndex=LEVEL_INDEX_PLACEHOLDER&attackIndex=ATTACK_INDEX_PLACEHOLDER"
+                                hx-target="#dice-LEVEL_INDEX_PLACEHOLDER-ATTACK_INDEX_PLACEHOLDER"
+                                hx-swap="beforeend"
+                                hx-include="#dice-counter"
+                                class="outline btn-sm">
+                            + Add Dice
+                        </button>
+
+                        <div style="margin-top:1rem;">
+                            <label for="ATTACK_PREFIX_PLACEHOLDER.flatModifier">Damage Modifier (+/-)</label>
+                            <input type="number" name="ATTACK_PREFIX_PLACEHOLDER.flatModifier" value="0" placeholder="e.g. 5 for +5" />
+                        </div>
+
+                        <div class="attack-actions">
+                            <button type="button"
+                                    hx-delete="/character/attack/remove?levelIndex=LEVEL_INDEX_PLACEHOLDER&attackIndex=ATTACK_INDEX_PLACEHOLDER"
+                                    hx-target="#ATTACK_ID_PLACEHOLDER"
+                                    hx-swap="outerHTML"
+                                    class="outline secondary btn-sm">
+                                Remove Attack
+                            </button>
+                        </div>
+                    </div>
+                </fieldset>
+            `;
+        }
+
+        // Add attack function - pure client-side
+        function addAttack(levelIndex) {
+            const container = document.getElementById(`attacks-${levelIndex}`);
+            if (!container) return;
+            
+            // Initialize template if not already done
+            initializeAttackTemplate();
+            
+            // Get current attack counter and increment
+            const attackCounter = document.getElementById('attack-counter');
+            const currentCounter = parseInt(attackCounter.value) || 0;
+            const newAttackIndex = currentCounter;
+            
+            // Create new attack HTML by replacing placeholders
+            const attackId = `attack-${levelIndex}-${newAttackIndex}`;
+            const attackBodyId = `attack-body-${levelIndex}-${newAttackIndex}`;
+            const attackPrefix = `level[${levelIndex}].attacks[${newAttackIndex}]`;
+            
+            let attackHtml = emptyAttackTemplate
+                .replace(/ATTACK_ID_PLACEHOLDER/g, attackId)
+                .replace(/ATTACK_BODY_ID_PLACEHOLDER/g, attackBodyId)
+                .replace(/ATTACK_PREFIX_PLACEHOLDER/g, attackPrefix)
+                .replace(/LEVEL_INDEX_PLACEHOLDER/g, levelIndex.toString())
+                .replace(/ATTACK_INDEX_PLACEHOLDER/g, newAttackIndex.toString());
+            
+            // Create a temporary div to hold the HTML
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = attackHtml;
+            const newAttack = tempDiv.firstElementChild;
+            
+            // Update the attack counter
+            attackCounter.value = newAttackIndex + 1;
+            
+            // Append to container
+            container.appendChild(newAttack);
+            
+            // Process HTMX attributes on the new element
+            htmx.process(newAttack);
         }
 
         // Clone level function - pure client-side

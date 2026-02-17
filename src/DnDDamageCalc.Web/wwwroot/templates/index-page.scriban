@@ -575,9 +575,7 @@
                                         onclick="toggleSectionById(this)"
                                         class="outline secondary btn-sm">&#x25BE;</button>
                                 <button type="button"
-                                        hx-delete="/character/level/remove?index=LEVEL_INDEX_PLACEHOLDER"
-                                        hx-target="#LEVEL_ID_PLACEHOLDER"
-                                        hx-swap="outerHTML"
+                                        onclick="removeLevel('LEVEL_ID_PLACEHOLDER')"
                                         class="outline secondary btn-sm">
                                     Remove Level
                                 </button>
@@ -611,12 +609,18 @@
             
             // Initialize template if not already done
             initializeLevelTemplate();
+            if (!emptyLevelTemplate) return;
             
-            // Get current level counter and increment
+            // Get current level counter for unique IDs (monotonic)
             const levelCounter = document.getElementById('level-counter');
+            if (!levelCounter) return;
+            
             const currentCounter = parseInt(levelCounter.value) || 0;
-            const newIndex = currentCounter;
-            const newLevelNumber = newIndex + 1;
+            const newIndex = currentCounter; // For unique IDs
+            
+            // Calculate level number based on existing levels count + 1
+            const existingLevels = container.children.length;
+            const newLevelNumber = existingLevels + 1;
             
             // Validate maximum level
             if (newLevelNumber > 20) {
@@ -625,8 +629,8 @@
             }
             
             // Create new level HTML by replacing placeholders
-            const levelId = `level-${newIndex}`;
-            const levelBodyId = `level-body-${newIndex}`;
+            const levelId = 'level-' + newIndex;
+            const levelBodyId = 'level-body-' + newIndex;
             
             let levelHtml = emptyLevelTemplate
                 .replace(/LEVEL_ID_PLACEHOLDER/g, levelId)
@@ -639,19 +643,15 @@
             tempDiv.innerHTML = levelHtml;
             const newLevel = tempDiv.firstElementChild;
             
+            if (!newLevel) return;
+            
             // Update the level counter
             levelCounter.value = newIndex + 1;
             
             // Show clone button if this is the first level
             const cloneButtonSpan = document.getElementById('clone-level-btn');
             if (cloneButtonSpan && container.children.length === 0) {
-                cloneButtonSpan.innerHTML = `
-                    <button type="button"
-                            onclick="cloneLevel()"
-                            class="secondary outline">
-                        Clone Last Level
-                    </button>
-                `;
+                cloneButtonSpan.innerHTML = '<button type="button" onclick="cloneLevel()" class="secondary outline">Clone Last Level</button>';
             }
             
             // Append to container
@@ -659,6 +659,47 @@
             
             // Process HTMX attributes on the new element
             htmx.process(newLevel);
+        }
+
+        // Renumber all levels to maintain sequential order (1, 2, 3, etc.)
+        function renumberAllLevels() {
+            const container = document.getElementById('levels-container');
+            if (!container) return;
+            
+            const levels = container.querySelectorAll('article[id^="level-"]');
+            levels.forEach((level, index) => {
+                const correctLevelNumber = index + 1;
+                
+                // Update the level number in the header
+                const header = level.querySelector('header strong');
+                if (header) {
+                    header.textContent = `Level ${correctLevelNumber}`;
+                }
+                
+                // Update the hidden input value
+                const levelNumberInput = level.querySelector('input[name$="].number"]');
+                if (levelNumberInput) {
+                    levelNumberInput.value = correctLevelNumber;
+                }
+            });
+            
+            // Hide clone button if no levels remain
+            const cloneButtonSpan = document.getElementById('clone-level-btn');
+            if (cloneButtonSpan && levels.length === 0) {
+                cloneButtonSpan.innerHTML = '';
+            }
+        }
+
+        // Remove level function - pure client-side
+        function removeLevel(levelId) {
+            const levelElement = document.getElementById(levelId);
+            if (levelElement) {
+                // Remove the level element
+                levelElement.remove();
+                
+                // Renumber all remaining levels
+                renumberAllLevels();
+            }
         }
 
         // Template caching for JavaScript attack creation
@@ -932,65 +973,6 @@
             // Process HTMX attributes on the new element
             htmx.process(cloned);
         }
-
-        // Hot reload functionality for development
-        {% raw %}{{ if show_hot_reload }}{% endraw %}
-        let lastModifiedTicks = 0;
-        let hotReloadCheckInterval;
-
-        function startHotReloadChecking() {
-            // Check for file changes every 1 second
-            hotReloadCheckInterval = setInterval(async () => {
-                try {
-                    const response = await fetch('/dev/hot-reload-check');
-                    const data = await response.json();
-                    
-                    if (lastModifiedTicks === 0) {
-                        // First check, just store the value
-                        lastModifiedTicks = data.lastModified;
-                        return;
-                    }
-                    
-                    if (data.lastModified > lastModifiedTicks) {
-                        console.log('🔥 Hot reload: Files changed, clearing cache and reloading...');
-                        
-                        // Clear server-side template cache
-                        await fetch('/dev/clear-template-cache', { method: 'POST' });
-                        
-                        // Reload the page
-                        window.location.reload();
-                    }
-                } catch (error) {
-                    console.warn('Hot reload check failed:', error);
-                }
-            }, 1000);
-        }
-
-        function stopHotReloadChecking() {
-            if (hotReloadCheckInterval) {
-                clearInterval(hotReloadCheckInterval);
-                hotReloadCheckInterval = null;
-            }
-        }
-
-        // Start hot reload checking when page loads
-        document.addEventListener('DOMContentLoaded', () => {
-            console.log('🔥 Hot reload enabled - watching for template and CSS changes...');
-            startHotReloadChecking();
-        });
-
-        // Stop checking when page is about to unload
-        window.addEventListener('beforeunload', stopHotReloadChecking);
-        
-        // Stop checking when page is hidden (tab switched, etc.)
-        document.addEventListener('visibilitychange', () => {
-            if (document.hidden) {
-                stopHotReloadChecking();
-            } else {
-                startHotReloadChecking();
-            }
-        });
-        {% raw %}{{ end }}{% endraw %}
     </script>
 </body>
 </html>

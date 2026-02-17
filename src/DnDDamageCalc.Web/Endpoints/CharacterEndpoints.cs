@@ -78,8 +78,7 @@ public static class CharacterEndpoints
             return Results.Text(html, "text/html");
         });
 
-        app.MapDelete("/character/level/remove", (int index) =>
-            Results.Text("", "text/html"));
+
 
         app.MapDelete("/character/attack/remove", (int levelIndex, int attackIndex) =>
             Results.Text("", "text/html"));

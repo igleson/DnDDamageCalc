@@ -1,4 +1,4 @@
-<form id="character-form" hx-post="/character/save" hx-target="#form-container" hx-swap="innerHTML">
+<form id="character-form" hx-post="/character/save" hx-target="#form-container" hx-swap="innerHTML" hx-include="#encounterSettingId">
     <input type="hidden" name="characterId" value="{{ character_id }}" />
     <input type="hidden" id="level-counter" name="levelCounter" value="{{ level_count }}" />
     <input type="hidden" id="attack-counter" name="attackCounter" value="0" />
@@ -33,29 +33,30 @@
         </div>
     </section>
 
-    <hr />
-    <button type="submit">Save Character</button>
-
-    <div style="margin-top:1rem;">
-        <label for="encounterSettingId">Encounter Setting</label>
-        <select id="encounterSettingId" name="encounterSettingId" required>
-            <option value="">Select encounter setting</option>
-            {{ for setting in encounter_settings }}
-            <option value="{{ setting.id }}"{{ if setting.id == selected_encounter_id }} selected{{ end }}>
-                {{ setting.name | html.escape }}
-            </option>
-            {{ end }}
-        </select>
-    </div>
-
-    <button type="button"
-            hx-post="/character/calculate"
-            hx-include="#character-form"
-            hx-target="#damage-results"
-            hx-swap="innerHTML"
-            class="contrast"
-            style="margin-top:1rem;width:100%;">
-        Calculate Damage
-    </button>
-    <div id="damage-results"></div>
 </form>
+
+<hr />
+<button type="submit" form="character-form">Save Character</button>
+
+<div style="margin-top:1rem;">
+    <label for="encounterSettingId">Encounter Setting</label>
+    <select id="encounterSettingId" name="encounterSettingId">
+        <option value="">Select encounter setting</option>
+        {{ for setting in encounter_settings }}
+        <option value="{{ setting.id }}"{{ if setting.id == selected_encounter_id }} selected{{ end }}>
+            {{ setting.name | html.escape }}
+        </option>
+        {{ end }}
+    </select>
+</div>
+
+<button type="button"
+        hx-post="/character/calculate"
+        hx-include="#character-form,#encounterSettingId"
+        hx-target="#damage-results"
+        hx-swap="innerHTML"
+        class="contrast"
+        style="margin-top:1rem;width:100%;">
+    Calculate Damage
+</button>
+<div id="damage-results"></div>

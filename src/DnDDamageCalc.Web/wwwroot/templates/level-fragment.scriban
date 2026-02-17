@@ -35,6 +35,22 @@
                            value="true"{{ if has_action_surge }} checked{{ end }} />
                     Action Surge
                 </label>
+                <input type="hidden" name="level[{{ level_index }}].resources.hasShieldMaster" value="false" />
+                <label>
+                    <input type="checkbox"
+                           name="level[{{ level_index }}].resources.hasShieldMaster"
+                           value="true"{{ if has_shield_master }} checked{{ end }}
+                           onchange="this.closest('fieldset').querySelector('.shield-master-topple').style.display=this.checked?'block':'none'" />
+                    Shield Master
+                </label>
+                <div class="shield-master-topple" style="display:{{ if has_shield_master }}block{{ else }}none{{ end }};">
+                    <label for="level[{{ level_index }}].resources.shieldMasterTopplePercent">Shield Master Topple %</label>
+                    <input type="number"
+                           name="level[{{ level_index }}].resources.shieldMasterTopplePercent"
+                           value="{{ shield_master_topple_percent }}"
+                           min="0"
+                           max="100" />
+                </div>
             </div>
         </fieldset>
 

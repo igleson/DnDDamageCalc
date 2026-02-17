@@ -825,6 +825,24 @@
                                            value="true" />
                                     Action Surge
                                 </label>
+                                <input type="hidden"
+                                       name="level[LEVEL_INDEX_PLACEHOLDER].resources.hasShieldMaster"
+                                       value="false" />
+                                <label>
+                                    <input type="checkbox"
+                                           name="level[LEVEL_INDEX_PLACEHOLDER].resources.hasShieldMaster"
+                                           value="true"
+                                           onchange="this.closest('fieldset').querySelector('.shield-master-topple').style.display=this.checked?'block':'none'" />
+                                    Shield Master
+                                </label>
+                                <div class="shield-master-topple" style="display:none;">
+                                    <label for="level[LEVEL_INDEX_PLACEHOLDER].resources.shieldMasterTopplePercent">Shield Master Topple %</label>
+                                    <input type="number"
+                                           name="level[LEVEL_INDEX_PLACEHOLDER].resources.shieldMasterTopplePercent"
+                                           value="0"
+                                           min="0"
+                                           max="100" />
+                                </div>
                             </div>
                         </fieldset>
 

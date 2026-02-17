@@ -27,6 +27,12 @@ public class LevelResources
 {
     [ProtoMember(1)]
     public bool HasActionSurge { get; set; }
+
+    [ProtoMember(2)]
+    public bool HasShieldMaster { get; set; }
+
+    [ProtoMember(3)]
+    public int ShieldMasterTopplePercent { get; set; }
 }
 
 [ProtoContract]

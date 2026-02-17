@@ -167,6 +167,9 @@ public static class CharacterEndpoints
             if (level.LevelNumber < 1 || level.LevelNumber > 20)
                 errors.Add($"Level number must be between 1 and 20 (got {level.LevelNumber}).");
 
+            if (level.Resources?.HasShieldMaster == true && ((level.Resources.ShieldMasterTopplePercent < 0) || (level.Resources.ShieldMasterTopplePercent > 100)))
+                errors.Add($"Shield Master Topple% must be 0-100 at level {level.LevelNumber}.");
+
             foreach (var attack in level.Attacks)
             {
                 if (string.IsNullOrWhiteSpace(attack.Name))
@@ -209,6 +212,9 @@ public static class CharacterEndpoints
         {
             if (level.Attacks.Count == 0)
                 errors.Add($"Level {level.LevelNumber} needs at least one attack.");
+
+            if (level.Resources?.HasShieldMaster == true && ((level.Resources.ShieldMasterTopplePercent < 0) || (level.Resources.ShieldMasterTopplePercent > 100)))
+                errors.Add($"Shield Master Topple% must be 0-100 at level {level.LevelNumber}.");
 
             foreach (var attack in level.Attacks)
             {

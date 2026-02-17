@@ -534,6 +534,54 @@ public class DamageSimulatorTests
         Assert.Equal(20, results[0].Average, precision: 1);
     }
 
+    [Fact]
+    public void Simulate_ShieldMaster_TopplesOncePerTurnOnHit()
+    {
+        var attacks = new List<Attack>
+        {
+            new()
+            {
+                Name = "First Hit", ActionType = "action", HitPercent = 100, CritPercent = 0,
+                FlatModifier = 0, DiceGroups = []
+            },
+            new()
+            {
+                Name = "Follow-up One", ActionType = "action", HitPercent = 50, CritPercent = 0,
+                FlatModifier = 10, DiceGroups = []
+            },
+            new()
+            {
+                Name = "Follow-up Two", ActionType = "action", HitPercent = 50, CritPercent = 0,
+                FlatModifier = 10, DiceGroups = []
+            }
+        };
+
+        var character = new Character
+        {
+            Name = "Shield Master Test",
+            Levels =
+            [
+                new CharacterLevel
+                {
+                    LevelNumber = 1,
+                    Resources = new LevelResources { HasShieldMaster = true, ShieldMasterTopplePercent = 100 },
+                    Attacks = attacks
+                }
+            ]
+        };
+
+        var setting = new EncounterSetting
+        {
+            Name = "One Round",
+            Combats = [new CombatDefinition { Rounds = 1, ShortRestAfter = false }]
+        };
+
+        var results = DamageSimulator.Simulate(character, setting, iterations: 50_000);
+
+        // First attack topples once, making both follow-ups advantaged (~0.75 each).
+        Assert.InRange(results[0].Average, 14.0, 16.0);
+    }
+
     private static Character MakeCharacter(int hitPercent, int critPercent,
         int flatModifier, List<DiceGroup> diceGroups)
     {

@@ -37,6 +37,8 @@ public static class DamageSimulator
             for (var i = 0; i < iterations; i++)
             {
                 var hasActionSurge = level.Resources?.HasActionSurge == true;
+                var hasShieldMaster = level.Resources?.HasShieldMaster == true;
+                var shieldMasterTopplePercent = level.Resources?.ShieldMasterTopplePercent ?? 0;
                 var nextAttackHasAdvantage = false;
                 var actionSurgesRemaining = hasActionSurge ? 1 : 0;
 
@@ -44,7 +46,13 @@ public static class DamageSimulator
                 {
                     for (var round = 0; round < Math.Max(1, combat.Rounds); round++)
                     {
-                        damages[index++] = SimulateRound(level.Attacks, ref nextAttackHasAdvantage, isFirstRoundOfCombat: round == 0, ref actionSurgesRemaining);
+                        damages[index++] = SimulateRound(
+                            level.Attacks,
+                            ref nextAttackHasAdvantage,
+                            isFirstRoundOfCombat: round == 0,
+                            ref actionSurgesRemaining,
+                            hasShieldMaster,
+                            shieldMasterTopplePercent);
                     }
 
                     nextAttackHasAdvantage = false;
@@ -70,10 +78,17 @@ public static class DamageSimulator
         return results;
     }
 
-    private static double SimulateRound(List<Attack> attacks, ref bool nextAttackHasAdvantage, bool isFirstRoundOfCombat, ref int actionSurgesRemaining)
+    private static double SimulateRound(
+        List<Attack> attacks,
+        ref bool nextAttackHasAdvantage,
+        bool isFirstRoundOfCombat,
+        ref int actionSurgesRemaining,
+        bool hasShieldMaster,
+        int shieldMasterTopplePercent)
     {
         var totalDamage = 0.0;
         var targetIsProne = false;
+        var shieldMasterUsedThisTurn = false;
 
         totalDamage += SimulateAttackSequence(
             attacks,
@@ -81,7 +96,10 @@ public static class DamageSimulator
             ref targetIsProne,
             isFirstRoundOfCombat,
             includeOnlyActionAttacks: false,
-            ignoreSetup: false);
+            ignoreSetup: false,
+            hasShieldMaster,
+            shieldMasterTopplePercent,
+            ref shieldMasterUsedThisTurn);
 
         if (actionSurgesRemaining > 0 && attacks.Any(IsActionAttack))
         {
@@ -91,7 +109,10 @@ public static class DamageSimulator
                 ref targetIsProne,
                 isFirstRoundOfCombat: false,
                 includeOnlyActionAttacks: true,
-                ignoreSetup: true);
+                ignoreSetup: true,
+                hasShieldMaster,
+                shieldMasterTopplePercent,
+                ref shieldMasterUsedThisTurn);
             actionSurgesRemaining--;
         }
 
@@ -104,7 +125,10 @@ public static class DamageSimulator
         ref bool targetIsProne,
         bool isFirstRoundOfCombat,
         bool includeOnlyActionAttacks,
-        bool ignoreSetup)
+        bool ignoreSetup,
+        bool hasShieldMaster,
+        int shieldMasterTopplePercent,
+        ref bool shieldMasterUsedThisTurn)
     {
         var totalDamage = 0.0;
 
@@ -146,6 +170,7 @@ public static class DamageSimulator
             {
                 // Crit: double dice quantity, same flat modifier
                 totalDamage += RollDamage(attack, isCrit: true);
+                TryShieldMasterTopple(hasShieldMaster, shieldMasterTopplePercent, ref shieldMasterUsedThisTurn, ref targetIsProne);
 
                 if (attack.MasteryVex)
                     nextAttackHasAdvantage = true;
@@ -157,6 +182,7 @@ public static class DamageSimulator
             {
                 // Normal hit
                 totalDamage += RollDamage(attack, isCrit: false);
+                TryShieldMasterTopple(hasShieldMaster, shieldMasterTopplePercent, ref shieldMasterUsedThisTurn, ref targetIsProne);
 
                 if (attack.MasteryVex)
                     nextAttackHasAdvantage = true;
@@ -187,6 +213,19 @@ public static class DamageSimulator
         return Random.Shared.NextDouble() < chance;
     }
 
+    private static void TryShieldMasterTopple(
+        bool hasShieldMaster,
+        int shieldMasterTopplePercent,
+        ref bool shieldMasterUsedThisTurn,
+        ref bool targetIsProne)
+    {
+        if (!hasShieldMaster || shieldMasterUsedThisTurn)
+            return;
+
+        shieldMasterUsedThisTurn = true;
+        TryTopplePercent(shieldMasterTopplePercent, ref targetIsProne);
+    }
+
     private static double RollDamage(Attack attack, bool isCrit)
     {
         var total = 0;
@@ -204,9 +243,14 @@ public static class DamageSimulator
 
     private static void TryTopple(Attack attack, ref bool targetIsProne)
     {
+        TryTopplePercent(attack.TopplePercent, ref targetIsProne);
+    }
+
+    private static void TryTopplePercent(int topplePercent, ref bool targetIsProne)
+    {
         if (targetIsProne) return; // Already prone
         var toppleRoll = Random.Shared.NextDouble();
-        if (toppleRoll < attack.TopplePercent / 100.0)
+        if (toppleRoll < Math.Clamp(topplePercent, 0, 100) / 100.0)
             targetIsProne = true;
     }
 

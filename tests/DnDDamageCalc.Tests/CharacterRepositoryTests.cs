@@ -60,6 +60,8 @@ public class CharacterRepositoryTests : IDisposable
         Assert.Single(loaded.Levels);
         Assert.Equal(1, loaded.Levels[0].LevelNumber);
         Assert.True(loaded.Levels[0].Resources.HasActionSurge);
+        Assert.True(loaded.Levels[0].Resources.HasShieldMaster);
+        Assert.Equal(45, loaded.Levels[0].Resources.ShieldMasterTopplePercent);
     }
 
     [Fact]
@@ -188,7 +190,7 @@ public class CharacterRepositoryTests : IDisposable
                 new CharacterLevel
                 {
                     LevelNumber = 1,
-                    Resources = new LevelResources { HasActionSurge = true },
+                    Resources = new LevelResources { HasActionSurge = true, HasShieldMaster = true, ShieldMasterTopplePercent = 45 },
                     Attacks =
                     [
                         new Attack

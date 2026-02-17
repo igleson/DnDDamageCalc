@@ -22,7 +22,9 @@ public static partial class FormParser
                 LevelNumber = ParseInt(form, $"level[{li}].number"),
                 Resources = new LevelResources
                 {
-                    HasActionSurge = ParseCheckbox(form, $"level[{li}].resources.hasActionSurge")
+                    HasActionSurge = ParseCheckbox(form, $"level[{li}].resources.hasActionSurge"),
+                    HasShieldMaster = ParseCheckbox(form, $"level[{li}].resources.hasShieldMaster"),
+                    ShieldMasterTopplePercent = ParseInt(form, $"level[{li}].resources.shieldMasterTopplePercent")
                 }
             };
 

@@ -69,6 +69,8 @@ public static class HtmlFragments
             level_body_id = levelBodyId,
             resources_body_id = resourcesBodyId,
             has_action_surge = l.Resources?.HasActionSurge ?? false,
+            has_shield_master = l.Resources?.HasShieldMaster ?? false,
+            shield_master_topple_percent = l.Resources?.ShieldMasterTopplePercent ?? 0,
             attacks = attacks,
             has_attacks = l.Attacks.Count > 0,
             clone_attack_button = l.Attacks.Count > 0 ? new { html = CloneAttackButton(levelIndex, templates) } : null

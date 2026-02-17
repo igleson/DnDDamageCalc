@@ -19,6 +19,25 @@
     <input type="hidden" name="level[{{ level_index }}].number" value="{{ level_number }}" />
 
     <div id="{{ level_body_id }}">
+        <fieldset id="resources-{{ level_index }}">
+            <legend style="display:flex;align-items:center;gap:0.5rem;">
+                <button type="button"
+                        data-collapse-target="{{ resources_body_id }}"
+                        onclick="toggleSectionById(this)"
+                        class="outline secondary btn-sm">&#x25BE;</button>
+                Resources
+            </legend>
+            <div id="{{ resources_body_id }}">
+                <input type="hidden" name="level[{{ level_index }}].resources.hasActionSurge" value="false" />
+                <label>
+                    <input type="checkbox"
+                           name="level[{{ level_index }}].resources.hasActionSurge"
+                           value="true"{{ if has_action_surge }} checked{{ end }} />
+                    Action Surge
+                </label>
+            </div>
+        </fieldset>
+
         <div id="attacks-{{ level_index }}">
             {{ for attack in attacks }}{{ attack.html }}{{ end }}
         </div>

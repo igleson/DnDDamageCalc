@@ -345,6 +345,87 @@ public class DamageSimulatorTests
         Assert.Equal(0, results[0].Average);
     }
 
+    [Fact]
+    public void Simulate_ActionSurge_ReplaysOnlyActionAttacks()
+    {
+        var attacks = new List<Attack>
+        {
+            new()
+            {
+                Name = "Action Attack", ActionType = "action", HitPercent = 100, CritPercent = 0,
+                FlatModifier = 10, DiceGroups = []
+            },
+            new()
+            {
+                Name = "Bonus Attack", ActionType = "bonus_action", HitPercent = 100, CritPercent = 0,
+                FlatModifier = 20, DiceGroups = []
+            }
+        };
+
+        var character = new Character
+        {
+            Name = "Action Surge Test",
+            Levels =
+            [
+                new CharacterLevel
+                {
+                    LevelNumber = 1,
+                    Resources = new LevelResources { HasActionSurge = true },
+                    Attacks = attacks
+                }
+            ]
+        };
+
+        var setting = new EncounterSetting
+        {
+            Name = "One Round",
+            Combats = [new CombatDefinition { Rounds = 1, ShortRestAfter = false }]
+        };
+
+        var results = DamageSimulator.Simulate(character, setting, iterations: 10_000);
+
+        // Normal round: 10 + 20. Action Surge replay: +10 action attack only.
+        Assert.Equal(40, results[0].Average, precision: 1);
+    }
+
+    [Fact]
+    public void Simulate_ActionSurge_IgnoresSetupRequirementOnReplay()
+    {
+        var attacks = new List<Attack>
+        {
+            new()
+            {
+                Name = "Setup Action Attack", ActionType = "action", HitPercent = 100, CritPercent = 0,
+                RequiresSetup = true, FlatModifier = 10, DiceGroups = []
+            }
+        };
+
+        var character = new Character
+        {
+            Name = "Action Surge Setup Test",
+            Levels =
+            [
+                new CharacterLevel
+                {
+                    LevelNumber = 1,
+                    Resources = new LevelResources { HasActionSurge = true },
+                    Attacks = attacks
+                }
+            ]
+        };
+
+        var setting = new EncounterSetting
+        {
+            Name = "One Round",
+            Combats = [new CombatDefinition { Rounds = 1, ShortRestAfter = false }]
+        };
+
+        var results = DamageSimulator.Simulate(character, setting, iterations: 10_000);
+
+        // Base action is skipped in round 1, but Action Surge replay can still perform it.
+        Assert.Equal(10, results[0].Average, precision: 1);
+    }
+
     private static Character MakeCharacter(int hitPercent, int critPercent,
         int flatModifier, List<DiceGroup> diceGroups)
     {

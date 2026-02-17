@@ -52,6 +52,7 @@ public static class HtmlFragments
         var levelNum = l.LevelNumber > 0 ? l.LevelNumber : levelIndex + 1;
         var levelId = $"level-{levelIndex}";
         var levelBodyId = $"level-body-{levelIndex}";
+        var resourcesBodyId = $"resources-body-{levelIndex}";
 
         // Generate attack HTML fragments
         var attacks = new List<object>();
@@ -66,6 +67,8 @@ public static class HtmlFragments
             level_number = levelNum,
             level_id = levelId,
             level_body_id = levelBodyId,
+            resources_body_id = resourcesBodyId,
+            has_action_surge = l.Resources?.HasActionSurge ?? false,
             attacks = attacks,
             has_attacks = l.Attacks.Count > 0,
             clone_attack_button = l.Attacks.Count > 0 ? new { html = CloneAttackButton(levelIndex, templates) } : null

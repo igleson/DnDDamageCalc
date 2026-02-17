@@ -17,6 +17,16 @@ public class CharacterLevel
 
     [ProtoMember(2)]
     public List<Attack> Attacks { get; set; } = [];
+
+    [ProtoMember(3)]
+    public LevelResources Resources { get; set; } = new();
+}
+
+[ProtoContract]
+public class LevelResources
+{
+    [ProtoMember(1)]
+    public bool HasActionSurge { get; set; }
 }
 
 [ProtoContract]

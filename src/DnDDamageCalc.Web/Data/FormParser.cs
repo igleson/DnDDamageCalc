@@ -19,7 +19,11 @@ public static partial class FormParser
         {
             var level = new CharacterLevel
             {
-                LevelNumber = ParseInt(form, $"level[{li}].number")
+                LevelNumber = ParseInt(form, $"level[{li}].number"),
+                Resources = new LevelResources
+                {
+                    HasActionSurge = ParseCheckbox(form, $"level[{li}].resources.hasActionSurge")
+                }
             };
 
             var attackIndices = ExtractIndices(form, AttackPattern(li));
@@ -89,6 +93,24 @@ public static partial class FormParser
     {
         var value = form[key].ToString();
         return int.TryParse(value, out var result) ? result : defaultValue;
+    }
+
+    private static bool ParseCheckbox(IFormCollection form, string key)
+    {
+        foreach (var value in form[key])
+        {
+            foreach (var token in value.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+            {
+                if (string.Equals(token, "on", StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(token, "true", StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(token, "1", StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     private static SortedSet<int> ExtractIndices(IFormCollection form, Regex pattern)

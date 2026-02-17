@@ -37,12 +37,13 @@ public static class DamageSimulator
             for (var i = 0; i < iterations; i++)
             {
                 var nextAttackHasAdvantage = false;
+                var actionSurgesRemaining = level.Resources?.HasActionSurge == true ? 1 : 0;
 
                 foreach (var combat in setting.Combats)
                 {
                     for (var round = 0; round < Math.Max(1, combat.Rounds); round++)
                     {
-                        damages[index++] = SimulateRound(level.Attacks, ref nextAttackHasAdvantage, isFirstRoundOfCombat: round == 0);
+                        damages[index++] = SimulateRound(level.Attacks, ref nextAttackHasAdvantage, isFirstRoundOfCombat: round == 0, ref actionSurgesRemaining);
                     }
 
                     nextAttackHasAdvantage = false;
@@ -66,14 +67,50 @@ public static class DamageSimulator
         return results;
     }
 
-    private static double SimulateRound(List<Attack> attacks, ref bool nextAttackHasAdvantage, bool isFirstRoundOfCombat)
+    private static double SimulateRound(List<Attack> attacks, ref bool nextAttackHasAdvantage, bool isFirstRoundOfCombat, ref int actionSurgesRemaining)
     {
         var totalDamage = 0.0;
         var targetIsProne = false;
 
+        totalDamage += SimulateAttackSequence(
+            attacks,
+            ref nextAttackHasAdvantage,
+            ref targetIsProne,
+            isFirstRoundOfCombat,
+            includeOnlyActionAttacks: false,
+            ignoreSetup: false);
+
+        if (actionSurgesRemaining > 0 && attacks.Any(IsActionAttack))
+        {
+            totalDamage += SimulateAttackSequence(
+                attacks,
+                ref nextAttackHasAdvantage,
+                ref targetIsProne,
+                isFirstRoundOfCombat: false,
+                includeOnlyActionAttacks: true,
+                ignoreSetup: true);
+            actionSurgesRemaining--;
+        }
+
+        return totalDamage;
+    }
+
+    private static double SimulateAttackSequence(
+        List<Attack> attacks,
+        ref bool nextAttackHasAdvantage,
+        ref bool targetIsProne,
+        bool isFirstRoundOfCombat,
+        bool includeOnlyActionAttacks,
+        bool ignoreSetup)
+    {
+        var totalDamage = 0.0;
+
         foreach (var attack in attacks)
         {
-            if (isFirstRoundOfCombat && attack.RequiresSetup)
+            if (includeOnlyActionAttacks && !IsActionAttack(attack))
+                continue;
+
+            if (!ignoreSetup && isFirstRoundOfCombat && attack.RequiresSetup)
                 continue;
 
             var hasAdvantage = nextAttackHasAdvantage || targetIsProne;
@@ -132,6 +169,9 @@ public static class DamageSimulator
 
         return totalDamage;
     }
+
+    private static bool IsActionAttack(Attack attack) =>
+        string.Equals(attack.ActionType, "action", StringComparison.OrdinalIgnoreCase);
 
     private static double RollDamage(Attack attack, bool isCrit)
     {

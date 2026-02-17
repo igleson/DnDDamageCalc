@@ -697,6 +697,27 @@
                     <input type="hidden" name="level[LEVEL_INDEX_PLACEHOLDER].number" value="LEVEL_NUMBER_PLACEHOLDER" />
 
                     <div id="LEVEL_BODY_ID_PLACEHOLDER">
+                        <fieldset id="resources-LEVEL_INDEX_PLACEHOLDER">
+                            <legend style="display:flex;align-items:center;gap:0.5rem;">
+                                <button type="button"
+                                        data-collapse-target="RESOURCES_BODY_ID_PLACEHOLDER"
+                                        onclick="toggleSectionById(this)"
+                                        class="outline secondary btn-sm">&#x25BE;</button>
+                                Resources
+                            </legend>
+                            <div id="RESOURCES_BODY_ID_PLACEHOLDER">
+                                <input type="hidden"
+                                       name="level[LEVEL_INDEX_PLACEHOLDER].resources.hasActionSurge"
+                                       value="false" />
+                                <label>
+                                    <input type="checkbox"
+                                           name="level[LEVEL_INDEX_PLACEHOLDER].resources.hasActionSurge"
+                                           value="true" />
+                                    Action Surge
+                                </label>
+                            </div>
+                        </fieldset>
+
                         <div id="attacks-LEVEL_INDEX_PLACEHOLDER">
                             <!-- Empty attacks container -->
                         </div>
@@ -742,10 +763,12 @@
             // Create new level HTML by replacing placeholders
             const levelId = 'level-' + newIndex;
             const levelBodyId = 'level-body-' + newIndex;
-            
+            const resourcesBodyId = 'resources-body-' + newIndex;
+             
             let levelHtml = emptyLevelTemplate
                 .replace(/LEVEL_ID_PLACEHOLDER/g, levelId)
                 .replace(/LEVEL_BODY_ID_PLACEHOLDER/g, levelBodyId)
+                .replace(/RESOURCES_BODY_ID_PLACEHOLDER/g, resourcesBodyId)
                 .replace(/LEVEL_INDEX_PLACEHOLDER/g, newIndex.toString())
                 .replace(/LEVEL_NUMBER_PLACEHOLDER/g, newLevelNumber.toString());
             

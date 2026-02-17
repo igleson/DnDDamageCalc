@@ -308,6 +308,121 @@
             }
         });
 
+        // URL Management for Character Routing
+        
+        // Utility functions for URL parsing
+        function getCurrentCharacterId() {
+            const match = window.location.pathname.match(/^\/character\/(\d+)$/);
+            return match ? parseInt(match[1]) : null;
+        }
+        
+        function isNewCharacterUrl() {
+            return window.location.pathname === '/';
+        }
+        
+        function updateUrlForCharacter(characterId) {
+            const newUrl = `/character/${characterId}`;
+            if (window.location.pathname !== newUrl) {
+                history.pushState({ characterId }, '', newUrl);
+            }
+        }
+        
+        function updateUrlForNewCharacter() {
+            const newUrl = '/';
+            if (window.location.pathname !== newUrl) {
+                history.pushState({ newCharacter: true }, '', newUrl);
+            }
+        }
+        
+        // Handle successful character loads and update URL
+        document.addEventListener('htmx:afterSwap', function(evt) {
+            const target = evt.detail.elt;
+            
+            // Check if this was a character form load
+            if (target && target.id === 'form-container') {
+                const xhr = evt.detail.xhr;
+                const requestUrl = evt.detail.requestConfig?.path || xhr?.responseURL;
+                
+                if (requestUrl) {
+                    // Check if this was a character load
+                    const characterMatch = requestUrl.match(/\/character\/(\d+)$/);
+                    if (characterMatch) {
+                        const characterId = parseInt(characterMatch[1]);
+                        updateUrlForCharacter(characterId);
+                    }
+                    // Check if this was a new character form load
+                    else if (requestUrl.includes('/character/form')) {
+                        updateUrlForNewCharacter();
+                    }
+                }
+            }
+            
+            // Check if this was a character deletion (character list update)
+            if (target && target.id === 'character-list') {
+                // If we're currently viewing a character that was potentially deleted,
+                // and the character is no longer in the list, redirect to home
+                const currentCharId = getCurrentCharacterId();
+                if (currentCharId) {
+                    const characterStillExists = target.querySelector(`a[hx-get="/character/${currentCharId}"]`);
+                    if (!characterStillExists) {
+                        // Character was deleted, update URL to home and load new character form
+                        updateUrlForNewCharacter();
+                        const newCharacterBtn = document.querySelector('button[hx-get="/character/form"]');
+                        if (newCharacterBtn) {
+                            htmx.trigger(newCharacterBtn, 'click');
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Handle browser back/forward navigation
+        window.addEventListener('popstate', function(evt) {
+            const currentCharId = getCurrentCharacterId();
+            
+            if (currentCharId) {
+                // Load character by ID
+                const characterLink = document.querySelector(`a[hx-get="/character/${currentCharId}"]`);
+                if (characterLink) {
+                    // Trigger HTMX request to load the character
+                    htmx.trigger(characterLink, 'click');
+                } else {
+                    // Character not found in sidebar, redirect to home
+                    window.location.href = '/';
+                }
+            } else if (isNewCharacterUrl()) {
+                // Load new character form
+                const newCharacterBtn = document.querySelector('button[hx-get="/character/form"]');
+                if (newCharacterBtn) {
+                    htmx.trigger(newCharacterBtn, 'click');
+                }
+            }
+        });
+
+        // Initialize URL state on page load
+        function initializeUrlState() {
+            // Ensure sidebar selection matches current URL
+            const currentCharId = getCurrentCharacterId();
+            if (currentCharId) {
+                // Mark the current character as selected in the sidebar
+                const characterLink = document.querySelector(`a[hx-get="/character/${currentCharId}"]`);
+                if (characterLink) {
+                    const charItem = characterLink.closest('.char-item');
+                    if (charItem) {
+                        document.querySelectorAll('.char-item').forEach(item => {
+                            item.classList.remove('selected');
+                        });
+                        charItem.classList.add('selected');
+                    }
+                }
+            }
+        }
+        
+        // Run initialization when page loads
+        document.addEventListener('DOMContentLoaded', initializeUrlState);
+        // Also run after HTMX settles (in case page was loaded via HTMX)
+        document.addEventListener('htmx:afterSettle', initializeUrlState);
+
         // Clone attack function - pure client-side
         function cloneAttack(levelIndex) {
             const container = document.getElementById(`attacks-${levelIndex}`);

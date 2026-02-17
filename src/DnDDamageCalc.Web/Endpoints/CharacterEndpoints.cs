@@ -27,8 +27,43 @@ public static class CharacterEndpoints
             var userId = ctx.GetUserId();
             var accessToken = ctx.GetAccessToken();
             var character = await repo.GetByIdAsync(id, userId, accessToken);
-            if (character is null) return Results.NotFound();
-            return Results.Text(HtmlFragments.CharacterForm(character, templates), "text/html");
+            
+            // Check if this is an HTMX request (partial update) or direct browser visit (full page)
+            var isHtmxRequest = ctx.Request.Headers.ContainsKey("HX-Request");
+            
+            if (character is null)
+            {
+                if (isHtmxRequest)
+                {
+                    // HTMX request: return error message in form container
+                    return Results.Text(
+                        HtmlFragments.ValidationError($"Character with ID {id} not found.", templates), 
+                        "text/html"
+                    );
+                }
+                else
+                {
+                    // Direct browser visit: redirect to home page
+                    return Results.Redirect("/");
+                }
+            }
+            
+            if (isHtmxRequest)
+            {
+                // HTMX request: return just the character form HTML
+                return Results.Text(HtmlFragments.CharacterForm(character, templates), "text/html");
+            }
+            else
+            {
+                // Direct browser visit: return full page with character loaded
+                var characters = await repo.ListAllAsync(userId, accessToken);
+                var characterListHtml = HtmlFragments.CharacterList(characters, selectedId: id, templates);
+                var characterFormHtml = HtmlFragments.CharacterForm(character, templates);
+                var showLogout = !ctx.RequestServices.GetRequiredService<IWebHostEnvironment>().IsDevelopment();
+                
+                var fullPageHtml = HtmlFragments.IndexPage(templates, characterListHtml, characterFormHtml, showLogout);
+                return Results.Content(fullPageHtml, "text/html");
+            }
         });
 
         app.MapPost("/character/level/add", (HttpRequest request, ITemplateService templates) =>

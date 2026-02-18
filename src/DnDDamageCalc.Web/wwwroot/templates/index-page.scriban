@@ -77,6 +77,19 @@
             line-height: 1;
             transition: left 0.25s ease;
         }
+        .collapse-all-toggle {
+            position: fixed;
+            top: 0.75rem;
+            right: 1.5rem;
+            z-index: 10;
+            background: var(--pico-primary);
+            border-color: var(--pico-primary);
+            color: var(--pico-primary-inverse);
+        }
+        .collapse-all-toggle:hover {
+            background: var(--pico-primary-hover);
+            border-color: var(--pico-primary-hover);
+        }
         .sidebar:not(.collapsed) ~ .app-main .sidebar-toggle {
             left: 290px;
         }
@@ -255,6 +268,11 @@
                     onclick="document.getElementById('sidebar').classList.toggle('collapsed')">
                 &#9776;
             </button>
+            <button type="button"
+                    class="collapse-all-toggle btn-sm"
+                    onclick="collapseCharacterFormSections()">
+                Collapse All
+            </button>
 
             <header class="app-header">
                 <h1>D&D Damage Calculator</h1>
@@ -309,6 +327,22 @@
             const shouldExpand = target.style.display === 'none';
             target.style.display = shouldExpand ? '' : 'none';
             button.textContent = shouldExpand ? '\u25BE' : '\u25B8';
+        }
+
+        function collapseCharacterFormSections() {
+            const form = document.getElementById('character-form');
+            if (!form) return;
+
+            form.querySelectorAll('[data-collapse-target]').forEach((button) => {
+                const targetId = button.getAttribute('data-collapse-target');
+                if (!targetId) return;
+
+                const target = document.getElementById(targetId);
+                if (!target || target.style.display === 'none') return;
+
+                target.style.display = 'none';
+                button.textContent = '\u25B8';
+            });
         }
 
         function moveDamageTooltip(event) {

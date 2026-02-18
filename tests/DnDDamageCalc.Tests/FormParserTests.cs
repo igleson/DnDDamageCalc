@@ -63,6 +63,26 @@ public class FormParserTests
     }
 
     [Fact]
+    public void Parse_BonusActionAttack_TriggerPercentDefaultsToHundred()
+    {
+        var form = CreateForm(new Dictionary<string, string>
+        {
+            ["characterName"] = "Test",
+            ["level[0].number"] = "1",
+            ["level[0].attacks[0].name"] = "Offhand",
+            ["level[0].attacks[0].actionType"] = "bonus_action",
+            ["level[0].attacks[0].hitPercent"] = "65",
+            ["level[0].attacks[0].critPercent"] = "5"
+        });
+
+        var character = FormParser.Parse(form);
+        var attack = character.Levels[0].Attacks[0];
+
+        Assert.Equal("bonus_action", attack.ActionType);
+        Assert.Equal(100, attack.ReactionChancePercent);
+    }
+
+    [Fact]
     public void Parse_Checkboxes_ParseCorrectly()
     {
         var form = CreateForm(new Dictionary<string, string>

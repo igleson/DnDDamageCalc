@@ -217,7 +217,7 @@ public static class DamageSimulator
         {
             if (includeOnlyActionAttacks && !IsActionAttack(attack))
                 continue;
-            if (IsReactionAttack(attack) && !ReactionOccurs(attack))
+            if (IsTriggeredAttack(attack) && !TriggerOccurs(attack))
                 continue;
 
             if (!ignoreSetup && isFirstRoundOfCombat && attack.RequiresSetup)
@@ -331,7 +331,13 @@ public static class DamageSimulator
     private static bool IsReactionAttack(Attack attack) =>
         string.Equals(attack.ActionType, "reaction", StringComparison.OrdinalIgnoreCase);
 
-    private static bool ReactionOccurs(Attack attack)
+    private static bool IsBonusActionAttack(Attack attack) =>
+        string.Equals(attack.ActionType, "bonus_action", StringComparison.OrdinalIgnoreCase);
+
+    private static bool IsTriggeredAttack(Attack attack) =>
+        IsReactionAttack(attack) || IsBonusActionAttack(attack);
+
+    private static bool TriggerOccurs(Attack attack)
     {
         var chance = Math.Clamp(attack.ReactionChancePercent, 0, 100) / 100.0;
         return Random.Shared.NextDouble() < chance;

@@ -1199,7 +1199,7 @@
                             <div>
                                 <label for="ATTACK_PREFIX_PLACEHOLDER.actionType">Attack Type</label>
                                 <select name="ATTACK_PREFIX_PLACEHOLDER.actionType" required
-                                        onchange="this.closest('fieldset').querySelector('.reaction-chance').style.display=this.value==='reaction'?'block':'none'">
+                                        onchange="this.closest('fieldset').querySelector('.reaction-chance').style.display=(this.value==='reaction'||this.value==='bonus_action')?'block':'none'">
                                     <option value="action" selected>Action Attack</option>
                                     <option value="bonus_action">Bonus Action Attack</option>
                                     <option value="reaction">Reaction Attack</option>
@@ -1207,7 +1207,7 @@
                             </div>
                         </div>
                         <div class="reaction-chance" style="display:none;">
-                            <label for="ATTACK_PREFIX_PLACEHOLDER.reactionChancePercent">Reaction Trigger %</label>
+                            <label for="ATTACK_PREFIX_PLACEHOLDER.reactionChancePercent">Trigger %</label>
                             <input type="number" name="ATTACK_PREFIX_PLACEHOLDER.reactionChancePercent" value="100" min="0" max="100" />
                         </div>
 

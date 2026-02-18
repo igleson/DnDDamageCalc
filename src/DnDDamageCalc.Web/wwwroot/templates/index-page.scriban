@@ -933,6 +933,15 @@
                                            min="0"
                                            max="100" />
                                 </div>
+                                <input type="hidden"
+                                       name="level[LEVEL_INDEX_PLACEHOLDER].resources.hasSurprisingStrikes"
+                                       value="false" />
+                                <label>
+                                    <input type="checkbox"
+                                           name="level[LEVEL_INDEX_PLACEHOLDER].resources.hasSurprisingStrikes"
+                                           value="true" />
+                                    Surprising Strikes
+                                </label>
                             </div>
                         </fieldset>
 

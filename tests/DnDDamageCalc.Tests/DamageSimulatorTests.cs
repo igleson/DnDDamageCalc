@@ -906,6 +906,133 @@ public class DamageSimulatorTests
         Assert.InRange(results[0].Average, 7.0, 8.0);
     }
 
+    [Fact]
+    public void Simulate_SurprisingStrikes_AppliesOnceInFirstRoundOnly()
+    {
+        var character = new Character
+        {
+            Name = "Surprising Strikes Round One",
+            Levels =
+            [
+                new CharacterLevel
+                {
+                    LevelNumber = 5,
+                    Resources = new LevelResources { HasSurprisingStrikes = true },
+                    Attacks =
+                    [
+                        new Attack
+                        {
+                            Name = "Always Hit One",
+                            ActionType = "action",
+                            HitPercent = 100,
+                            CritPercent = 0,
+                            FlatModifier = 0,
+                            DiceGroups = []
+                        },
+                        new Attack
+                        {
+                            Name = "Always Hit Two",
+                            ActionType = "action",
+                            HitPercent = 100,
+                            CritPercent = 0,
+                            FlatModifier = 0,
+                            DiceGroups = []
+                        }
+                    ]
+                }
+            ]
+        };
+        var setting = new EncounterSetting
+        {
+            Name = "Two Rounds",
+            Combats = [new CombatDefinition { Rounds = 2, ShortRestAfter = false }]
+        };
+
+        var results = DamageSimulator.Simulate(character, setting, iterations: 10_000);
+
+        Assert.Equal(2.5, results[0].Average, precision: 1);
+    }
+
+    [Fact]
+    public void Simulate_SurprisingStrikes_ResetsEachCombat()
+    {
+        var character = new Character
+        {
+            Name = "Surprising Strikes Combat Reset",
+            Levels =
+            [
+                new CharacterLevel
+                {
+                    LevelNumber = 5,
+                    Resources = new LevelResources { HasSurprisingStrikes = true },
+                    Attacks =
+                    [
+                        new Attack
+                        {
+                            Name = "Always Hit",
+                            ActionType = "action",
+                            HitPercent = 100,
+                            CritPercent = 0,
+                            FlatModifier = 0,
+                            DiceGroups = []
+                        }
+                    ]
+                }
+            ]
+        };
+        var setting = new EncounterSetting
+        {
+            Name = "Two Combats",
+            Combats =
+            [
+                new CombatDefinition { Rounds = 1, ShortRestAfter = false },
+                new CombatDefinition { Rounds = 1, ShortRestAfter = false }
+            ]
+        };
+
+        var results = DamageSimulator.Simulate(character, setting, iterations: 10_000);
+
+        Assert.Equal(5, results[0].Average, precision: 1);
+    }
+
+    [Fact]
+    public void Simulate_SurprisingStrikes_CritDoesNotDoubleBonus()
+    {
+        var character = new Character
+        {
+            Name = "Surprising Strikes Crit",
+            Levels =
+            [
+                new CharacterLevel
+                {
+                    LevelNumber = 6,
+                    Resources = new LevelResources { HasSurprisingStrikes = true },
+                    Attacks =
+                    [
+                        new Attack
+                        {
+                            Name = "Always Crit",
+                            ActionType = "action",
+                            HitPercent = 100,
+                            CritPercent = 100,
+                            FlatModifier = 0,
+                            DiceGroups = []
+                        }
+                    ]
+                }
+            ]
+        };
+        var setting = new EncounterSetting
+        {
+            Name = "One Combat",
+            Combats = [new CombatDefinition { Rounds = 1, ShortRestAfter = false }]
+        };
+
+        var results = DamageSimulator.Simulate(character, setting, iterations: 10_000);
+
+        Assert.Equal(6, results[0].Average, precision: 1);
+    }
+
     private static Character MakeCharacter(int hitPercent, int critPercent,
         int flatModifier, List<DiceGroup> diceGroups)
     {

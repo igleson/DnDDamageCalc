@@ -51,6 +51,9 @@ public class LevelResources
 
     [ProtoMember(9)]
     public int PureAdvantagePercent { get; set; }
+
+    [ProtoMember(10)]
+    public bool HasSurprisingStrikes { get; set; }
 }
 
 [ProtoContract]

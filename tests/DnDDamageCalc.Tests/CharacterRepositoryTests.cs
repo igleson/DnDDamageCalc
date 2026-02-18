@@ -68,6 +68,7 @@ public class CharacterRepositoryTests : IDisposable
         Assert.True(loaded.Levels[0].Resources.HasBoonOfCombatProwess);
         Assert.True(loaded.Levels[0].Resources.HasPureAdvantage);
         Assert.Equal(35, loaded.Levels[0].Resources.PureAdvantagePercent);
+        Assert.True(loaded.Levels[0].Resources.HasSurprisingStrikes);
     }
 
     [Fact]
@@ -196,7 +197,7 @@ public class CharacterRepositoryTests : IDisposable
                 new CharacterLevel
                 {
                     LevelNumber = 1,
-                    Resources = new LevelResources { HasActionSurge = true, HasShieldMaster = true, ShieldMasterTopplePercent = 45, HasHeroicInspiration = true, HasStudiedAttacks = true, HasExtraActionSurge = true, HasBoonOfCombatProwess = true, HasPureAdvantage = true, PureAdvantagePercent = 35 },
+                    Resources = new LevelResources { HasActionSurge = true, HasShieldMaster = true, ShieldMasterTopplePercent = 45, HasHeroicInspiration = true, HasStudiedAttacks = true, HasExtraActionSurge = true, HasBoonOfCombatProwess = true, HasPureAdvantage = true, PureAdvantagePercent = 35, HasSurprisingStrikes = true },
                     Attacks =
                     [
                         new Attack

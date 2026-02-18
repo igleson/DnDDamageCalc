@@ -43,6 +43,7 @@ public static class DamageSimulator
                 var hasStudiedAttacks = level.Resources?.HasStudiedAttacks == true;
                 var hasBoonOfCombatProwess = level.Resources?.HasBoonOfCombatProwess == true;
                 var hasPureAdvantage = level.Resources?.HasPureAdvantage == true;
+                var hasSurprisingStrikes = level.Resources?.HasSurprisingStrikes == true;
                 var shieldMasterTopplePercent = level.Resources?.ShieldMasterTopplePercent ?? 0;
                 var pureAdvantagePercent = level.Resources?.PureAdvantagePercent ?? 0;
                 var nextAttackHasAdvantage = false;
@@ -53,6 +54,8 @@ public static class DamageSimulator
 
                 foreach (var combat in setting.Combats)
                 {
+                    var surprisingStrikesAvailableForCombat = hasSurprisingStrikes;
+
                     for (var round = 0; round < Math.Max(1, combat.Rounds); round++)
                     {
                         if (round > 0)
@@ -71,6 +74,8 @@ public static class DamageSimulator
                             hasBoonOfCombatProwess,
                             hasPureAdvantage,
                             pureAdvantagePercent,
+                            level.LevelNumber,
+                            ref surprisingStrikesAvailableForCombat,
                             ref studiedAttacksAdvantagePending,
                             ref studiedAttacksTurnsRemaining);
 
@@ -120,6 +125,8 @@ public static class DamageSimulator
         bool hasBoonOfCombatProwess,
         bool hasPureAdvantage,
         int pureAdvantagePercent,
+        int levelNumber,
+        ref bool surprisingStrikesAvailableForCombat,
         ref bool studiedAttacksAdvantagePending,
         ref int studiedAttacksTurnsRemaining)
     {
@@ -145,6 +152,8 @@ public static class DamageSimulator
             ref boonOfCombatProwessAvailableThisTurn,
             hasPureAdvantage,
             pureAdvantagePercent,
+            levelNumber,
+            ref surprisingStrikesAvailableForCombat,
             ref studiedAttacksAdvantagePending,
             ref studiedAttacksTurnsRemaining);
 
@@ -154,7 +163,7 @@ public static class DamageSimulator
                 attacks,
                 ref nextAttackHasAdvantage,
                 ref targetIsProne,
-                isFirstRoundOfCombat: false,
+                isFirstRoundOfCombat,
                 includeOnlyActionAttacks: true,
                 ignoreSetup: true,
                 hasShieldMaster,
@@ -165,6 +174,8 @@ public static class DamageSimulator
                 ref boonOfCombatProwessAvailableThisTurn,
                 hasPureAdvantage,
                 pureAdvantagePercent,
+                levelNumber,
+                ref surprisingStrikesAvailableForCombat,
                 ref studiedAttacksAdvantagePending,
                 ref studiedAttacksTurnsRemaining);
             actionSurgesRemaining--;
@@ -177,7 +188,7 @@ public static class DamageSimulator
                 attacks,
                 ref nextAttackHasAdvantage,
                 ref targetIsProne,
-                isFirstRoundOfCombat: false,
+                isFirstRoundOfCombat,
                 includeOnlyActionAttacks: true,
                 ignoreSetup: true,
                 hasShieldMaster,
@@ -188,6 +199,8 @@ public static class DamageSimulator
                 ref boonOfCombatProwessAvailableThisTurn,
                 hasPureAdvantage,
                 pureAdvantagePercent,
+                levelNumber,
+                ref surprisingStrikesAvailableForCombat,
                 ref studiedAttacksAdvantagePending,
                 ref studiedAttacksTurnsRemaining);
             extraActionSurgesRemaining--;
@@ -211,6 +224,8 @@ public static class DamageSimulator
         ref bool boonOfCombatProwessAvailableThisTurn,
         bool hasPureAdvantage,
         int pureAdvantagePercent,
+        int levelNumber,
+        ref bool surprisingStrikesAvailableForCombat,
         ref bool studiedAttacksAdvantagePending,
         ref int studiedAttacksTurnsRemaining)
     {
@@ -272,6 +287,7 @@ public static class DamageSimulator
             {
                 // Crit: double dice quantity, same flat modifier
                 totalDamage += RollDamage(attack, isCrit: true);
+                TryApplySurprisingStrikes(isFirstRoundOfCombat, levelNumber, ref surprisingStrikesAvailableForCombat, ref totalDamage);
                 TryShieldMasterTopple(hasShieldMaster, shieldMasterTopplePercent, ref shieldMasterUsedThisTurn, ref targetIsProne);
 
                 if (attack.MasteryVex)
@@ -284,6 +300,7 @@ public static class DamageSimulator
             {
                 // Normal hit
                 totalDamage += RollDamage(attack, isCrit: false);
+                TryApplySurprisingStrikes(isFirstRoundOfCombat, levelNumber, ref surprisingStrikesAvailableForCombat, ref totalDamage);
                 TryShieldMasterTopple(hasShieldMaster, shieldMasterTopplePercent, ref shieldMasterUsedThisTurn, ref targetIsProne);
 
                 if (attack.MasteryVex)
@@ -344,6 +361,19 @@ public static class DamageSimulator
     {
         var chance = Math.Clamp(attack.ReactionChancePercent, 0, 100) / 100.0;
         return Random.Shared.NextDouble() < chance;
+    }
+
+    private static void TryApplySurprisingStrikes(
+        bool isFirstRoundOfCombat,
+        int levelNumber,
+        ref bool surprisingStrikesAvailableForCombat,
+        ref double totalDamage)
+    {
+        if (!isFirstRoundOfCombat || !surprisingStrikesAvailableForCombat)
+            return;
+
+        totalDamage += levelNumber;
+        surprisingStrikesAvailableForCombat = false;
     }
 
     private static void TryShieldMasterTopple(

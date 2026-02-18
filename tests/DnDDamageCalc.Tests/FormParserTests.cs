@@ -413,6 +413,21 @@ public class FormParserTests
     }
 
     [Fact]
+    public void Parse_SurprisingStrikes_ParsedCorrectly()
+    {
+        var form = CreateForm(new Dictionary<string, string>
+        {
+            ["characterName"] = "Test",
+            ["level[0].number"] = "5",
+            ["level[0].resources.hasSurprisingStrikes"] = "true"
+        });
+
+        var character = FormParser.Parse(form);
+
+        Assert.True(character.Levels[0].Resources.HasSurprisingStrikes);
+    }
+
+    [Fact]
     public void ParseEncounterSetting_ReturnsCombats()
     {
         var form = CreateForm(new Dictionary<string, string>

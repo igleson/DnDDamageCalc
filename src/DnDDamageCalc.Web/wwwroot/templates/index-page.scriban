@@ -825,6 +825,17 @@
                                            value="true" />
                                     Action Surge
                                 </label>
+                                <label>
+                                    <input type="checkbox"
+                                           name="level[LEVEL_INDEX_PLACEHOLDER].resources.hasExtraActionSurge"
+                                           onchange="this.closest('label').querySelector('.extra-action-surge-value').value=this.checked?'true':'false'"
+                                           value="true" />
+                                    Extra Action Surge
+                                    <input type="hidden"
+                                           class="extra-action-surge-value"
+                                           name="level[LEVEL_INDEX_PLACEHOLDER].resources.hasExtraActionSurgeValue"
+                                           value="false" />
+                                </label>
                                 <input type="hidden"
                                        name="level[LEVEL_INDEX_PLACEHOLDER].resources.hasShieldMaster"
                                        value="false" />
@@ -851,6 +862,15 @@
                                            name="level[LEVEL_INDEX_PLACEHOLDER].resources.hasHeroicInspiration"
                                            value="true" />
                                     Heroic Inspiration
+                                </label>
+                                <input type="hidden"
+                                       name="level[LEVEL_INDEX_PLACEHOLDER].resources.hasStudiedAttacks"
+                                       value="false" />
+                                <label>
+                                    <input type="checkbox"
+                                           name="level[LEVEL_INDEX_PLACEHOLDER].resources.hasStudiedAttacks"
+                                           value="true" />
+                                    Studied Attacks
                                 </label>
                             </div>
                         </fieldset>

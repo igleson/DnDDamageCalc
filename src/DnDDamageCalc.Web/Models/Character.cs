@@ -36,6 +36,12 @@ public class LevelResources
 
     [ProtoMember(4)]
     public bool HasHeroicInspiration { get; set; }
+
+    [ProtoMember(5)]
+    public bool HasStudiedAttacks { get; set; }
+
+    [ProtoMember(6)]
+    public bool HasExtraActionSurge { get; set; }
 }
 
 [ProtoContract]

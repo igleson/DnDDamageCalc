@@ -331,6 +331,36 @@ public class FormParserTests
     }
 
     [Fact]
+    public void Parse_StudiedAttacks_ParsedCorrectly()
+    {
+        var form = CreateForm(new Dictionary<string, string>
+        {
+            ["characterName"] = "Test",
+            ["level[0].number"] = "1",
+            ["level[0].resources.hasStudiedAttacks"] = "true"
+        });
+
+        var character = FormParser.Parse(form);
+
+        Assert.True(character.Levels[0].Resources.HasStudiedAttacks);
+    }
+
+    [Fact]
+    public void Parse_ExtraActionSurge_ParsedCorrectly()
+    {
+        var form = CreateForm(new Dictionary<string, string>
+        {
+            ["characterName"] = "Test",
+            ["level[0].number"] = "1",
+            ["level[0].resources.hasExtraActionSurge"] = "true"
+        });
+
+        var character = FormParser.Parse(form);
+
+        Assert.True(character.Levels[0].Resources.HasExtraActionSurge);
+    }
+
+    [Fact]
     public void ParseEncounterSetting_ReturnsCombats()
     {
         var form = CreateForm(new Dictionary<string, string>

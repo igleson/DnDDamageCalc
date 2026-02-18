@@ -37,11 +37,16 @@ public static class DamageSimulator
             for (var i = 0; i < iterations; i++)
             {
                 var hasActionSurge = level.Resources?.HasActionSurge == true;
+                var hasExtraActionSurge = level.Resources?.HasExtraActionSurge == true;
                 var hasShieldMaster = level.Resources?.HasShieldMaster == true;
                 var hasHeroicInspiration = level.Resources?.HasHeroicInspiration == true;
+                var hasStudiedAttacks = level.Resources?.HasStudiedAttacks == true;
                 var shieldMasterTopplePercent = level.Resources?.ShieldMasterTopplePercent ?? 0;
                 var nextAttackHasAdvantage = false;
                 var actionSurgesRemaining = hasActionSurge ? 1 : 0;
+                var extraActionSurgesRemaining = hasExtraActionSurge ? 1 : 0;
+                var studiedAttacksAdvantagePending = false;
+                var studiedAttacksTurnsRemaining = 0;
 
                 foreach (var combat in setting.Combats)
                 {
@@ -52,14 +57,27 @@ public static class DamageSimulator
                             ref nextAttackHasAdvantage,
                             isFirstRoundOfCombat: round == 0,
                             ref actionSurgesRemaining,
+                            ref extraActionSurgesRemaining,
                             hasShieldMaster,
                             shieldMasterTopplePercent,
-                            hasHeroicInspiration);
+                            hasHeroicInspiration,
+                            hasStudiedAttacks,
+                            ref studiedAttacksAdvantagePending,
+                            ref studiedAttacksTurnsRemaining);
+
+                        if (studiedAttacksAdvantagePending && studiedAttacksTurnsRemaining > 0)
+                        {
+                            studiedAttacksTurnsRemaining--;
+                            if (studiedAttacksTurnsRemaining <= 0)
+                                studiedAttacksAdvantagePending = false;
+                        }
                     }
 
                     nextAttackHasAdvantage = false;
                     if (combat.ShortRestAfter && hasActionSurge)
                         actionSurgesRemaining = 1;
+                    if (combat.ShortRestAfter && hasExtraActionSurge)
+                        extraActionSurgesRemaining = 1;
                 }
             }
 
@@ -85,14 +103,19 @@ public static class DamageSimulator
         ref bool nextAttackHasAdvantage,
         bool isFirstRoundOfCombat,
         ref int actionSurgesRemaining,
+        ref int extraActionSurgesRemaining,
         bool hasShieldMaster,
         int shieldMasterTopplePercent,
-        bool hasHeroicInspiration)
+        bool hasHeroicInspiration,
+        bool hasStudiedAttacks,
+        ref bool studiedAttacksAdvantagePending,
+        ref int studiedAttacksTurnsRemaining)
     {
         var totalDamage = 0.0;
         var targetIsProne = false;
         var shieldMasterUsedThisTurn = false;
         var heroicInspirationAvailableThisTurn = hasHeroicInspiration;
+        var surgeUsedThisTurn = false;
 
         totalDamage += SimulateAttackSequence(
             attacks,
@@ -104,9 +127,12 @@ public static class DamageSimulator
             hasShieldMaster,
             shieldMasterTopplePercent,
             ref shieldMasterUsedThisTurn,
-            ref heroicInspirationAvailableThisTurn);
+            ref heroicInspirationAvailableThisTurn,
+            hasStudiedAttacks,
+            ref studiedAttacksAdvantagePending,
+            ref studiedAttacksTurnsRemaining);
 
-        if (actionSurgesRemaining > 0 && attacks.Any(IsActionAttack))
+        if (!surgeUsedThisTurn && actionSurgesRemaining > 0 && attacks.Any(IsActionAttack))
         {
             totalDamage += SimulateAttackSequence(
                 attacks,
@@ -118,8 +144,31 @@ public static class DamageSimulator
                 hasShieldMaster,
                 shieldMasterTopplePercent,
                 ref shieldMasterUsedThisTurn,
-                ref heroicInspirationAvailableThisTurn);
+                ref heroicInspirationAvailableThisTurn,
+                hasStudiedAttacks,
+                ref studiedAttacksAdvantagePending,
+                ref studiedAttacksTurnsRemaining);
             actionSurgesRemaining--;
+            surgeUsedThisTurn = true;
+        }
+
+        if (!surgeUsedThisTurn && extraActionSurgesRemaining > 0 && attacks.Any(IsActionAttack))
+        {
+            totalDamage += SimulateAttackSequence(
+                attacks,
+                ref nextAttackHasAdvantage,
+                ref targetIsProne,
+                isFirstRoundOfCombat: false,
+                includeOnlyActionAttacks: true,
+                ignoreSetup: true,
+                hasShieldMaster,
+                shieldMasterTopplePercent,
+                ref shieldMasterUsedThisTurn,
+                ref heroicInspirationAvailableThisTurn,
+                hasStudiedAttacks,
+                ref studiedAttacksAdvantagePending,
+                ref studiedAttacksTurnsRemaining);
+            extraActionSurgesRemaining--;
         }
 
         return totalDamage;
@@ -135,7 +184,10 @@ public static class DamageSimulator
         bool hasShieldMaster,
         int shieldMasterTopplePercent,
         ref bool shieldMasterUsedThisTurn,
-        ref bool heroicInspirationAvailableThisTurn)
+        ref bool heroicInspirationAvailableThisTurn,
+        bool hasStudiedAttacks,
+        ref bool studiedAttacksAdvantagePending,
+        ref int studiedAttacksTurnsRemaining)
     {
         var totalDamage = 0.0;
 
@@ -149,10 +201,15 @@ public static class DamageSimulator
             if (!ignoreSetup && isFirstRoundOfCombat && attack.RequiresSetup)
                 continue;
 
-            var hasAdvantage = nextAttackHasAdvantage || targetIsProne;
+            var hasAdvantage = nextAttackHasAdvantage || targetIsProne || studiedAttacksAdvantagePending;
             // Vex advantage is consumed after one use; prone persists
             if (nextAttackHasAdvantage && !targetIsProne)
                 nextAttackHasAdvantage = false;
+            if (studiedAttacksAdvantagePending)
+            {
+                studiedAttacksAdvantagePending = false;
+                studiedAttacksTurnsRemaining = 0;
+            }
 
             var hitPct = attack.HitPercent / 100.0;
             var critPct = attack.CritPercent / 100.0;
@@ -205,6 +262,12 @@ public static class DamageSimulator
             else
             {
                 // Miss
+                if (hasStudiedAttacks)
+                {
+                    studiedAttacksAdvantagePending = true;
+                    studiedAttacksTurnsRemaining = 2;
+                }
+
                 if (attack.MasteryGraze && attack.GrazeValue > 0)
                     totalDamage += attack.GrazeValue;
             }

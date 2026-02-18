@@ -616,6 +616,123 @@ public class DamageSimulatorTests
         Assert.InRange(results[0].Average, 7.0, 8.0);
     }
 
+    [Fact]
+    public void Simulate_StudiedAttacks_GrantsAdvantageAfterMiss()
+    {
+        var character = new Character
+        {
+            Name = "Studied Attacks Test",
+            Levels =
+            [
+                new CharacterLevel
+                {
+                    LevelNumber = 1,
+                    Resources = new LevelResources { HasStudiedAttacks = true },
+                    Attacks =
+                    [
+                        new Attack
+                        {
+                            Name = "Single Swing",
+                            ActionType = "action",
+                            HitPercent = 50,
+                            CritPercent = 0,
+                            FlatModifier = 10,
+                            DiceGroups = []
+                        }
+                    ]
+                }
+            ]
+        };
+
+        var setting = new EncounterSetting
+        {
+            Name = "Two Rounds",
+            Combats = [new CombatDefinition { Rounds = 2, ShortRestAfter = false }]
+        };
+
+        var results = DamageSimulator.Simulate(character, setting, iterations: 50_000);
+
+        // Baseline per-round would be 5. Studied misses in round 1 create advantage in round 2.
+        Assert.InRange(results[0].Average, 5.8, 6.7);
+    }
+
+    [Fact]
+    public void Simulate_ExtraActionSurge_CannotStackWithActionSurgeSameTurn()
+    {
+        var attacks = new List<Attack>
+        {
+            new()
+            {
+                Name = "Action Attack", ActionType = "action", HitPercent = 100, CritPercent = 0,
+                FlatModifier = 10, DiceGroups = []
+            }
+        };
+
+        var character = new Character
+        {
+            Name = "Dual Surge Test",
+            Levels =
+            [
+                new CharacterLevel
+                {
+                    LevelNumber = 1,
+                    Resources = new LevelResources { HasActionSurge = true, HasExtraActionSurge = true },
+                    Attacks = attacks
+                }
+            ]
+        };
+        var setting = new EncounterSetting
+        {
+            Name = "One Round",
+            Combats = [new CombatDefinition { Rounds = 1, ShortRestAfter = false }]
+        };
+
+        var results = DamageSimulator.Simulate(character, setting, iterations: 10_000);
+
+        // Base (10) + only one surge replay (10), not two replays.
+        Assert.Equal(20, results[0].Average, precision: 1);
+    }
+
+    [Fact]
+    public void Simulate_ExtraActionSurge_ResetsAfterShortRest()
+    {
+        var attacks = new List<Attack>
+        {
+            new()
+            {
+                Name = "Action Attack", ActionType = "action", HitPercent = 100, CritPercent = 0,
+                FlatModifier = 10, DiceGroups = []
+            }
+        };
+
+        var character = new Character
+        {
+            Name = "Extra Surge Short Rest Test",
+            Levels =
+            [
+                new CharacterLevel
+                {
+                    LevelNumber = 1,
+                    Resources = new LevelResources { HasExtraActionSurge = true },
+                    Attacks = attacks
+                }
+            ]
+        };
+        var setting = new EncounterSetting
+        {
+            Name = "Two Combats with Short Rest",
+            Combats =
+            [
+                new CombatDefinition { Rounds = 1, ShortRestAfter = true },
+                new CombatDefinition { Rounds = 1, ShortRestAfter = false }
+            ]
+        };
+
+        var results = DamageSimulator.Simulate(character, setting, iterations: 10_000);
+
+        Assert.Equal(20, results[0].Average, precision: 1);
+    }
+
     private static Character MakeCharacter(int hitPercent, int critPercent,
         int flatModifier, List<DiceGroup> diceGroups)
     {

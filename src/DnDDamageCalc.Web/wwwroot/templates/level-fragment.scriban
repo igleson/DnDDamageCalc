@@ -35,6 +35,17 @@
                            value="true"{{ if has_action_surge }} checked{{ end }} />
                     Action Surge
                 </label>
+                <label>
+                    <input type="checkbox"
+                           name="level[{{ level_index }}].resources.hasExtraActionSurge"
+                           onchange="this.closest('label').querySelector('.extra-action-surge-value').value=this.checked?'true':'false'"
+                           value="true"{{ if has_extra_action_surge }} checked{{ end }} />
+                    Extra Action Surge
+                    <input type="hidden"
+                           class="extra-action-surge-value"
+                           name="level[{{ level_index }}].resources.hasExtraActionSurgeValue"
+                           value="{{ if has_extra_action_surge }}true{{ else }}false{{ end }}" />
+                </label>
                 <input type="hidden" name="level[{{ level_index }}].resources.hasShieldMaster" value="false" />
                 <label>
                     <input type="checkbox"
@@ -57,6 +68,13 @@
                            name="level[{{ level_index }}].resources.hasHeroicInspiration"
                            value="true"{{ if has_heroic_inspiration }} checked{{ end }} />
                     Heroic Inspiration
+                </label>
+                <input type="hidden" name="level[{{ level_index }}].resources.hasStudiedAttacks" value="false" />
+                <label>
+                    <input type="checkbox"
+                           name="level[{{ level_index }}].resources.hasStudiedAttacks"
+                           value="true"{{ if has_studied_attacks }} checked{{ end }} />
+                    Studied Attacks
                 </label>
             </div>
         </fieldset>

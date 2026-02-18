@@ -55,6 +55,9 @@ public static class DamageSimulator
                 {
                     for (var round = 0; round < Math.Max(1, combat.Rounds); round++)
                     {
+                        if (round > 0)
+                            nextAttackHasAdvantage = false;
+
                         damages[index++] = SimulateRound(
                             level.Attacks,
                             ref nextAttackHasAdvantage,

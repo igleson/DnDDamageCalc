@@ -350,19 +350,19 @@ public class DamageSimulatorTests
     }
 
     [Fact]
-    public void Simulate_WithEncounterSetting_VexPersistsAcrossRounds()
+    public void Simulate_WithEncounterSetting_VexDoesNotPersistAcrossRounds()
     {
         var attacks = new List<Attack>
         {
             new()
             {
-                Name = "Vex Opener", HitPercent = 100, CritPercent = 0,
-                MasteryVex = true, FlatModifier = 0, DiceGroups = []
+                Name = "Round Opener", HitPercent = 50, CritPercent = 0,
+                FlatModifier = 10, DiceGroups = []
             },
             new()
             {
-                Name = "Follow-up", HitPercent = 50, CritPercent = 0,
-                FlatModifier = 10, DiceGroups = []
+                Name = "Vex Setter", HitPercent = 100, CritPercent = 0,
+                MasteryVex = true, FlatModifier = 0, DiceGroups = []
             }
         };
         var character = new Character
@@ -378,7 +378,7 @@ public class DamageSimulatorTests
 
         var results = DamageSimulator.Simulate(character, setting, iterations: 50_000);
 
-        Assert.True(results[0].Average > 6.5, $"Average {results[0].Average} should reflect persistent Vex across rounds");
+        Assert.InRange(results[0].Average, 4.5, 5.5);
     }
 
     [Fact]

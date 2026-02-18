@@ -30,7 +30,9 @@ public static partial class FormParser
                     HasExtraActionSurge =
                         ParseCheckbox(form, $"level[{li}].resources.hasExtraActionSurge") ||
                         ParseCheckbox(form, $"level[{li}].resources.hasExtraActionSurgeValue"),
-                    HasBoonOfCombatProwess = ParseCheckbox(form, $"level[{li}].resources.hasBoonOfCombatProwess")
+                    HasBoonOfCombatProwess = ParseCheckbox(form, $"level[{li}].resources.hasBoonOfCombatProwess"),
+                    HasPureAdvantage = ParseCheckbox(form, $"level[{li}].resources.hasPureAdvantage"),
+                    PureAdvantagePercent = ParseInt(form, $"level[{li}].resources.pureAdvantagePercent")
                 }
             };
 

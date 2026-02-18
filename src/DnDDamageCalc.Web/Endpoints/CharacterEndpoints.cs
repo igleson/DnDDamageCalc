@@ -170,6 +170,9 @@ public static class CharacterEndpoints
             if (level.Resources?.HasShieldMaster == true && ((level.Resources.ShieldMasterTopplePercent < 0) || (level.Resources.ShieldMasterTopplePercent > 100)))
                 errors.Add($"Shield Master Topple% must be 0-100 at level {level.LevelNumber}.");
 
+            if (level.Resources?.HasPureAdvantage == true && (level.Resources.PureAdvantagePercent < 0 || level.Resources.PureAdvantagePercent > 100))
+                errors.Add($"Pure Advantage% must be 0-100 at level {level.LevelNumber}.");
+
             foreach (var attack in level.Attacks)
             {
                 if (string.IsNullOrWhiteSpace(attack.Name))
@@ -215,6 +218,9 @@ public static class CharacterEndpoints
 
             if (level.Resources?.HasShieldMaster == true && ((level.Resources.ShieldMasterTopplePercent < 0) || (level.Resources.ShieldMasterTopplePercent > 100)))
                 errors.Add($"Shield Master Topple% must be 0-100 at level {level.LevelNumber}.");
+
+            if (level.Resources?.HasPureAdvantage == true && (level.Resources.PureAdvantagePercent < 0 || level.Resources.PureAdvantagePercent > 100))
+                errors.Add($"Pure Advantage% must be 0-100 at level {level.LevelNumber}.");
 
             foreach (var attack in level.Attacks)
             {

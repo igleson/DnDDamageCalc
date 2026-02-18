@@ -881,6 +881,24 @@
                                            value="true" />
                                     Boon of Combat Prowess
                                 </label>
+                                <input type="hidden"
+                                       name="level[LEVEL_INDEX_PLACEHOLDER].resources.hasPureAdvantage"
+                                       value="false" />
+                                <label>
+                                    <input type="checkbox"
+                                           name="level[LEVEL_INDEX_PLACEHOLDER].resources.hasPureAdvantage"
+                                           value="true"
+                                           onchange="this.closest('fieldset').querySelector('.pure-advantage-pct').style.display=this.checked?'block':'none'" />
+                                    Pure Advantage
+                                </label>
+                                <div class="pure-advantage-pct" style="display:none;">
+                                    <label for="level[LEVEL_INDEX_PLACEHOLDER].resources.pureAdvantagePercent">Pure Advantage %</label>
+                                    <input type="number"
+                                           name="level[LEVEL_INDEX_PLACEHOLDER].resources.pureAdvantagePercent"
+                                           value="0"
+                                           min="0"
+                                           max="100" />
+                                </div>
                             </div>
                         </fieldset>
 

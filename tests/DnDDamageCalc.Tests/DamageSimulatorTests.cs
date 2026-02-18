@@ -774,6 +774,72 @@ public class DamageSimulatorTests
         Assert.Equal(10, results[0].Average, precision: 1);
     }
 
+    [Fact]
+    public void Simulate_PureAdvantage_ZeroPercent_DoesNotGrantAdvantage()
+    {
+        var character = new Character
+        {
+            Name = "Pure Advantage Zero",
+            Levels =
+            [
+                new CharacterLevel
+                {
+                    LevelNumber = 1,
+                    Resources = new LevelResources { HasPureAdvantage = true, PureAdvantagePercent = 0 },
+                    Attacks =
+                    [
+                        new Attack
+                        {
+                            Name = "Attack",
+                            ActionType = "action",
+                            HitPercent = 50,
+                            CritPercent = 0,
+                            FlatModifier = 10,
+                            DiceGroups = []
+                        }
+                    ]
+                }
+            ]
+        };
+
+        var results = DamageSimulator.Simulate(character, iterations: 50_000);
+
+        Assert.InRange(results[0].Average, 4.5, 5.5);
+    }
+
+    [Fact]
+    public void Simulate_PureAdvantage_HundredPercent_GrantsAdvantage()
+    {
+        var character = new Character
+        {
+            Name = "Pure Advantage Full",
+            Levels =
+            [
+                new CharacterLevel
+                {
+                    LevelNumber = 1,
+                    Resources = new LevelResources { HasPureAdvantage = true, PureAdvantagePercent = 100 },
+                    Attacks =
+                    [
+                        new Attack
+                        {
+                            Name = "Attack",
+                            ActionType = "action",
+                            HitPercent = 50,
+                            CritPercent = 0,
+                            FlatModifier = 10,
+                            DiceGroups = []
+                        }
+                    ]
+                }
+            ]
+        };
+
+        var results = DamageSimulator.Simulate(character, iterations: 50_000);
+
+        Assert.InRange(results[0].Average, 7.0, 8.0);
+    }
+
     private static Character MakeCharacter(int hitPercent, int critPercent,
         int flatModifier, List<DiceGroup> diceGroups)
     {

@@ -45,6 +45,12 @@ public class LevelResources
 
     [ProtoMember(7)]
     public bool HasBoonOfCombatProwess { get; set; }
+
+    [ProtoMember(8)]
+    public bool HasPureAdvantage { get; set; }
+
+    [ProtoMember(9)]
+    public int PureAdvantagePercent { get; set; }
 }
 
 [ProtoContract]

@@ -83,6 +83,22 @@
                            value="true"{{ if has_boon_of_combat_prowess }} checked{{ end }} />
                     Boon of Combat Prowess
                 </label>
+                <input type="hidden" name="level[{{ level_index }}].resources.hasPureAdvantage" value="false" />
+                <label>
+                    <input type="checkbox"
+                           name="level[{{ level_index }}].resources.hasPureAdvantage"
+                           value="true"{{ if has_pure_advantage }} checked{{ end }}
+                           onchange="this.closest('fieldset').querySelector('.pure-advantage-pct').style.display=this.checked?'block':'none'" />
+                    Pure Advantage
+                </label>
+                <div class="pure-advantage-pct" style="display:{{ if has_pure_advantage }}block{{ else }}none{{ end }};">
+                    <label for="level[{{ level_index }}].resources.pureAdvantagePercent">Pure Advantage %</label>
+                    <input type="number"
+                           name="level[{{ level_index }}].resources.pureAdvantagePercent"
+                           value="{{ pure_advantage_percent }}"
+                           min="0"
+                           max="100" />
+                </div>
             </div>
         </fieldset>
 

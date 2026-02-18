@@ -75,6 +75,8 @@ public static class HtmlFragments
             has_studied_attacks = l.Resources?.HasStudiedAttacks ?? false,
             has_extra_action_surge = l.Resources?.HasExtraActionSurge ?? false,
             has_boon_of_combat_prowess = l.Resources?.HasBoonOfCombatProwess ?? false,
+            has_pure_advantage = l.Resources?.HasPureAdvantage ?? false,
+            pure_advantage_percent = l.Resources?.PureAdvantagePercent ?? 0,
             attacks = attacks,
             has_attacks = l.Attacks.Count > 0,
             clone_attack_button = l.Attacks.Count > 0 ? new { html = CloneAttackButton(levelIndex, templates) } : null

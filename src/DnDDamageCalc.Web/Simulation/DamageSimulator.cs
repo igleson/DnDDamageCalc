@@ -42,7 +42,9 @@ public static class DamageSimulator
                 var hasHeroicInspiration = level.Resources?.HasHeroicInspiration == true;
                 var hasStudiedAttacks = level.Resources?.HasStudiedAttacks == true;
                 var hasBoonOfCombatProwess = level.Resources?.HasBoonOfCombatProwess == true;
+                var hasPureAdvantage = level.Resources?.HasPureAdvantage == true;
                 var shieldMasterTopplePercent = level.Resources?.ShieldMasterTopplePercent ?? 0;
+                var pureAdvantagePercent = level.Resources?.PureAdvantagePercent ?? 0;
                 var nextAttackHasAdvantage = false;
                 var actionSurgesRemaining = hasActionSurge ? 1 : 0;
                 var extraActionSurgesRemaining = hasExtraActionSurge ? 1 : 0;
@@ -64,6 +66,8 @@ public static class DamageSimulator
                             hasHeroicInspiration,
                             hasStudiedAttacks,
                             hasBoonOfCombatProwess,
+                            hasPureAdvantage,
+                            pureAdvantagePercent,
                             ref studiedAttacksAdvantagePending,
                             ref studiedAttacksTurnsRemaining);
 
@@ -111,6 +115,8 @@ public static class DamageSimulator
         bool hasHeroicInspiration,
         bool hasStudiedAttacks,
         bool hasBoonOfCombatProwess,
+        bool hasPureAdvantage,
+        int pureAdvantagePercent,
         ref bool studiedAttacksAdvantagePending,
         ref int studiedAttacksTurnsRemaining)
     {
@@ -134,6 +140,8 @@ public static class DamageSimulator
             ref heroicInspirationAvailableThisTurn,
             hasStudiedAttacks,
             ref boonOfCombatProwessAvailableThisTurn,
+            hasPureAdvantage,
+            pureAdvantagePercent,
             ref studiedAttacksAdvantagePending,
             ref studiedAttacksTurnsRemaining);
 
@@ -152,6 +160,8 @@ public static class DamageSimulator
                 ref heroicInspirationAvailableThisTurn,
                 hasStudiedAttacks,
                 ref boonOfCombatProwessAvailableThisTurn,
+                hasPureAdvantage,
+                pureAdvantagePercent,
                 ref studiedAttacksAdvantagePending,
                 ref studiedAttacksTurnsRemaining);
             actionSurgesRemaining--;
@@ -173,6 +183,8 @@ public static class DamageSimulator
                 ref heroicInspirationAvailableThisTurn,
                 hasStudiedAttacks,
                 ref boonOfCombatProwessAvailableThisTurn,
+                hasPureAdvantage,
+                pureAdvantagePercent,
                 ref studiedAttacksAdvantagePending,
                 ref studiedAttacksTurnsRemaining);
             extraActionSurgesRemaining--;
@@ -194,6 +206,8 @@ public static class DamageSimulator
         ref bool heroicInspirationAvailableThisTurn,
         bool hasStudiedAttacks,
         ref bool boonOfCombatProwessAvailableThisTurn,
+        bool hasPureAdvantage,
+        int pureAdvantagePercent,
         ref bool studiedAttacksAdvantagePending,
         ref int studiedAttacksTurnsRemaining)
     {
@@ -210,6 +224,8 @@ public static class DamageSimulator
                 continue;
 
             var hasAdvantage = nextAttackHasAdvantage || targetIsProne || studiedAttacksAdvantagePending;
+            if (!hasAdvantage && hasPureAdvantage && Random.Shared.NextDouble() < Math.Clamp(pureAdvantagePercent, 0, 100) / 100.0)
+                hasAdvantage = true;
             // Vex advantage is consumed after one use; prone persists
             if (nextAttackHasAdvantage && !targetIsProne)
                 nextAttackHasAdvantage = false;

@@ -376,6 +376,23 @@ public class FormParserTests
     }
 
     [Fact]
+    public void Parse_PureAdvantage_ParsedCorrectly()
+    {
+        var form = CreateForm(new Dictionary<string, string>
+        {
+            ["characterName"] = "Test",
+            ["level[0].number"] = "1",
+            ["level[0].resources.hasPureAdvantage"] = "true",
+            ["level[0].resources.pureAdvantagePercent"] = "35"
+        });
+
+        var character = FormParser.Parse(form);
+
+        Assert.True(character.Levels[0].Resources.HasPureAdvantage);
+        Assert.Equal(35, character.Levels[0].Resources.PureAdvantagePercent);
+    }
+
+    [Fact]
     public void ParseEncounterSetting_ReturnsCombats()
     {
         var form = CreateForm(new Dictionary<string, string>

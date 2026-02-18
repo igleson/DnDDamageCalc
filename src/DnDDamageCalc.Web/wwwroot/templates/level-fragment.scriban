@@ -76,6 +76,13 @@
                            value="true"{{ if has_studied_attacks }} checked{{ end }} />
                     Studied Attacks
                 </label>
+                <input type="hidden" name="level[{{ level_index }}].resources.hasBoonOfCombatProwess" value="false" />
+                <label>
+                    <input type="checkbox"
+                           name="level[{{ level_index }}].resources.hasBoonOfCombatProwess"
+                           value="true"{{ if has_boon_of_combat_prowess }} checked{{ end }} />
+                    Boon of Combat Prowess
+                </label>
             </div>
         </fieldset>
 

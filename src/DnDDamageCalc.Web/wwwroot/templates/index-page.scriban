@@ -872,6 +872,15 @@
                                            value="true" />
                                     Studied Attacks
                                 </label>
+                                <input type="hidden"
+                                       name="level[LEVEL_INDEX_PLACEHOLDER].resources.hasBoonOfCombatProwess"
+                                       value="false" />
+                                <label>
+                                    <input type="checkbox"
+                                           name="level[LEVEL_INDEX_PLACEHOLDER].resources.hasBoonOfCombatProwess"
+                                           value="true" />
+                                    Boon of Combat Prowess
+                                </label>
                             </div>
                         </fieldset>
 

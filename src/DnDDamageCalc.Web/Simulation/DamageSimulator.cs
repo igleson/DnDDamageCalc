@@ -41,6 +41,7 @@ public static class DamageSimulator
                 var hasShieldMaster = level.Resources?.HasShieldMaster == true;
                 var hasHeroicInspiration = level.Resources?.HasHeroicInspiration == true;
                 var hasStudiedAttacks = level.Resources?.HasStudiedAttacks == true;
+                var hasBoonOfCombatProwess = level.Resources?.HasBoonOfCombatProwess == true;
                 var shieldMasterTopplePercent = level.Resources?.ShieldMasterTopplePercent ?? 0;
                 var nextAttackHasAdvantage = false;
                 var actionSurgesRemaining = hasActionSurge ? 1 : 0;
@@ -62,6 +63,7 @@ public static class DamageSimulator
                             shieldMasterTopplePercent,
                             hasHeroicInspiration,
                             hasStudiedAttacks,
+                            hasBoonOfCombatProwess,
                             ref studiedAttacksAdvantagePending,
                             ref studiedAttacksTurnsRemaining);
 
@@ -108,6 +110,7 @@ public static class DamageSimulator
         int shieldMasterTopplePercent,
         bool hasHeroicInspiration,
         bool hasStudiedAttacks,
+        bool hasBoonOfCombatProwess,
         ref bool studiedAttacksAdvantagePending,
         ref int studiedAttacksTurnsRemaining)
     {
@@ -115,6 +118,7 @@ public static class DamageSimulator
         var targetIsProne = false;
         var shieldMasterUsedThisTurn = false;
         var heroicInspirationAvailableThisTurn = hasHeroicInspiration;
+        var boonOfCombatProwessAvailableThisTurn = hasBoonOfCombatProwess;
         var surgeUsedThisTurn = false;
 
         totalDamage += SimulateAttackSequence(
@@ -129,6 +133,7 @@ public static class DamageSimulator
             ref shieldMasterUsedThisTurn,
             ref heroicInspirationAvailableThisTurn,
             hasStudiedAttacks,
+            ref boonOfCombatProwessAvailableThisTurn,
             ref studiedAttacksAdvantagePending,
             ref studiedAttacksTurnsRemaining);
 
@@ -146,6 +151,7 @@ public static class DamageSimulator
                 ref shieldMasterUsedThisTurn,
                 ref heroicInspirationAvailableThisTurn,
                 hasStudiedAttacks,
+                ref boonOfCombatProwessAvailableThisTurn,
                 ref studiedAttacksAdvantagePending,
                 ref studiedAttacksTurnsRemaining);
             actionSurgesRemaining--;
@@ -166,6 +172,7 @@ public static class DamageSimulator
                 ref shieldMasterUsedThisTurn,
                 ref heroicInspirationAvailableThisTurn,
                 hasStudiedAttacks,
+                ref boonOfCombatProwessAvailableThisTurn,
                 ref studiedAttacksAdvantagePending,
                 ref studiedAttacksTurnsRemaining);
             extraActionSurgesRemaining--;
@@ -186,6 +193,7 @@ public static class DamageSimulator
         ref bool shieldMasterUsedThisTurn,
         ref bool heroicInspirationAvailableThisTurn,
         bool hasStudiedAttacks,
+        ref bool boonOfCombatProwessAvailableThisTurn,
         ref bool studiedAttacksAdvantagePending,
         ref int studiedAttacksTurnsRemaining)
     {
@@ -229,7 +237,13 @@ public static class DamageSimulator
 
             var normalHitPct = hitPct - critPct;
             var isHit = RollHits(critPct, normalHitPct, out var isCrit);
-            if (!isHit && heroicInspirationAvailableThisTurn)
+            if (!isHit && boonOfCombatProwessAvailableThisTurn)
+            {
+                boonOfCombatProwessAvailableThisTurn = false;
+                isHit = true;
+                isCrit = false;
+            }
+            else if (!isHit && heroicInspirationAvailableThisTurn)
             {
                 heroicInspirationAvailableThisTurn = false;
                 isHit = RollHits(critPct, normalHitPct, out isCrit);

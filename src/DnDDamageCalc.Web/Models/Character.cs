@@ -42,6 +42,9 @@ public class LevelResources
 
     [ProtoMember(6)]
     public bool HasExtraActionSurge { get; set; }
+
+    [ProtoMember(7)]
+    public bool HasBoonOfCombatProwess { get; set; }
 }
 
 [ProtoContract]

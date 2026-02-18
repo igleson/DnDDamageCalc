@@ -733,6 +733,47 @@ public class DamageSimulatorTests
         Assert.Equal(20, results[0].Average, precision: 1);
     }
 
+    [Fact]
+    public void Simulate_BoonOfCombatProwess_ConvertsOneMissPerTurnToHit()
+    {
+        var attacks = new List<Attack>
+        {
+            new()
+            {
+                Name = "Miss One", ActionType = "action", HitPercent = 0, CritPercent = 0,
+                FlatModifier = 10, DiceGroups = []
+            },
+            new()
+            {
+                Name = "Miss Two", ActionType = "action", HitPercent = 0, CritPercent = 0,
+                FlatModifier = 10, DiceGroups = []
+            }
+        };
+
+        var character = new Character
+        {
+            Name = "Boon Test",
+            Levels =
+            [
+                new CharacterLevel
+                {
+                    LevelNumber = 1,
+                    Resources = new LevelResources { HasBoonOfCombatProwess = true },
+                    Attacks = attacks
+                }
+            ]
+        };
+        var setting = new EncounterSetting
+        {
+            Name = "One Round",
+            Combats = [new CombatDefinition { Rounds = 1, ShortRestAfter = false }]
+        };
+
+        var results = DamageSimulator.Simulate(character, setting, iterations: 10_000);
+
+        Assert.Equal(10, results[0].Average, precision: 1);
+    }
+
     private static Character MakeCharacter(int hitPercent, int critPercent,
         int flatModifier, List<DiceGroup> diceGroups)
     {

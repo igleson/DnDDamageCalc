@@ -29,7 +29,8 @@ public static partial class FormParser
                     HasStudiedAttacks = ParseCheckbox(form, $"level[{li}].resources.hasStudiedAttacks"),
                     HasExtraActionSurge =
                         ParseCheckbox(form, $"level[{li}].resources.hasExtraActionSurge") ||
-                        ParseCheckbox(form, $"level[{li}].resources.hasExtraActionSurgeValue")
+                        ParseCheckbox(form, $"level[{li}].resources.hasExtraActionSurgeValue"),
+                    HasBoonOfCombatProwess = ParseCheckbox(form, $"level[{li}].resources.hasBoonOfCombatProwess")
                 }
             };
 

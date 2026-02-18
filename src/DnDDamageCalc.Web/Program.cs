@@ -4,6 +4,7 @@ using DnDDamageCalc.Web.Endpoints;
 using DnDDamageCalc.Web.Html;
 using DnDDamageCalc.Web.Services;
 using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.Http.Features;
 
 var builder = WebApplication.CreateSlimBuilder(args);
 
@@ -13,6 +14,10 @@ builder.Logging.AddConsole();
 builder.Logging.SetMinimumLevel(LogLevel.Information);
 
 builder.Services.AddDataProtection().SetApplicationName("DnDDamageCalc");
+builder.Services.Configure<FormOptions>(options =>
+{
+    options.ValueCountLimit = 10_000;
+});
 
 // Register template service
 builder.Services.AddSingleton<ITemplateService, TemplateService>();

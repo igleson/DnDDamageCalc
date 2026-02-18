@@ -173,6 +173,9 @@ public static class CharacterEndpoints
             if (level.Resources?.HasPureAdvantage == true && (level.Resources.PureAdvantagePercent < 0 || level.Resources.PureAdvantagePercent > 100))
                 errors.Add($"Pure Advantage% must be 0-100 at level {level.LevelNumber}.");
 
+            if (level.Resources?.HasDeathStrikes == true && (level.Resources.DeathStrikesResistPercent < 0 || level.Resources.DeathStrikesResistPercent > 100))
+                errors.Add($"Death Strikes Resist% must be 0-100 at level {level.LevelNumber}.");
+
             foreach (var attack in level.Attacks)
             {
                 if (string.IsNullOrWhiteSpace(attack.Name))
@@ -222,6 +225,9 @@ public static class CharacterEndpoints
 
             if (level.Resources?.HasPureAdvantage == true && (level.Resources.PureAdvantagePercent < 0 || level.Resources.PureAdvantagePercent > 100))
                 errors.Add($"Pure Advantage% must be 0-100 at level {level.LevelNumber}.");
+
+            if (level.Resources?.HasDeathStrikes == true && (level.Resources.DeathStrikesResistPercent < 0 || level.Resources.DeathStrikesResistPercent > 100))
+                errors.Add($"Death Strikes Resist% must be 0-100 at level {level.LevelNumber}.");
 
             foreach (var attack in level.Attacks)
             {

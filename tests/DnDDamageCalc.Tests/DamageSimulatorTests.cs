@@ -1033,6 +1033,128 @@ public class DamageSimulatorTests
         Assert.Equal(6, results[0].Average, precision: 1);
     }
 
+    [Fact]
+    public void Simulate_DeathStrikes_DoublesHighestSuccessfulAttackInRoundOne()
+    {
+        var character = new Character
+        {
+            Name = "Death Strikes Highest",
+            Levels =
+            [
+                new CharacterLevel
+                {
+                    LevelNumber = 1,
+                    Resources = new LevelResources { HasDeathStrikes = true, DeathStrikesResistPercent = 0 },
+                    Attacks =
+                    [
+                        new Attack { Name = "Low", ActionType = "action", HitPercent = 100, CritPercent = 0, FlatModifier = 5, DiceGroups = [] },
+                        new Attack { Name = "High", ActionType = "action", HitPercent = 100, CritPercent = 0, FlatModifier = 10, DiceGroups = [] }
+                    ]
+                }
+            ]
+        };
+        var setting = new EncounterSetting
+        {
+            Name = "One Combat One Round",
+            Combats = [new CombatDefinition { Rounds = 1, ShortRestAfter = false }]
+        };
+
+        var results = DamageSimulator.Simulate(character, setting, iterations: 10_000);
+
+        Assert.Equal(25, results[0].Average, precision: 1);
+    }
+
+    [Fact]
+    public void Simulate_DeathStrikes_CanDoubleCritAttackBonusPortion()
+    {
+        var character = new Character
+        {
+            Name = "Death Strikes Crit",
+            Levels =
+            [
+                new CharacterLevel
+                {
+                    LevelNumber = 1,
+                    Resources = new LevelResources { HasDeathStrikes = true, DeathStrikesResistPercent = 0 },
+                    Attacks =
+                    [
+                        new Attack { Name = "Normal", ActionType = "action", HitPercent = 100, CritPercent = 0, FlatModifier = 5, DiceGroups = [] },
+                        new Attack { Name = "Crit High", ActionType = "action", HitPercent = 100, CritPercent = 100, FlatModifier = 12, DiceGroups = [] }
+                    ]
+                }
+            ]
+        };
+        var setting = new EncounterSetting
+        {
+            Name = "One Combat One Round",
+            Combats = [new CombatDefinition { Rounds = 1, ShortRestAfter = false }]
+        };
+
+        var results = DamageSimulator.Simulate(character, setting, iterations: 10_000);
+
+        Assert.Equal(29, results[0].Average, precision: 1);
+    }
+
+    [Fact]
+    public void Simulate_DeathStrikes_AllMissesInRoundOne_NoBonusApplied()
+    {
+        var character = new Character
+        {
+            Name = "Death Strikes Miss",
+            Levels =
+            [
+                new CharacterLevel
+                {
+                    LevelNumber = 1,
+                    Resources = new LevelResources { HasDeathStrikes = true, DeathStrikesResistPercent = 0 },
+                    Attacks =
+                    [
+                        new Attack { Name = "Miss", ActionType = "action", HitPercent = 0, CritPercent = 0, FlatModifier = 10, DiceGroups = [] }
+                    ]
+                }
+            ]
+        };
+        var setting = new EncounterSetting
+        {
+            Name = "One Combat Two Rounds",
+            Combats = [new CombatDefinition { Rounds = 2, ShortRestAfter = false }]
+        };
+
+        var results = DamageSimulator.Simulate(character, setting, iterations: 10_000);
+
+        Assert.Equal(0, results[0].Average, precision: 1);
+    }
+
+    [Fact]
+    public void Simulate_DeathStrikes_ResistPreventsExtraBonusDamage()
+    {
+        var character = new Character
+        {
+            Name = "Death Strikes Resisted",
+            Levels =
+            [
+                new CharacterLevel
+                {
+                    LevelNumber = 1,
+                    Resources = new LevelResources { HasDeathStrikes = true, DeathStrikesResistPercent = 100 },
+                    Attacks =
+                    [
+                        new Attack { Name = "Hit", ActionType = "action", HitPercent = 100, CritPercent = 0, FlatModifier = 10, DiceGroups = [] }
+                    ]
+                }
+            ]
+        };
+        var setting = new EncounterSetting
+        {
+            Name = "One Combat One Round",
+            Combats = [new CombatDefinition { Rounds = 1, ShortRestAfter = false }]
+        };
+
+        var results = DamageSimulator.Simulate(character, setting, iterations: 10_000);
+
+        Assert.Equal(10, results[0].Average, precision: 1);
+    }
+
     private static Character MakeCharacter(int hitPercent, int critPercent,
         int flatModifier, List<DiceGroup> diceGroups)
     {

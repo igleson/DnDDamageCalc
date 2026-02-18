@@ -428,6 +428,23 @@ public class FormParserTests
     }
 
     [Fact]
+    public void Parse_DeathStrikes_ParsedCorrectly()
+    {
+        var form = CreateForm(new Dictionary<string, string>
+        {
+            ["characterName"] = "Test",
+            ["level[0].number"] = "5",
+            ["level[0].resources.hasDeathStrikes"] = "true",
+            ["level[0].resources.deathStrikesResistPercent"] = "40"
+        });
+
+        var character = FormParser.Parse(form);
+
+        Assert.True(character.Levels[0].Resources.HasDeathStrikes);
+        Assert.Equal(40, character.Levels[0].Resources.DeathStrikesResistPercent);
+    }
+
+    [Fact]
     public void ParseEncounterSetting_ReturnsCombats()
     {
         var form = CreateForm(new Dictionary<string, string>

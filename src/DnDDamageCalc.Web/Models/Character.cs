@@ -54,6 +54,12 @@ public class LevelResources
 
     [ProtoMember(10)]
     public bool HasSurprisingStrikes { get; set; }
+
+    [ProtoMember(11)]
+    public bool HasDeathStrikes { get; set; }
+
+    [ProtoMember(12)]
+    public int DeathStrikesResistPercent { get; set; }
 }
 
 [ProtoContract]

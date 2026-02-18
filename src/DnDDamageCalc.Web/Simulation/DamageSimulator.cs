@@ -44,8 +44,10 @@ public static class DamageSimulator
                 var hasBoonOfCombatProwess = level.Resources?.HasBoonOfCombatProwess == true;
                 var hasPureAdvantage = level.Resources?.HasPureAdvantage == true;
                 var hasSurprisingStrikes = level.Resources?.HasSurprisingStrikes == true;
+                var hasDeathStrikes = level.Resources?.HasDeathStrikes == true;
                 var shieldMasterTopplePercent = level.Resources?.ShieldMasterTopplePercent ?? 0;
                 var pureAdvantagePercent = level.Resources?.PureAdvantagePercent ?? 0;
+                var deathStrikesResistPercent = level.Resources?.DeathStrikesResistPercent ?? 0;
                 var nextAttackHasAdvantage = false;
                 var actionSurgesRemaining = hasActionSurge ? 1 : 0;
                 var extraActionSurgesRemaining = hasExtraActionSurge ? 1 : 0;
@@ -55,6 +57,7 @@ public static class DamageSimulator
                 foreach (var combat in setting.Combats)
                 {
                     var surprisingStrikesAvailableForCombat = hasSurprisingStrikes;
+                    var deathStrikesAvailableForCombat = hasDeathStrikes;
 
                     for (var round = 0; round < Math.Max(1, combat.Rounds); round++)
                     {
@@ -76,6 +79,8 @@ public static class DamageSimulator
                             pureAdvantagePercent,
                             level.LevelNumber,
                             ref surprisingStrikesAvailableForCombat,
+                            deathStrikesResistPercent,
+                            ref deathStrikesAvailableForCombat,
                             ref studiedAttacksAdvantagePending,
                             ref studiedAttacksTurnsRemaining);
 
@@ -127,10 +132,13 @@ public static class DamageSimulator
         int pureAdvantagePercent,
         int levelNumber,
         ref bool surprisingStrikesAvailableForCombat,
+        int deathStrikesResistPercent,
+        ref bool deathStrikesAvailableForCombat,
         ref bool studiedAttacksAdvantagePending,
         ref int studiedAttacksTurnsRemaining)
     {
         var totalDamage = 0.0;
+        var highestSuccessfulHitDamageThisRound = 0.0;
         var targetIsProne = false;
         var shieldMasterUsedThisTurn = false;
         var heroicInspirationAvailableThisTurn = hasHeroicInspiration;
@@ -154,6 +162,7 @@ public static class DamageSimulator
             pureAdvantagePercent,
             levelNumber,
             ref surprisingStrikesAvailableForCombat,
+            ref highestSuccessfulHitDamageThisRound,
             ref studiedAttacksAdvantagePending,
             ref studiedAttacksTurnsRemaining);
 
@@ -176,6 +185,7 @@ public static class DamageSimulator
                 pureAdvantagePercent,
                 levelNumber,
                 ref surprisingStrikesAvailableForCombat,
+                ref highestSuccessfulHitDamageThisRound,
                 ref studiedAttacksAdvantagePending,
                 ref studiedAttacksTurnsRemaining);
             actionSurgesRemaining--;
@@ -201,10 +211,18 @@ public static class DamageSimulator
                 pureAdvantagePercent,
                 levelNumber,
                 ref surprisingStrikesAvailableForCombat,
+                ref highestSuccessfulHitDamageThisRound,
                 ref studiedAttacksAdvantagePending,
                 ref studiedAttacksTurnsRemaining);
             extraActionSurgesRemaining--;
         }
+
+        TryApplyDeathStrikes(
+            isFirstRoundOfCombat,
+            deathStrikesResistPercent,
+            highestSuccessfulHitDamageThisRound,
+            ref deathStrikesAvailableForCombat,
+            ref totalDamage);
 
         return totalDamage;
     }
@@ -226,6 +244,7 @@ public static class DamageSimulator
         int pureAdvantagePercent,
         int levelNumber,
         ref bool surprisingStrikesAvailableForCombat,
+        ref double highestSuccessfulHitDamageThisRound,
         ref bool studiedAttacksAdvantagePending,
         ref int studiedAttacksTurnsRemaining)
     {
@@ -286,8 +305,10 @@ public static class DamageSimulator
             if (isHit && isCrit)
             {
                 // Crit: double dice quantity, same flat modifier
-                totalDamage += RollDamage(attack, isCrit: true);
-                TryApplySurprisingStrikes(isFirstRoundOfCombat, levelNumber, ref surprisingStrikesAvailableForCombat, ref totalDamage);
+                var attackDamage = RollDamage(attack, isCrit: true);
+                TryApplySurprisingStrikes(isFirstRoundOfCombat, levelNumber, ref surprisingStrikesAvailableForCombat, ref attackDamage);
+                totalDamage += attackDamage;
+                TrackHighestSuccessfulHitDamage(attackDamage, ref highestSuccessfulHitDamageThisRound);
                 TryShieldMasterTopple(hasShieldMaster, shieldMasterTopplePercent, ref shieldMasterUsedThisTurn, ref targetIsProne);
 
                 if (attack.MasteryVex)
@@ -299,8 +320,10 @@ public static class DamageSimulator
             else if (isHit)
             {
                 // Normal hit
-                totalDamage += RollDamage(attack, isCrit: false);
-                TryApplySurprisingStrikes(isFirstRoundOfCombat, levelNumber, ref surprisingStrikesAvailableForCombat, ref totalDamage);
+                var attackDamage = RollDamage(attack, isCrit: false);
+                TryApplySurprisingStrikes(isFirstRoundOfCombat, levelNumber, ref surprisingStrikesAvailableForCombat, ref attackDamage);
+                totalDamage += attackDamage;
+                TrackHighestSuccessfulHitDamage(attackDamage, ref highestSuccessfulHitDamageThisRound);
                 TryShieldMasterTopple(hasShieldMaster, shieldMasterTopplePercent, ref shieldMasterUsedThisTurn, ref targetIsProne);
 
                 if (attack.MasteryVex)
@@ -374,6 +397,37 @@ public static class DamageSimulator
 
         totalDamage += levelNumber;
         surprisingStrikesAvailableForCombat = false;
+    }
+
+    private static void TrackHighestSuccessfulHitDamage(double attackDamage, ref double highestSuccessfulHitDamageThisRound)
+    {
+        if (attackDamage > highestSuccessfulHitDamageThisRound)
+            highestSuccessfulHitDamageThisRound = attackDamage;
+    }
+
+    private static void TryApplyDeathStrikes(
+        bool isFirstRoundOfCombat,
+        int deathStrikesResistPercent,
+        double highestSuccessfulHitDamageThisRound,
+        ref bool deathStrikesAvailableForCombat,
+        ref double totalDamage)
+    {
+        if (!isFirstRoundOfCombat || !deathStrikesAvailableForCombat)
+            return;
+
+        deathStrikesAvailableForCombat = false;
+        if (highestSuccessfulHitDamageThisRound <= 0)
+            return;
+        if (DeathStrikesResisted(deathStrikesResistPercent))
+            return;
+
+        totalDamage += highestSuccessfulHitDamageThisRound;
+    }
+
+    private static bool DeathStrikesResisted(int deathStrikesResistPercent)
+    {
+        var chance = Math.Clamp(deathStrikesResistPercent, 0, 100) / 100.0;
+        return Random.Shared.NextDouble() < chance;
     }
 
     private static void TryShieldMasterTopple(

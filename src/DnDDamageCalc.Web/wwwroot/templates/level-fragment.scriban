@@ -106,6 +106,22 @@
                            value="true"{{ if has_surprising_strikes }} checked{{ end }} />
                     Surprising Strikes
                 </label>
+                <input type="hidden" name="level[{{ level_index }}].resources.hasDeathStrikes" value="false" />
+                <label>
+                    <input type="checkbox"
+                           name="level[{{ level_index }}].resources.hasDeathStrikes"
+                           value="true"{{ if has_death_strikes }} checked{{ end }}
+                           onchange="this.closest('fieldset').querySelector('.death-strikes-resist-pct').style.display=this.checked?'block':'none'" />
+                    Death Strikes
+                </label>
+                <div class="death-strikes-resist-pct" style="display:{{ if has_death_strikes }}block{{ else }}none{{ end }};">
+                    <label for="level[{{ level_index }}].resources.deathStrikesResistPercent">Death Strikes Resist %</label>
+                    <input type="number"
+                           name="level[{{ level_index }}].resources.deathStrikesResistPercent"
+                           value="{{ death_strikes_resist_percent }}"
+                           min="0"
+                           max="100" />
+                </div>
             </div>
         </fieldset>
 

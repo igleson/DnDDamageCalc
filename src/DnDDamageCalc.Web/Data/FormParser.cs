@@ -33,7 +33,9 @@ public static partial class FormParser
                     HasBoonOfCombatProwess = ParseCheckbox(form, $"level[{li}].resources.hasBoonOfCombatProwess"),
                     HasPureAdvantage = ParseCheckbox(form, $"level[{li}].resources.hasPureAdvantage"),
                     PureAdvantagePercent = ParseInt(form, $"level[{li}].resources.pureAdvantagePercent"),
-                    HasSurprisingStrikes = ParseCheckbox(form, $"level[{li}].resources.hasSurprisingStrikes")
+                    HasSurprisingStrikes = ParseCheckbox(form, $"level[{li}].resources.hasSurprisingStrikes"),
+                    HasDeathStrikes = ParseCheckbox(form, $"level[{li}].resources.hasDeathStrikes"),
+                    DeathStrikesResistPercent = ParseInt(form, $"level[{li}].resources.deathStrikesResistPercent")
                 }
             };
 

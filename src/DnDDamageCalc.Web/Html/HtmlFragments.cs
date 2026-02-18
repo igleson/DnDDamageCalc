@@ -78,6 +78,8 @@ public static class HtmlFragments
             has_pure_advantage = l.Resources?.HasPureAdvantage ?? false,
             pure_advantage_percent = l.Resources?.PureAdvantagePercent ?? 0,
             has_surprising_strikes = l.Resources?.HasSurprisingStrikes ?? false,
+            has_death_strikes = l.Resources?.HasDeathStrikes ?? false,
+            death_strikes_resist_percent = l.Resources?.DeathStrikesResistPercent ?? 0,
             attacks = attacks,
             has_attacks = l.Attacks.Count > 0,
             clone_attack_button = l.Attacks.Count > 0 ? new { html = CloneAttackButton(levelIndex, templates) } : null
